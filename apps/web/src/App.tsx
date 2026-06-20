@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { Player } from "@remotion/player";
 import { MyComposition } from "./Composition";
+import { VideoScene } from "./types";
 import { AiVideoModal } from "./components/dashboard/AiVideoModal";
 import { Header } from "./components/dashboard/Header";
 import { RenderModal } from "./components/dashboard/RenderModal";
@@ -146,15 +147,59 @@ export const App: React.FC = () => {
       handleSeek(startFrame);
     }
   };
+ 
+  const handleAddScene = (type: string) => {
+    const newScene: VideoScene = {
+      type: type as VideoScene["type"],
+      title: `NEW ${type.toUpperCase()} SCENE`,
+      subtitle: `Preset ${type} template`,
+      description: `This is a newly added ${type} themed scene component. Customize it here.`,
+      durationInFrames: 120, // 4 seconds default
+      effect: "fade",
+      imageUrl: "https://images.unsplash.com/photo-1542831371-29b0f74f9713?auto=format&fit=crop&w=1280&h=720&q=80",
+      customProps: {
+        layoutVariant: "center",
+        visualStyle: "minimal",
+        badgeText: type.toUpperCase(),
+        chips: [type, "template", "scene"],
+      }
+    };
+    
+    if (type === "react") {
+      newScene.customProps!.codeSnippet = "export default function Component() {\n  return <div>React Component</div>;\n}";
+    } else if (type === "outro") {
+      newScene.customProps!.terminalCommand = "npm run build";
+    }
+ 
+    const nextScenes = [...videoData.scenes, newScene];
+    updateCurrentVideoData({
+      ...videoData,
+      scenes: nextScenes,
+    });
+    
+    // Seek to the new scene start frame
+    setTimeout(() => {
+      let startFrame = 0;
+      nextScenes.slice(0, -1).forEach((scene) => {
+        startFrame += scene.durationInFrames;
+        if (scene.effect !== "none") {
+          startFrame -= 10;
+        }
+      });
+      handleSeek(startFrame);
+      setSelectedSceneIndex(nextScenes.length - 1);
+    }, 100);
+  };
 
   const handleGenerateAiVideo = (
     title: string,
     description: string,
     duration: string,
     tone: string,
-    updateCurrent: boolean
+    updateCurrent: boolean,
+    templates: string[]
   ) => {
-    generateAiVideo(title, description, duration, tone, updateCurrent)
+    generateAiVideo(title, description, duration, tone, updateCurrent, templates)
       .then(() => setShowAiModal(false))
       .catch((err) => {
         console.error("Error generating AI video:", err);
@@ -184,6 +229,7 @@ export const App: React.FC = () => {
             activeProject={activeProject}
             onProjectSelect={handleProjectSelect}
             onNewProject={handleNewProject}
+            onAddScene={handleAddScene}
           />
           <div
             onPointerDown={(e) => beginResize("left", e)}

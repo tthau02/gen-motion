@@ -16,17 +16,30 @@ import { SceneScale } from "./scenes/SceneScale";
 import { SceneTransitions } from "./scenes/SceneTransitions";
 import { ScenePerformance } from "./scenes/ScenePerformance";
 import { SceneOutro } from "./scenes/SceneOutro";
+import { SceneCyberpunk } from "./scenes/SceneCyberpunk";
+import { SceneCorporate } from "./scenes/SceneCorporate";
+import { SceneVintage } from "./scenes/SceneVintage";
+import { ScenePlayful } from "./scenes/ScenePlayful";
+import { SceneDynamic } from "./scenes/SceneDynamic";
 
 // =========================================================================
 // MAIN COMPOSITION
 // =========================================================================
 export const MyComposition: React.FC<VideoMetadata> = ({
   themeColor = "#c89547",
+  textColor,
+  backgroundColor,
+  borderColor,
   audioUrl,
   scenes = [],
 }) => {
   return (
-    <AestheticContainer themeColor={themeColor}>
+    <AestheticContainer
+      themeColor={themeColor}
+      textColor={textColor}
+      backgroundColor={backgroundColor}
+      borderColor={borderColor}
+    >
       {audioUrl && <Audio src={audioUrl} volume={0.5} />}
 
       <TransitionSeries>
@@ -118,8 +131,58 @@ export const MyComposition: React.FC<VideoMetadata> = ({
                 />
               );
               break;
+            case "cyberpunk":
+              component = (
+                <SceneCyberpunk
+                  title={scene.title}
+                  subtitle={scene.subtitle}
+                  description={scene.description}
+                  imageUrl={scene.imageUrl}
+                />
+              );
+              break;
+            case "corporate":
+              component = (
+                <SceneCorporate
+                  title={scene.title}
+                  subtitle={scene.subtitle}
+                  description={scene.description}
+                  imageUrl={scene.imageUrl}
+                />
+              );
+              break;
+            case "vintage":
+              component = (
+                <SceneVintage
+                  title={scene.title}
+                  subtitle={scene.subtitle}
+                  description={scene.description}
+                  imageUrl={scene.imageUrl}
+                />
+              );
+              break;
+            case "playful":
+              component = (
+                <ScenePlayful
+                  title={scene.title}
+                  subtitle={scene.subtitle}
+                  description={scene.description}
+                  imageUrl={scene.imageUrl}
+                />
+              );
+              break;
             default:
-              component = null;
+              component = (
+                <SceneDynamic
+                  type={scene.type}
+                  title={scene.title}
+                  subtitle={scene.subtitle}
+                  description={scene.description}
+                  imageUrl={scene.imageUrl}
+                  themeColor={themeColor}
+                  customProps={scene.customProps}
+                />
+              );
           }
 
           // Transition settings

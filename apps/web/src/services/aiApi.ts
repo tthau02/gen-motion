@@ -7,6 +7,7 @@ export interface GenerateVideoRequest {
   duration: string;
   tone: string;
   projectId?: string;
+  templates?: string[];
 }
 
 export const aiApi = {

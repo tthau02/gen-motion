@@ -1,13 +1,5 @@
 export class VideoScene {
-  type:
-    | 'intro'
-    | 'react'
-    | 'precision'
-    | 'audio'
-    | 'scale'
-    | 'transitions'
-    | 'performance'
-    | 'outro';
+  type: string;
   title: string;
   subtitle: string;
   description?: string;
@@ -23,11 +15,15 @@ export class VideoScene {
     metricLabel?: string;
     metricValue?: string;
     chips?: string[];
+    [key: string]: any;
   };
 }
 
 export class VideoMetadata {
   themeColor: string;
+  textColor?: string;
+  backgroundColor?: string;
+  borderColor?: string;
   audioUrl?: string;
   scenes: VideoScene[];
 }

@@ -141,7 +141,13 @@ export class RenderService {
 
     if (basename(cwd) === 'api') {
       const fromApiWorkspace = resolve(cwd, '..', '..');
-      const entryPoint = resolve(fromApiWorkspace, 'apps', 'web', 'src', 'index.ts');
+      const entryPoint = resolve(
+        fromApiWorkspace,
+        'apps',
+        'web',
+        'src',
+        'index.ts',
+      );
       if (existsSync(entryPoint)) {
         return fromApiWorkspace;
       }

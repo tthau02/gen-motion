@@ -4,6 +4,8 @@ import { Settings, Zap } from "lucide-react";
 import { VideoMetadata, VideoScene } from "../../types";
 import { RightTab } from "./types";
 
+
+
 interface SidebarRightProps {
   rightTab: RightTab;
   setRightTab: (tab: RightTab) => void;
@@ -59,21 +61,151 @@ export const SidebarRight: React.FC<SidebarRightProps> = ({
       <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4 custom-scrollbar">
         {rightTab === "props" && (
           <>
-            {/* Theme color customizer */}
-            <div className="flex flex-col gap-2">
-              <label className="text-[10px] text-[#8f8278] uppercase font-mono tracking-wider">
-                Accent Theme Color
-              </label>
-              <div className="flex items-center gap-3">
-                <input
-                  type="color"
-                  value={videoData.themeColor}
-                  onChange={(e) => setVideoData({ ...videoData, themeColor: e.target.value })}
-                  className="w-8 h-8 rounded border border-[#3e342c] bg-transparent cursor-pointer"
-                />
-                <span className="font-mono text-xs uppercase text-white">
-                  {videoData.themeColor}
-                </span>
+            {/* Theme colors customizer */}
+            <div className="flex flex-col gap-3 bg-[#1e1916]/30 p-3 rounded-lg border border-[#3e342c]/20">
+              <span className="text-[10px] text-[#8f8278] uppercase font-mono tracking-wider font-semibold">
+                Theme Palette
+              </span>
+
+              {/* Accent Theme Color */}
+              <div className="flex flex-col gap-1">
+                <label className="text-[9px] text-[#8f8278] uppercase font-mono">
+                  Accent Color
+                </label>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="color"
+                    value={videoData.themeColor}
+                    onChange={(e) => setVideoData({ ...videoData, themeColor: e.target.value })}
+                    className="w-7 h-7 rounded border border-[#3e342c] bg-[#110d0b] cursor-pointer"
+                  />
+                  <span className="font-mono text-xs uppercase text-white">
+                    {videoData.themeColor}
+                  </span>
+                </div>
+              </div>
+
+              {/* Custom Text Color */}
+              <div className="flex flex-col gap-1 mt-1">
+                <div className="flex items-center justify-between">
+                  <label className="text-[9px] text-[#8f8278] uppercase font-mono">
+                    Text Color
+                  </label>
+                  <label className="flex items-center gap-1.5 text-[9px] text-stone-400 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={!!videoData.textColor}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setVideoData({ ...videoData, textColor: "#faf8f5" });
+                        } else {
+                          const nextData = { ...videoData };
+                          delete nextData.textColor;
+                          setVideoData(nextData);
+                        }
+                      }}
+                      className="w-3 h-3 rounded accent-vintage-gold"
+                    />
+                    <span>Override</span>
+                  </label>
+                </div>
+                {videoData.textColor ? (
+                  <div className="flex items-center gap-3 animate-fade-in">
+                    <input
+                      type="color"
+                      value={videoData.textColor}
+                      onChange={(e) => setVideoData({ ...videoData, textColor: e.target.value })}
+                      className="w-7 h-7 rounded border border-[#3e342c] bg-[#110d0b] cursor-pointer"
+                    />
+                    <span className="font-mono text-xs uppercase text-white">
+                      {videoData.textColor}
+                    </span>
+                  </div>
+                ) : (
+                  <span className="text-[9px] text-stone-500 italic">Auto (hue-tinted white)</span>
+                )}
+              </div>
+
+              {/* Custom Background Color */}
+              <div className="flex flex-col gap-1 mt-1">
+                <div className="flex items-center justify-between">
+                  <label className="text-[9px] text-[#8f8278] uppercase font-mono">
+                    Background Color
+                  </label>
+                  <label className="flex items-center gap-1.5 text-[9px] text-stone-400 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={!!videoData.backgroundColor}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setVideoData({ ...videoData, backgroundColor: "#1c1815" });
+                        } else {
+                          const nextData = { ...videoData };
+                          delete nextData.backgroundColor;
+                          setVideoData(nextData);
+                        }
+                      }}
+                      className="w-3 h-3 rounded accent-vintage-gold"
+                    />
+                    <span>Override</span>
+                  </label>
+                </div>
+                {videoData.backgroundColor ? (
+                  <div className="flex items-center gap-3 animate-fade-in">
+                    <input
+                      type="color"
+                      value={videoData.backgroundColor}
+                      onChange={(e) => setVideoData({ ...videoData, backgroundColor: e.target.value })}
+                      className="w-7 h-7 rounded border border-[#3e342c] bg-[#110d0b] cursor-pointer"
+                    />
+                    <span className="font-mono text-xs uppercase text-white">
+                      {videoData.backgroundColor}
+                    </span>
+                  </div>
+                ) : (
+                  <span className="text-[9px] text-stone-500 italic">Auto (hue-tinted dark slate)</span>
+                )}
+              </div>
+
+              {/* Custom Border Color */}
+              <div className="flex flex-col gap-1 mt-1">
+                <div className="flex items-center justify-between">
+                  <label className="text-[9px] text-[#8f8278] uppercase font-mono">
+                    Border Color
+                  </label>
+                  <label className="flex items-center gap-1.5 text-[9px] text-stone-400 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={!!videoData.borderColor}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setVideoData({ ...videoData, borderColor: "#3e342c" });
+                        } else {
+                          const nextData = { ...videoData };
+                          delete nextData.borderColor;
+                          setVideoData(nextData);
+                        }
+                      }}
+                      className="w-3 h-3 rounded accent-vintage-gold"
+                    />
+                    <span>Override</span>
+                  </label>
+                </div>
+                {videoData.borderColor ? (
+                  <div className="flex items-center gap-3 animate-fade-in">
+                    <input
+                      type="color"
+                      value={videoData.borderColor}
+                      onChange={(e) => setVideoData({ ...videoData, borderColor: e.target.value })}
+                      className="w-7 h-7 rounded border border-[#3e342c] bg-[#110d0b] cursor-pointer"
+                    />
+                    <span className="font-mono text-xs uppercase text-white">
+                      {videoData.borderColor}
+                    </span>
+                  </div>
+                ) : (
+                  <span className="text-[9px] text-stone-500 italic">Auto (hue-tinted border)</span>
+                )}
               </div>
             </div>
 
@@ -138,6 +270,8 @@ export const SidebarRight: React.FC<SidebarRightProps> = ({
                       />
                     </div>
                   )}
+
+
                 </div>
               ))}
             </div>

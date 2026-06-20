@@ -15,15 +15,17 @@ export class AiController {
       duration: string;
       tone: string;
       projectId?: string;
+      templates?: string[];
     },
   ): Promise<SidebarProject> {
-    const { title, description, duration, tone, projectId } = body;
+    const { title, description, duration, tone, projectId, templates } = body;
     return await this.aiService.generateVideo(
       title,
       description,
       duration,
       tone,
       projectId,
+      templates,
     );
   }
 }

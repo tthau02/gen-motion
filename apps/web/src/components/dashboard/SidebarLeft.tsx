@@ -5,7 +5,6 @@ import {
   Layers,
   FolderOpen,
   Search,
-  FileVideo,
   Music,
   Monitor,
   Plus
@@ -21,6 +20,7 @@ interface SidebarLeftProps {
   activeProject: string;
   onProjectSelect: (proj: SidebarProject) => void;
   onNewProject: () => void;
+  onAddScene?: (type: string) => void;
 }
 
 export const SidebarLeft: React.FC<SidebarLeftProps> = ({
@@ -31,7 +31,8 @@ export const SidebarLeft: React.FC<SidebarLeftProps> = ({
   filteredProjects,
   activeProject,
   onProjectSelect,
-  onNewProject
+  onNewProject,
+  onAddScene
 }) => {
   return (
     <section className="w-full h-full border-r border-[#2b2420] flex flex-col bg-[#181412] shrink-0">
@@ -134,16 +135,48 @@ export const SidebarLeft: React.FC<SidebarLeftProps> = ({
         )}
 
         {leftTab === "compositions" && (
-          <div className="flex flex-col gap-2">
-            <div className="p-3 bg-[#1e1916]/40 rounded border border-[#3e342c]/30 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <FileVideo className="w-4 h-4 text-vintage-gold" />
-                <span className="text-xs font-semibold text-white">VintageCinematic</span>
-              </div>
-              <span className="text-[10px] font-mono bg-vintage-gold/15 px-1.5 py-0.5 rounded text-vintage-gold border border-vintage-gold/20">
-                ACTIVE
-              </span>
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center justify-between text-xs text-[#8f8278] mb-1 uppercase font-mono">
+              <span>Themed Components</span>
+              <span>12 TEMPLATES</span>
             </div>
+
+            {[
+              { type: "cyberpunk", name: "Cyberpunk Tech", desc: "Neon cyan/pink text, scanned grids" },
+              { type: "corporate", name: "Corporate Minimal", desc: "Clean layout, metric summary box" },
+              { type: "vintage", name: "Vintage Cinematic", desc: "DM Serif font, warm parchment borders" },
+              { type: "playful", name: "Playful Pop-Art", desc: "Bouncy springs, thick blocky shadow borders" },
+              { type: "intro", name: "Standard Intro", desc: "Sparkle icons, dynamic center texts" },
+              { type: "react", name: "React Live Code", desc: "Formatted Javascript workspace" },
+              { type: "precision", name: "Precision Insights", desc: "Analytical dashboard layout" },
+              { type: "audio", name: "Audio Wave", desc: "Visual music/sound metadata indicators" },
+              { type: "scale", name: "Futuristic Scale", desc: "Networks, futuristic space overlays" },
+              { type: "transitions", name: "Cine Filters", desc: "Cinematic filter layouts, blur transitions" },
+              { type: "performance", name: "Server Metrics", desc: "Infrastructure, database details" },
+              { type: "outro", name: "Terminal Outro", desc: "CLI inputs, call to actions" },
+            ].map((comp) => (
+              <div
+                key={comp.type}
+                className="p-3 bg-[#1e1916]/40 rounded border border-[#3e342c]/30 hover:border-[#52443a] transition-all flex items-center justify-between gap-3 group"
+              >
+                <div className="flex flex-col gap-1 min-w-0">
+                  <span className="text-xs font-semibold text-white group-hover:text-vintage-gold transition-colors truncate">
+                    {comp.name}
+                  </span>
+                  <span className="text-[10px] text-[#8f8278] leading-normal font-sans font-light line-clamp-1">
+                    {comp.desc}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => onAddScene?.(comp.type)}
+                  className="w-7 h-7 rounded-full bg-vintage-gold/15 border border-vintage-gold/30 hover:bg-vintage-gold hover:text-black flex items-center justify-center text-vintage-gold cursor-pointer transition-all hover:scale-105 active:scale-95 shrink-0"
+                  title={`Add ${comp.name} to timeline`}
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ))}
           </div>
         )}
 

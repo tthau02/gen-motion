@@ -2,16 +2,7 @@ import { z } from "zod";
 import { zColor } from "@remotion/zod-types";
 
 export const VideoSceneSchema = z.object({
-  type: z.enum([
-    "intro",
-    "react",
-    "precision",
-    "audio",
-    "scale",
-    "transitions",
-    "performance",
-    "outro",
-  ]),
+  type: z.string(),
   title: z.string(),
   subtitle: z.string(),
   description: z.string().optional(),
@@ -33,11 +24,15 @@ export const VideoSceneSchema = z.object({
       metricValue: z.string().optional(),
       chips: z.array(z.string()).optional(),
     })
+    .catchall(z.unknown())
     .optional(),
-});
+}).catchall(z.unknown());
 
 export const VideoMetadataSchema = z.object({
   themeColor: zColor(),
+  textColor: zColor().optional(),
+  backgroundColor: zColor().optional(),
+  borderColor: zColor().optional(),
   audioUrl: z.string().optional(),
   scenes: z.array(VideoSceneSchema),
 });

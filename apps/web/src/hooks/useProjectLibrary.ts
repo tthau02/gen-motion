@@ -132,7 +132,8 @@ export const useProjectLibrary = (onPlaybackReset: () => void) => {
     description: string,
     duration: string,
     tone: string,
-    updateCurrent: boolean
+    updateCurrent: boolean,
+    templates?: string[]
   ) => {
     setIsGenerating(true);
     try {
@@ -142,6 +143,7 @@ export const useProjectLibrary = (onPlaybackReset: () => void) => {
         duration,
         tone,
         projectId: updateCurrent && activeProject ? activeProject : undefined,
+        templates,
       });
 
       lastSavedProjectData.current[newProject.id] = JSON.stringify(newProject.data);
