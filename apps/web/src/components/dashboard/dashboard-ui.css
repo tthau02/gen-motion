@@ -1,0 +1,146 @@
+.editor-dashboard-ui {
+  --editor-font:
+    Inter, "Segoe UI Variable", "Segoe UI", Roboto, "Helvetica Neue", Arial,
+    system-ui, sans-serif;
+  --editor-mono:
+    "JetBrains Mono", "Cascadia Mono", "SFMono-Regular", Consolas,
+    "Liberation Mono", monospace;
+
+  font-family: var(--editor-font);
+  font-size: 15px;
+  line-height: 1.45;
+  letter-spacing: 0;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.editor-dashboard-ui .font-sans {
+  font-family: var(--editor-font);
+}
+
+.editor-dashboard-ui .font-mono {
+  font-family: var(--editor-mono);
+}
+
+.editor-dashboard-ui .text-\[8px\] {
+  font-size: 10px;
+}
+
+.editor-dashboard-ui .text-\[9px\] {
+  font-size: 10.5px;
+}
+
+.editor-dashboard-ui .text-\[10px\] {
+  font-size: 11.5px;
+}
+
+.editor-dashboard-ui .text-\[11px\] {
+  font-size: 12.5px;
+}
+
+.editor-dashboard-ui .text-xs {
+  font-size: 13px;
+}
+
+.editor-dashboard-ui .text-sm {
+  font-size: 15px;
+}
+
+.editor-dashboard-ui input,
+.editor-dashboard-ui textarea,
+.editor-dashboard-ui select,
+.editor-dashboard-ui button {
+  font-family: var(--editor-font);
+  font-size: 13px;
+}
+
+.editor-dashboard-ui .font-mono input,
+.editor-dashboard-ui .font-mono textarea,
+.editor-dashboard-ui .font-mono select,
+.editor-dashboard-ui .font-mono button,
+.editor-dashboard-ui input.font-mono,
+.editor-dashboard-ui textarea.font-mono,
+.editor-dashboard-ui select.font-mono,
+.editor-dashboard-ui button.font-mono {
+  font-family: var(--editor-mono);
+}
+
+.editor-dashboard-ui input,
+.editor-dashboard-ui select {
+  min-height: 34px;
+}
+
+.editor-dashboard-ui textarea {
+  min-height: 68px;
+}
+
+.editor-dashboard-ui label,
+.editor-dashboard-ui .uppercase {
+  letter-spacing: 0.055em;
+}
+
+.editor-dashboard-ui button {
+  letter-spacing: 0.015em;
+}
+
+.editor-dashboard-ui .editor-compact-label {
+  font-size: 11.5px;
+}
+
+.editor-dashboard-ui .timeline-range {
+  appearance: none;
+  -webkit-appearance: none;
+  display: block;
+  height: 18px;
+  min-height: 18px;
+  background: transparent;
+  accent-color: var(--color-vintage-gold);
+}
+
+.editor-dashboard-ui .timeline-range::-webkit-slider-runnable-track {
+  height: 5px;
+  border-radius: 999px;
+  background: #2b2420;
+  border: 1px solid #3e342c;
+}
+
+.editor-dashboard-ui .timeline-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 13px;
+  height: 13px;
+  margin-top: -5px;
+  border-radius: 999px;
+  background: var(--color-vintage-gold);
+  border: 2px solid #110d0b;
+  box-shadow: 0 0 0 1px #3e342c;
+}
+
+.editor-dashboard-ui .timeline-range:hover::-webkit-slider-runnable-track {
+  background: #3a302a;
+}
+
+.editor-dashboard-ui .timeline-range:focus {
+  outline: none;
+}
+
+.editor-dashboard-ui .timeline-range:focus::-webkit-slider-thumb {
+  box-shadow:
+    0 0 0 1px #3e342c,
+    0 0 0 4px rgba(200, 149, 71, 0.2);
+}
+
+.editor-dashboard-ui .timeline-range::-moz-range-track {
+  height: 5px;
+  border-radius: 999px;
+  background: #2b2420;
+  border: 1px solid #3e342c;
+}
+
+.editor-dashboard-ui .timeline-range::-moz-range-thumb {
+  width: 13px;
+  height: 13px;
+  border-radius: 999px;
+  background: var(--color-vintage-gold);
+  border: 2px solid #110d0b;
+  box-shadow: 0 0 0 1px #3e342c;
+}
