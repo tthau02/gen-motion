@@ -36,7 +36,7 @@
   "scripts": {
     "dev": "vite",
     "studio": "remotion studio",
-    "build": "remotion bundle",
+    "build": "tsc && vite build",
     "upgrade": "remotion upgrade",
     "lint": "eslint src && tsc"
   },
