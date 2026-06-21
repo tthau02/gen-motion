@@ -24,6 +24,7 @@
     "@nestjs/common": "^11.0.1",
     "@nestjs/core": "^11.0.1",
     "@nestjs/platform-express": "^11.0.1",
+    "@nestjs/throttler": "^6.5.0",
     "@remotion/bundler": "4.0.477",
     "@remotion/renderer": "4.0.477",
     "@remotion/tailwind-v4": "4.0.477",

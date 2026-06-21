@@ -1,7 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { PreviewZoom } from "../components/dashboard/types";
 
-export const usePreviewSizing = (previewZoom: PreviewZoom) => {
+export const usePreviewSizing = (
+  previewZoom: PreviewZoom,
+  compositionWidth: number = 1280,
+  compositionHeight: number = 720
+) => {
   const previewViewportRef = useRef<HTMLDivElement>(null);
   const [fitPreviewSize, setFitPreviewSize] = useState({
     width: 800,
@@ -15,11 +19,14 @@ export const usePreviewSizing = (previewZoom: PreviewZoom) => {
     const updateFitSize = () => {
       const availableWidth = Math.max(1, viewport.clientWidth - 64);
       const availableHeight = Math.max(1, viewport.clientHeight - 64);
-      const scale = Math.min(availableWidth / 1280, availableHeight / 720);
+      const scale = Math.min(
+        availableWidth / compositionWidth,
+        availableHeight / compositionHeight
+      );
 
       setFitPreviewSize({
-        width: Math.max(160, Math.floor(1280 * scale)),
-        height: Math.max(90, Math.floor(720 * scale)),
+        width: Math.max(160, Math.floor(compositionWidth * scale)),
+        height: Math.max(90, Math.floor(compositionHeight * scale)),
       });
     };
 
@@ -28,14 +35,14 @@ export const usePreviewSizing = (previewZoom: PreviewZoom) => {
     observer.observe(viewport);
 
     return () => observer.disconnect();
-  }, []);
+  }, [compositionWidth, compositionHeight]);
 
   const previewSize =
     previewZoom === "fit"
       ? fitPreviewSize
       : {
-          width: 1280 * previewZoom,
-          height: 720 * previewZoom,
+          width: compositionWidth * previewZoom,
+          height: compositionHeight * previewZoom,
         };
 
   return {

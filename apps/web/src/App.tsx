@@ -97,8 +97,6 @@ export const App: React.FC = () => {
     togglePreviewExpanded: togglePanelPreviewExpanded,
   } = useResizablePanels();
 
-  const { previewViewportRef, previewSize } = usePreviewSizing(previewZoom);
-
   const projectLibrary = useProjectLibrary(() => playerControls.resetPlayback());
   const {
     projects,
@@ -111,6 +109,16 @@ export const App: React.FC = () => {
     handleProjectSelect,
     generateAiVideo,
   } = projectLibrary;
+
+  const isVerticalRatio = videoData?.aspectRatio === "9:16";
+  const compositionWidth = isVerticalRatio ? 720 : 1280;
+  const compositionHeight = isVerticalRatio ? 1280 : 720;
+
+  const { previewViewportRef, previewSize } = usePreviewSizing(
+    previewZoom,
+    compositionWidth,
+    compositionHeight
+  );
 
   const totalFrames = calculateTotalDuration(videoData);
   const playerControls = usePlayerControls(totalFrames);
@@ -159,9 +167,12 @@ export const App: React.FC = () => {
       imageUrl: "https://images.unsplash.com/photo-1542831371-29b0f74f9713?auto=format&fit=crop&w=1280&h=720&q=80",
       customProps: {
         layoutVariant: "center",
-        visualStyle: "minimal",
-        badgeText: type.toUpperCase(),
-        chips: [type, "template", "scene"],
+        visualStyle: "cinematic",
+        shotType: "editorial",
+        captionStyle: "lower-third",
+        textureLevel: "subtle",
+        overlayDensity: "low",
+        focalPoint: `A clear ${type} subject with restrained typography`,
       }
     };
     
@@ -197,9 +208,10 @@ export const App: React.FC = () => {
     duration: string,
     tone: string,
     updateCurrent: boolean,
-    templates: string[]
+    templates: string[],
+    aspectRatio?: "16:9" | "9:16"
   ) => {
-    generateAiVideo(title, description, duration, tone, updateCurrent, templates)
+    generateAiVideo(title, description, duration, tone, updateCurrent, templates, aspectRatio)
       .then(() => setShowAiModal(false))
       .catch((err) => {
         console.error("Error generating AI video:", err);
@@ -269,8 +281,8 @@ export const App: React.FC = () => {
                     inputProps={videoData}
                     durationInFrames={totalFrames}
                     fps={30}
-                    compositionWidth={1280}
-                    compositionHeight={720}
+                    compositionWidth={compositionWidth}
+                    compositionHeight={compositionHeight}
                     style={{
                       width: "100%",
                       height: "100%",

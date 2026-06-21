@@ -133,7 +133,8 @@ export const useProjectLibrary = (onPlaybackReset: () => void) => {
     duration: string,
     tone: string,
     updateCurrent: boolean,
-    templates?: string[]
+    templates?: string[],
+    aspectRatio?: "16:9" | "9:16"
   ) => {
     setIsGenerating(true);
     try {
@@ -144,6 +145,7 @@ export const useProjectLibrary = (onPlaybackReset: () => void) => {
         tone,
         projectId: updateCurrent && activeProject ? activeProject : undefined,
         templates,
+        aspectRatio,
       });
 
       lastSavedProjectData.current[newProject.id] = JSON.stringify(newProject.data);

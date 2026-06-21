@@ -1,17 +1,24 @@
 /* eslint-disable @remotion/non-pure-animation */
 import React, { useState } from "react";
-import { X, Sparkles, ChevronDown, Video, MessageSquare, Clock, Sliders } from "lucide-react";
+import { X, Sparkles, ChevronDown, Video, MessageSquare, Clock, Sliders, Layout } from "lucide-react";
 
 interface AiVideoModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onGenerate: (title: string, description: string, duration: string, tone: string, updateCurrent: boolean, templates: string[]) => void;
+  onGenerate: (title: string, description: string, duration: string, tone: string, updateCurrent: boolean, templates: string[], aspectRatio: "16:9" | "9:16") => void;
   isGenerating: boolean;
   defaultUpdateCurrent?: boolean;
 }
 
 const TEMPLATE_OPTIONS = [
   { id: "intro", label: "Intro (Opening card)" },
+  { id: "documentary", label: "Documentary (Social/Life)" },
+  { id: "lifestyle", label: "Lifestyle (Daily Life)" },
+  { id: "community", label: "Community (People/Street)" },
+  { id: "street_story", label: "Street Story (Urban)" },
+  { id: "education", label: "Education (Learning)" },
+  { id: "culinary", label: "Culinary (Food/Culture)" },
+  { id: "nature", label: "Nature (Outdoor)" },
   { id: "cyberpunk", label: "Cyberpunk (Neon/Tech)" },
   { id: "corporate", label: "Corporate (Business/Finance)" },
   { id: "vintage", label: "Vintage (Retro/Cinema)" },
@@ -37,6 +44,7 @@ export const AiVideoModal: React.FC<AiVideoModalProps> = ({
   const [duration, setDuration] = useState("20");
   const [customDuration, setCustomDuration] = useState("300");
   const [tone, setTone] = useState("Professional");
+  const [aspectRatio, setAspectRatio] = useState<"16:9" | "9:16">("16:9");
   const [updateCurrent, setUpdateCurrent] = useState(defaultUpdateCurrent);
   const [hasGenerated, setHasGenerated] = useState(false);
   const [selectedTemplates, setSelectedTemplates] = useState<string[]>([]);
@@ -47,6 +55,7 @@ export const AiVideoModal: React.FC<AiVideoModalProps> = ({
       setUpdateCurrent(defaultUpdateCurrent);
       setSelectedTemplates([]);
       setIsDropdownOpen(false);
+      setAspectRatio("16:9");
     }
   }, [isOpen, defaultUpdateCurrent]);
 
@@ -75,7 +84,7 @@ export const AiVideoModal: React.FC<AiVideoModalProps> = ({
     if (!title.trim() || !description.trim()) return;
     setHasGenerated(true);
     const finalDuration = duration === "custom" ? customDuration : duration;
-    onGenerate(title, description, finalDuration, tone, updateCurrent, selectedTemplates);
+    onGenerate(title, description, finalDuration, tone, updateCurrent, selectedTemplates, aspectRatio);
   };
 
   const handleBackdropClick = (e: React.MouseEvent) => {
@@ -173,7 +182,7 @@ export const AiVideoModal: React.FC<AiVideoModalProps> = ({
               </div>
 
               {/* Select Options */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-4">
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[10px] text-[#8f8278] uppercase font-mono tracking-wider flex items-center gap-1">
                     <Clock className="w-3 h-3" />
@@ -195,6 +204,25 @@ export const AiVideoModal: React.FC<AiVideoModalProps> = ({
                       <option value="180">180 seconds (3m)</option>
                       <option value="300">300 seconds (5m)</option>
                       <option value="custom">Custom Duration (Advanced)</option>
+                    </select>
+                    <ChevronDown className="w-4 h-4 absolute right-3 top-2 text-[#6b5d53] pointer-events-none" />
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[10px] text-[#8f8278] uppercase font-mono tracking-wider flex items-center gap-1">
+                    <Layout className="w-3 h-3" />
+                    <span>Aspect Ratio</span>
+                  </label>
+                  <div className="relative">
+                    <select
+                      value={aspectRatio}
+                      onChange={(e) => setAspectRatio(e.target.value as "16:9" | "9:16")}
+                      disabled={isGenerating}
+                      className="w-full bg-[#110d0b] border border-[#3e342c] rounded px-3 py-2 text-xs text-white focus:outline-none focus:border-vintage-gold/50 appearance-none cursor-pointer"
+                    >
+                      <option value="16:9">16:9 Horizontal</option>
+                      <option value="9:16">9:16 Vertical</option>
                     </select>
                     <ChevronDown className="w-4 h-4 absolute right-3 top-2 text-[#6b5d53] pointer-events-none" />
                   </div>

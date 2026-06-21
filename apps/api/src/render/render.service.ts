@@ -73,7 +73,11 @@ export class RenderService {
         .slice(0, 48);
       const filename = `${safeTitle || 'video'}-${Date.now()}.mp4`;
       const outputLocation = join(outputDir, filename);
+
+      const isVertical = request.data?.aspectRatio === '9:16';
       const resolution = this.resolveResolution(request.resolution);
+      const renderWidth = isVertical ? resolution.height : resolution.width;
+      const renderHeight = isVertical ? resolution.width : resolution.height;
 
       job.status = 'bundling';
       job.message = 'Preparing Remotion bundle';
@@ -99,8 +103,8 @@ export class RenderService {
         serveUrl,
         composition: {
           ...composition,
-          width: resolution.width,
-          height: resolution.height,
+          width: renderWidth,
+          height: renderHeight,
         },
         inputProps,
         codec: 'h264',

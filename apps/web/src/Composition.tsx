@@ -56,6 +56,7 @@ export const MyComposition: React.FC<VideoMetadata> = ({
                   subtitle={scene.subtitle}
                   description={scene.description}
                   imageUrl={scene.imageUrl}
+                  customProps={scene.customProps}
                 />
               );
               break;
@@ -66,7 +67,7 @@ export const MyComposition: React.FC<VideoMetadata> = ({
                   subtitle={scene.subtitle}
                   description={scene.description}
                   imageUrl={scene.imageUrl}
-                  codeSnippet={scene.customProps?.codeSnippet}
+                  customProps={scene.customProps}
                 />
               );
               break;
@@ -77,6 +78,7 @@ export const MyComposition: React.FC<VideoMetadata> = ({
                   subtitle={scene.subtitle}
                   description={scene.description}
                   imageUrl={scene.imageUrl}
+                  customProps={scene.customProps}
                 />
               );
               break;
@@ -87,6 +89,7 @@ export const MyComposition: React.FC<VideoMetadata> = ({
                   subtitle={scene.subtitle}
                   description={scene.description}
                   imageUrl={scene.imageUrl}
+                  customProps={scene.customProps}
                 />
               );
               break;
@@ -97,6 +100,7 @@ export const MyComposition: React.FC<VideoMetadata> = ({
                   subtitle={scene.subtitle}
                   description={scene.description}
                   imageUrl={scene.imageUrl}
+                  customProps={scene.customProps}
                 />
               );
               break;
@@ -107,6 +111,7 @@ export const MyComposition: React.FC<VideoMetadata> = ({
                   subtitle={scene.subtitle}
                   description={scene.description}
                   imageUrl={scene.imageUrl}
+                  customProps={scene.customProps}
                 />
               );
               break;
@@ -117,6 +122,7 @@ export const MyComposition: React.FC<VideoMetadata> = ({
                   subtitle={scene.subtitle}
                   description={scene.description}
                   imageUrl={scene.imageUrl}
+                  customProps={scene.customProps}
                 />
               );
               break;
@@ -127,7 +133,7 @@ export const MyComposition: React.FC<VideoMetadata> = ({
                   subtitle={scene.subtitle}
                   description={scene.description}
                   imageUrl={scene.imageUrl}
-                  terminalCommand={scene.customProps?.terminalCommand}
+                  customProps={scene.customProps}
                 />
               );
               break;
@@ -138,6 +144,7 @@ export const MyComposition: React.FC<VideoMetadata> = ({
                   subtitle={scene.subtitle}
                   description={scene.description}
                   imageUrl={scene.imageUrl}
+                  customProps={scene.customProps}
                 />
               );
               break;
@@ -148,6 +155,7 @@ export const MyComposition: React.FC<VideoMetadata> = ({
                   subtitle={scene.subtitle}
                   description={scene.description}
                   imageUrl={scene.imageUrl}
+                  customProps={scene.customProps}
                 />
               );
               break;
@@ -158,6 +166,7 @@ export const MyComposition: React.FC<VideoMetadata> = ({
                   subtitle={scene.subtitle}
                   description={scene.description}
                   imageUrl={scene.imageUrl}
+                  customProps={scene.customProps}
                 />
               );
               break;
@@ -168,6 +177,7 @@ export const MyComposition: React.FC<VideoMetadata> = ({
                   subtitle={scene.subtitle}
                   description={scene.description}
                   imageUrl={scene.imageUrl}
+                  customProps={scene.customProps}
                 />
               );
               break;

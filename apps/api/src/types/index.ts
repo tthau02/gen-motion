@@ -4,6 +4,7 @@ export class VideoScene {
   subtitle: string;
   description?: string;
   imageUrl?: string;
+  imageSearchKeyword?: string;
   durationInFrames: number;
   effect: 'fade' | 'slide-left' | 'slide-right' | 'none';
   customProps?: {
@@ -15,6 +16,23 @@ export class VideoScene {
     metricLabel?: string;
     metricValue?: string;
     chips?: string[];
+    shotType?:
+      | 'wide'
+      | 'close-up'
+      | 'detail'
+      | 'editorial'
+      | 'documentary'
+      | 'data-insert';
+    focalPoint?: string;
+    captionStyle?:
+      | 'none'
+      | 'lower-third'
+      | 'chapter'
+      | 'caption'
+      | 'annotation';
+    textureLevel?: 'none' | 'subtle' | 'medium';
+    overlayDensity?: 'none' | 'low' | 'medium';
+    supportingDetails?: string[];
     [key: string]: any;
   };
 }
@@ -25,6 +43,7 @@ export class VideoMetadata {
   backgroundColor?: string;
   borderColor?: string;
   audioUrl?: string;
+  aspectRatio?: '16:9' | '9:16';
   scenes: VideoScene[];
 }
 

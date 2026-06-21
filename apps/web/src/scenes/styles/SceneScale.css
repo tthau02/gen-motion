@@ -1,0 +1,25 @@
+/* SceneScale styles */
+.scale-container {
+  background: radial-gradient(circle at center, #0a111a 0%, #03060b 100%);
+  color: #e2e8f0;
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.scale-window {
+  border: 1px solid rgba(56, 189, 248, 0.15);
+  background: rgba(10, 18, 30, 0.85);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6), 0 0 25px rgba(56, 189, 248, 0.05);
+}
+
+.node-connector {
+  stroke-dasharray: 6 6;
+  stroke: rgba(56, 189, 248, 0.25);
+}
+
+.active-pulse-node {
+  fill: #38bdf8;
+  filter: drop-shadow(0 0 6px #38bdf8);
+}

@@ -1,7 +1,7 @@
 /******/ (() => { // webpackBootstrap
 /******/ 	var __webpack_modules__ = ({
 
-/***/ 6589
+/***/ 4167
 (__unused_webpack_module, __unused_webpack___webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -1683,50 +1683,309 @@ var slide_slide = (props) => {
 
 
 
+function hexToHsl(hex) {
+  let c = hex.replace(/^#/, "");
+  if (c.length === 3) {
+    c = c[0] + c[0] + c[1] + c[1] + c[2] + c[2];
+  }
+  const r = parseInt(c.substring(0, 2), 16) / 255;
+  const g = parseInt(c.substring(2, 4), 16) / 255;
+  const b = parseInt(c.substring(4, 6), 16) / 255;
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  let h = 0;
+  let s = 0;
+  const l = (max + min) / 2;
+  if (max !== min) {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case r:
+        h = (g - b) / d + (g < b ? 6 : 0);
+        break;
+      case g:
+        h = (b - r) / d + 2;
+        break;
+      case b:
+        h = (r - g) / d + 4;
+        break;
+    }
+    h /= 6;
+  }
+  return {
+    h: Math.round(h * 360),
+    s: Math.round(s * 100),
+    l: Math.round(l * 100)
+  };
+}
+function getDerivedColors(themeColor, customBg, customText, customBorder) {
+  let h = 35;
+  let s = 25;
+  try {
+    if (themeColor && themeColor.startsWith("#")) {
+      const hsl = hexToHsl(themeColor);
+      h = hsl.h;
+      s = hsl.s;
+    }
+  } catch (err) {
+    console.error("Failed to parse theme color:", err);
+  }
+  const bg = customBg || `hsl(${h}, ${Math.max(6, Math.round(s * 0.35))}%, 6%)`;
+  const text = customText || `hsl(${h}, ${Math.min(12, Math.round(s * 0.2))}%, 95%)`;
+  const border = customBorder || `hsl(${h}, ${Math.max(10, Math.round(s * 0.3))}%, 18%)`;
+  const muted = `hsl(${h}, ${Math.max(8, Math.round(s * 0.25))}%, 55%)`;
+  const glow = `hsla(${h}, ${s}%, 50%, 0.12)`;
+  const tint = `hsla(${h}, ${s}%, 50%, 0.015)`;
+  return { bg, text, border, muted, glow, tint };
+}
 const AestheticContainer = ({
   children,
   showGrain = true,
   showVignette = true,
   showBorder = true,
-  themeColor = "#c89547"
+  themeColor = "#c89547",
+  textColor,
+  backgroundColor,
+  borderColor
 }) => {
+  const frame = (0,esm.useCurrentFrame)();
+  const derived = getDerivedColors(themeColor, backgroundColor, textColor, borderColor);
+  const grainX = frame * 17 % 9 - 4;
+  const grainY = frame * 29 % 9 - 4;
   return /* @__PURE__ */ (0,jsx_runtime.jsxs)(
     esm.AbsoluteFill,
     {
       className: "bg-vintage-bg text-vintage-paper font-sans overflow-hidden select-none",
       style: {
-        "--color-vintage-gold": themeColor
+        "--color-vintage-gold": themeColor,
+        "--color-vintage-bg": derived.bg,
+        "--color-vintage-paper": derived.text,
+        "--color-vintage-border": derived.border,
+        "--color-vintage-muted": derived.muted,
+        "--color-theme-glow": derived.glow,
+        "--color-theme-tint": derived.tint
       },
       children: [
-        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { className: "absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(62,52,44,0.15)_0%,rgba(28,24,21,1)_80%)]" }),
+        /* @__PURE__ */ (0,jsx_runtime.jsx)(
+          "div",
+          {
+            className: "absolute inset-0",
+            style: {
+              background: "radial-gradient(circle at center, var(--color-theme-glow) 0%, var(--color-vintage-bg) 85%)"
+            }
+          }
+        ),
         /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { className: "z-10 flex flex-col items-center justify-center", children }),
         showBorder && /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { className: "absolute inset-6 border border-vintage-border/40 pointer-events-none z-20 rounded-sm" }),
         showVignette && /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { className: "absolute inset-0 vignette-overlay pointer-events-none z-30" }),
-        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { className: "absolute inset-0 cinematic-tint pointer-events-none z-40" }),
-        showGrain && /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { className: "absolute -inset-[50%] w-[200%] h-[200%] opacity-[0.06] pointer-events-none mix-blend-overlay z-50 animate-grain", children: /* @__PURE__ */ (0,jsx_runtime.jsxs)(
-          "svg",
+        /* @__PURE__ */ (0,jsx_runtime.jsx)(
+          "div",
           {
-            width: "100%",
-            height: "100%",
-            xmlns: "http://www.w3.org/2000/svg",
-            className: "w-full h-full",
+            className: "absolute inset-0 pointer-events-none z-40",
+            style: {
+              mixBlendMode: "color-burn",
+              backgroundColor: "var(--color-theme-tint)"
+            }
+          }
+        ),
+        showGrain && /* @__PURE__ */ (0,jsx_runtime.jsx)(
+          "div",
+          {
+            className: "absolute -inset-[50%] w-[200%] h-[200%] opacity-[0.045] pointer-events-none mix-blend-overlay z-50",
+            style: {
+              transform: `translate(${grainX}px, ${grainY}px)`
+            },
+            children: /* @__PURE__ */ (0,jsx_runtime.jsxs)(
+              "svg",
+              {
+                width: "100%",
+                height: "100%",
+                xmlns: "http://www.w3.org/2000/svg",
+                className: "w-full h-full",
+                children: [
+                  /* @__PURE__ */ (0,jsx_runtime.jsxs)("filter", { id: "noise", children: [
+                    /* @__PURE__ */ (0,jsx_runtime.jsx)(
+                      "feTurbulence",
+                      {
+                        type: "fractalNoise",
+                        baseFrequency: "0.75",
+                        numOctaves: "3",
+                        stitchTiles: "stitch"
+                      }
+                    ),
+                    /* @__PURE__ */ (0,jsx_runtime.jsx)("feColorMatrix", { type: "matrix", values: "0 0 0 0 0   0 0 0 0 0   0 0 0 0 0  0 0 0 0.5 0" })
+                  ] }),
+                  /* @__PURE__ */ (0,jsx_runtime.jsx)("rect", { width: "100%", height: "100%", filter: "url(#noise)" })
+                ]
+              }
+            )
+          }
+        )
+      ]
+    }
+  );
+};
+
+;// ./src/components/SceneDirectorOverlay.tsx
+
+
+
+const layoutPosition = {
+  center: {
+    left: 80,
+    right: 80,
+    bottom: 58,
+    alignItems: "center",
+    textAlign: "center"
+  },
+  split: {
+    left: 72,
+    bottom: 58,
+    alignItems: "flex-start",
+    textAlign: "left"
+  },
+  spotlight: {
+    right: 72,
+    top: 70,
+    alignItems: "flex-end",
+    textAlign: "right"
+  },
+  dashboard: {
+    right: 72,
+    bottom: 58,
+    alignItems: "flex-end",
+    textAlign: "right"
+  }
+};
+const SceneDirectorOverlay = ({
+  customProps,
+  themeColor
+}) => {
+  const frame = (0,esm.useCurrentFrame)();
+  if (!customProps) return null;
+  const {
+    layoutVariant = "center",
+    visualStyle = "cinematic",
+    badgeText,
+    metricLabel,
+    metricValue,
+    chips = []
+  } = customProps;
+  if (!badgeText && !metricLabel && !metricValue && chips.length === 0) {
+    return null;
+  }
+  const progress = (0,esm.interpolate)(frame, [8, 24], [0, 1], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp",
+    easing: esm.Easing.bezier(0.16, 1, 0.3, 1)
+  });
+  const panelOpacity = visualStyle === "minimal" ? 0.18 : visualStyle === "bold" ? 0.42 : 0.28;
+  const borderOpacity = visualStyle === "technical" ? 0.7 : visualStyle === "minimal" ? 0.28 : 0.48;
+  return /* @__PURE__ */ (0,jsx_runtime.jsxs)(
+    "div",
+    {
+      style: {
+        position: "absolute",
+        zIndex: 45,
+        display: "flex",
+        flexDirection: "column",
+        gap: 12,
+        maxWidth: 410,
+        opacity: progress,
+        transform: `translateY(${(1 - progress) * 18}px)`,
+        pointerEvents: "none",
+        ...layoutPosition[layoutVariant]
+      },
+      children: [
+        badgeText && /* @__PURE__ */ (0,jsx_runtime.jsx)(
+          "div",
+          {
+            style: {
+              alignSelf: layoutVariant === "center" ? "center" : "inherit",
+              padding: "7px 12px",
+              borderRadius: 999,
+              color: themeColor,
+              background: `rgba(0,0,0,${panelOpacity})`,
+              border: `1px solid ${themeColor}${Math.round(borderOpacity * 255).toString(16).padStart(2, "0")}`,
+              fontSize: 13,
+              fontWeight: 700,
+              letterSpacing: "0.12em",
+              textTransform: "uppercase"
+            },
+            children: badgeText
+          }
+        ),
+        (metricLabel || metricValue) && /* @__PURE__ */ (0,jsx_runtime.jsxs)(
+          "div",
+          {
+            style: {
+              minWidth: 220,
+              padding: "16px 18px",
+              borderRadius: 10,
+              background: `linear-gradient(135deg, rgba(0,0,0,0.55), ${themeColor}22)`,
+              border: `1px solid ${themeColor}66`,
+              boxShadow: "0 18px 40px rgba(0,0,0,0.22)"
+            },
             children: [
-              /* @__PURE__ */ (0,jsx_runtime.jsxs)("filter", { id: "noise", children: [
-                /* @__PURE__ */ (0,jsx_runtime.jsx)(
-                  "feTurbulence",
-                  {
-                    type: "fractalNoise",
-                    baseFrequency: "0.75",
-                    numOctaves: "3",
-                    stitchTiles: "stitch"
-                  }
-                ),
-                /* @__PURE__ */ (0,jsx_runtime.jsx)("feColorMatrix", { type: "matrix", values: "0 0 0 0 0   0 0 0 0 0   0 0 0 0 0  0 0 0 0.5 0" })
-              ] }),
-              /* @__PURE__ */ (0,jsx_runtime.jsx)("rect", { width: "100%", height: "100%", filter: "url(#noise)" })
+              metricValue && /* @__PURE__ */ (0,jsx_runtime.jsx)(
+                "div",
+                {
+                  style: {
+                    color: "#faf8f5",
+                    fontSize: 36,
+                    lineHeight: 1,
+                    fontWeight: 800,
+                    letterSpacing: "0.02em"
+                  },
+                  children: metricValue
+                }
+              ),
+              metricLabel && /* @__PURE__ */ (0,jsx_runtime.jsx)(
+                "div",
+                {
+                  style: {
+                    marginTop: 8,
+                    color: themeColor,
+                    fontSize: 12,
+                    fontWeight: 700,
+                    letterSpacing: "0.16em",
+                    textTransform: "uppercase"
+                  },
+                  children: metricLabel
+                }
+              )
             ]
           }
-        ) })
+        ),
+        chips.length > 0 && /* @__PURE__ */ (0,jsx_runtime.jsx)(
+          "div",
+          {
+            style: {
+              display: "flex",
+              flexWrap: "wrap",
+              justifyContent: layoutVariant === "spotlight" || layoutVariant === "dashboard" ? "flex-end" : layoutVariant === "center" ? "center" : "flex-start",
+              gap: 8
+            },
+            children: chips.slice(0, 4).map((chip) => /* @__PURE__ */ (0,jsx_runtime.jsx)(
+              "span",
+              {
+                style: {
+                  padding: "7px 10px",
+                  borderRadius: 6,
+                  color: "#faf8f5",
+                  background: visualStyle === "technical" ? "rgba(2,132,199,0.22)" : "rgba(250,248,245,0.1)",
+                  border: "1px solid rgba(250,248,245,0.18)",
+                  fontSize: 12,
+                  fontWeight: 700,
+                  letterSpacing: "0.08em",
+                  textTransform: "uppercase"
+                },
+                children: chip
+              },
+              chip
+            ))
+          }
+        )
       ]
     }
   );
@@ -2465,7 +2724,37 @@ const MotionDiv = ({
   return /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: animatedStyle, ...props, children });
 };
 
+// EXTERNAL MODULE: ../../node_modules/css-loader/dist/cjs.js??ruleSet[1].rules[4].use[1]!../../node_modules/@tailwindcss/webpack/dist/index.js!./src/scenes/styles/SceneIntro.css
+var SceneIntro = __webpack_require__(7637);
+;// ./src/scenes/styles/SceneIntro.css
+
+      
+      
+      
+      
+      
+      
+      
+      
+      
+
+var SceneIntro_options = {};
+
+SceneIntro_options.styleTagTransform = (styleTagTransform_default());
+SceneIntro_options.setAttributes = (setAttributesWithoutAttributes_default());
+SceneIntro_options.insert = insertBySelector_default().bind(null, "head");
+SceneIntro_options.domAPI = (styleDomAPI_default());
+SceneIntro_options.insertStyleElement = (insertStyleElement_default());
+
+var SceneIntro_update = injectStylesIntoStyleTag_default()(SceneIntro/* default */.A, SceneIntro_options);
+
+
+
+
+       /* harmony default export */ const styles_SceneIntro = (SceneIntro/* default */.A && SceneIntro/* default */.A.locals ? SceneIntro/* default */.A.locals : undefined);
+
 ;// ./src/scenes/SceneIntro.tsx
+
 
 
 
@@ -2475,74 +2764,354 @@ const MotionDiv = ({
 
 const { fontFamily: serifFont } = loadFont("normal", { weights: ["400"] });
 const { fontFamily: sansFont } = SpaceGrotesk_loadFont("normal", { weights: ["400", "700"] });
-const SceneIntro = ({
+const SceneIntro_SceneIntro = ({
   title,
   subtitle,
   description,
   imageUrl
 }) => {
-  return /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: "relative flex flex-col items-center justify-center h-full w-full", children: [
+  const frame = (0,esm.useCurrentFrame)();
+  const { width, height } = (0,esm.useVideoConfig)();
+  const isVertical = height > width;
+  const bgScale = (0,esm.interpolate)(frame, [0, 300], [1.05, 1.15], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp"
+  });
+  const bgTranslateX = (0,esm.interpolate)(frame, [0, 300], [0, 10], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp"
+  });
+  const bgTranslateY = (0,esm.interpolate)(frame, [0, 300], [0, -10], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp"
+  });
+  const sparkleRotation = (0,esm.interpolate)(frame, [0, 300], [0, 120]);
+  const sparkleScale = (0,esm.interpolate)(
+    Math.sin(frame * 0.1),
+    [-1, 1],
+    [0.9, 1.15]
+  );
+  const borderProgress = (0,esm.interpolate)(frame, [0, 45], [0, 1], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp"
+  });
+  return /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: "intro-container w-full h-full", children: [
     imageUrl && /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { className: "absolute inset-0 -z-20 overflow-hidden", children: /* @__PURE__ */ (0,jsx_runtime.jsx)(
       esm.Img,
       {
         src: imageUrl,
-        className: "w-full h-full object-cover opacity-20 scale-[1.08] animate-subtle-drift"
+        className: "w-full h-full object-cover opacity-20",
+        style: {
+          transform: `scale(${bgScale}) translate(${bgTranslateX}px, ${bgTranslateY}px)`
+        }
       }
     ) }),
+    /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { className: "intro-vignette" }),
     /* @__PURE__ */ (0,jsx_runtime.jsx)(
-      MotionDiv,
+      "div",
       {
-        initial: { opacity: 0, scale: 0, rotate: -180 },
-        animate: { opacity: 1, scale: 1, rotate: 0 },
-        transition: { startFrame: 5, type: "spring", damping: 12 },
-        className: "mb-5",
-        children: /* @__PURE__ */ (0,jsx_runtime.jsx)(Sparkles, { className: "w-12 h-12 text-vintage-gold drop-shadow-[0_0_12px_rgba(200,149,71,0.4)]" })
+        className: "intro-border-frame",
+        style: {
+          inset: isVertical ? "24px" : "40px",
+          clipPath: `polygon(
+            0% 0%, 
+            ${borderProgress * 100}% 0%, 
+            ${borderProgress * 100}% ${borderProgress * 100}%, 
+            0% ${borderProgress * 100}%
+          )`,
+          opacity: borderProgress
+        }
       }
     ),
-    /* @__PURE__ */ (0,jsx_runtime.jsx)(
-      MotionDiv,
-      {
-        initial: { opacity: 0, y: 12 },
-        animate: { opacity: 1, y: 0 },
-        transition: { startFrame: 10, type: "spring", damping: 16 },
-        className: "text-vintage-muted font-sans text-xs tracking-[0.3em] uppercase mb-3",
-        style: { fontFamily: sansFont },
-        children: subtitle
-      }
-    ),
-    /* @__PURE__ */ (0,jsx_runtime.jsx)(
-      MotionDiv,
-      {
-        initial: { opacity: 0, y: 25, scale: 0.95 },
-        animate: { opacity: 1, y: 0, scale: 1 },
-        transition: { startFrame: 15, type: "spring", damping: 14 },
-        className: "text-vintage-paper font-serif text-6xl md:text-7xl tracking-widest uppercase text-center max-w-[850px] font-bold",
-        style: { fontFamily: serifFont },
-        children: title
-      }
-    ),
-    description && /* @__PURE__ */ (0,jsx_runtime.jsx)(
-      MotionDiv,
-      {
-        initial: { opacity: 0, y: 15 },
-        animate: { opacity: 0.8, y: 0 },
-        transition: { startFrame: 22, type: "spring", damping: 16 },
-        className: "text-vintage-paper font-sans text-sm tracking-wide text-center max-w-[500px] mt-4 font-light",
-        style: { fontFamily: sansFont },
-        children: description
-      }
-    ),
-    /* @__PURE__ */ (0,jsx_runtime.jsx)(
-      MotionDiv,
-      {
-        initial: { opacity: 0, scale: 0 },
-        animate: { opacity: 0.4, scale: 1 },
-        transition: { startFrame: 28, type: "spring", damping: 18 },
-        className: "w-24 h-[1px] bg-vintage-gold mt-6"
-      }
-    )
+    /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: "relative flex flex-col items-center justify-center h-full w-full p-8 md:p-12 text-center", children: [
+      /* @__PURE__ */ (0,jsx_runtime.jsx)(
+        MotionDiv,
+        {
+          initial: { opacity: 0, scale: 0.3 },
+          animate: { opacity: 1, scale: 1 },
+          transition: { startFrame: 5, type: "spring", damping: 12 },
+          className: "mb-5",
+          style: {
+            transform: `scale(${sparkleScale}) rotate(${sparkleRotation}deg)`
+          },
+          children: /* @__PURE__ */ (0,jsx_runtime.jsx)(Sparkles, { className: "w-12 h-12 text-vintage-gold drop-shadow-[0_0_12px_rgba(200,149,71,0.5)]" })
+        }
+      ),
+      /* @__PURE__ */ (0,jsx_runtime.jsx)(
+        MotionDiv,
+        {
+          initial: { opacity: 0, y: 15 },
+          animate: { opacity: 1, y: 0 },
+          transition: { startFrame: 10, type: "spring", damping: 16 },
+          className: "text-vintage-muted font-sans tracking-[0.3em] uppercase mb-4",
+          style: {
+            fontFamily: sansFont,
+            fontSize: isVertical ? "10px" : "12px"
+          },
+          children: subtitle
+        }
+      ),
+      /* @__PURE__ */ (0,jsx_runtime.jsx)(
+        MotionDiv,
+        {
+          initial: { opacity: 0, y: 30, scale: 0.95 },
+          animate: { opacity: 1, y: 0, scale: 1 },
+          transition: { startFrame: 15, type: "spring", damping: 14 },
+          className: "text-vintage-paper font-serif tracking-widest uppercase font-bold leading-tight",
+          style: {
+            fontFamily: serifFont,
+            fontSize: isVertical ? "32px" : "56px",
+            maxWidth: isVertical ? "90%" : "850px"
+          },
+          children: title
+        }
+      ),
+      description && /* @__PURE__ */ (0,jsx_runtime.jsx)(
+        MotionDiv,
+        {
+          initial: { opacity: 0, y: 15 },
+          animate: { opacity: 0.8, y: 0 },
+          transition: { startFrame: 22, type: "spring", damping: 16 },
+          className: "text-vintage-paper font-sans tracking-wide mt-6 font-light leading-relaxed",
+          style: {
+            fontFamily: sansFont,
+            fontSize: isVertical ? "11px" : "14px",
+            maxWidth: isVertical ? "90%" : "550px"
+          },
+          children: description
+        }
+      ),
+      /* @__PURE__ */ (0,jsx_runtime.jsx)(
+        MotionDiv,
+        {
+          initial: { opacity: 0, scale: 0 },
+          animate: { opacity: 0.4, scale: 1 },
+          transition: { startFrame: 28, type: "spring", damping: 18 },
+          className: "w-24 h-[1px] bg-vintage-gold mt-8"
+        }
+      )
+    ] })
   ] });
 };
+
+;// ../../node_modules/@remotion/google-fonts/dist/esm/FiraCode.mjs
+// src/base.ts
+
+
+
+// src/resolve-font-subsets.ts
+var FiraCode_isChunkSubset = (subset) => /^\[\d+\]$/.test(subset);
+var FiraCode_compareChunkSubsets = (a, b) => {
+  return Number(a.slice(1, -1)) - Number(b.slice(1, -1));
+};
+var FiraCode_resolveFontSubsetKeys = ({
+  availableSubsetKeys,
+  metaSubsets,
+  requestedSubset
+}) => {
+  if (availableSubsetKeys.includes(requestedSubset)) {
+    return [requestedSubset];
+  }
+  if (!metaSubsets.includes(requestedSubset)) {
+    return [requestedSubset];
+  }
+  const chunkSubsets = availableSubsetKeys.filter(FiraCode_isChunkSubset).sort(FiraCode_compareChunkSubsets);
+  return chunkSubsets.length === 0 ? [requestedSubset] : chunkSubsets;
+};
+
+// src/base.ts
+var FiraCode_loadedFonts = {};
+var FiraCode_withResolvers = function() {
+  let resolve;
+  let reject;
+  const promise = new Promise((res, rej) => {
+    resolve = res;
+    reject = rej;
+  });
+  return { promise, resolve, reject };
+};
+var FiraCode_loadFontFaceOrTimeoutAfter20Seconds = (fontFace) => {
+  const timeout = FiraCode_withResolvers();
+  const int = setTimeout(() => {
+    timeout.reject(new Error("Timed out loading Google Font"));
+  }, 18000);
+  return Promise.race([
+    fontFace.load().then(() => {
+      clearTimeout(int);
+    }),
+    timeout.promise
+  ]);
+};
+var FiraCode_loadFonts = (meta, style, options) => {
+  const weightsAndSubsetsAreSpecified = Array.isArray(options?.weights) && Array.isArray(options?.subsets) && options.weights.length > 0 && options.subsets.length > 0;
+  if (no_react.NoReactInternals.ENABLE_V5_BREAKING_CHANGES && !weightsAndSubsetsAreSpecified) {
+    throw new Error("Loading Google Fonts without specifying weights and subsets is not supported in Remotion v5. Please specify the weights and subsets you need.");
+  }
+  const promises = [];
+  const styles = style ? [style] : Object.keys(meta.fonts);
+  let fontsLoaded = 0;
+  for (const style2 of styles) {
+    if (typeof FontFace === "undefined") {
+      continue;
+    }
+    if (!meta.fonts[style2]) {
+      throw new Error(`The font ${meta.fontFamily} does not have a style ${style2}`);
+    }
+    const weights = options?.weights ?? Object.keys(meta.fonts[style2]);
+    for (const weight of weights) {
+      if (!meta.fonts[style2][weight]) {
+        throw new Error(`The font ${meta.fontFamily} does not  have a weight ${weight} in style ${style2}`);
+      }
+      const requestedSubsets = options?.subsets ?? Object.keys(meta.fonts[style2][weight]);
+      const availableSubsetKeys = Object.keys(meta.fonts[style2][weight]);
+      const subsets = [
+        ...new Set(requestedSubsets.flatMap((requestedSubset) => FiraCode_resolveFontSubsetKeys({
+          availableSubsetKeys,
+          metaSubsets: meta.subsets,
+          requestedSubset
+        })))
+      ];
+      for (const subset of subsets) {
+        let font = meta.fonts[style2]?.[weight]?.[subset];
+        if (!font) {
+          throw new Error(`weight: ${weight} subset: ${subset} is not available for '${meta.fontFamily}'`);
+        }
+        let fontKey = `${meta.fontFamily}-${style2}-${weight}-${subset}`;
+        const previousPromise = FiraCode_loadedFonts[fontKey];
+        if (previousPromise) {
+          promises.push(previousPromise);
+          continue;
+        }
+        const baseLabel = `Fetching ${meta.fontFamily} font ${JSON.stringify({
+          style: style2,
+          weight,
+          subset
+        })}`;
+        const label = weightsAndSubsetsAreSpecified ? baseLabel : `${baseLabel}. This might be caused by loading too many font variations. Read more: https://www.remotion.dev/docs/troubleshooting/font-loading-errors#render-timeout-when-loading-google-fonts`;
+        const handle = (0,esm.delayRender)(label, { timeoutInMilliseconds: 60000 });
+        fontsLoaded++;
+        const fontFace = new FontFace(meta.fontFamily, `url(${font}) format('woff2')`, {
+          weight,
+          style: style2,
+          unicodeRange: meta.unicodeRanges[subset]
+        });
+        let attempts = 2;
+        const tryToLoad = () => {
+          if (fontFace.status === "loaded") {
+            (0,esm.continueRender)(handle);
+            return;
+          }
+          const promise = FiraCode_loadFontFaceOrTimeoutAfter20Seconds(fontFace).then(() => {
+            (options?.document ?? document).fonts.add(fontFace);
+            (0,esm.continueRender)(handle);
+          }).catch((err) => {
+            FiraCode_loadedFonts[fontKey] = undefined;
+            if (attempts === 0) {
+              throw err;
+            } else {
+              attempts--;
+              tryToLoad();
+            }
+          });
+          FiraCode_loadedFonts[fontKey] = promise;
+          promises.push(promise);
+        };
+        tryToLoad();
+      }
+    }
+    if (fontsLoaded > 20 && !options?.ignoreTooManyRequestsWarning) {
+      console.warn(`Made ${fontsLoaded} network requests to load fonts for ${meta.fontFamily}. Consider loading fewer weights and subsets by passing options to loadFont(). Disable this warning by passing "ignoreTooManyRequestsWarning: true" to "options".`);
+    }
+  }
+  return {
+    fontFamily: meta.fontFamily,
+    fonts: meta.fonts,
+    unicodeRanges: meta.unicodeRanges,
+    waitUntilDone: () => Promise.all(promises).then(() => {
+      return;
+    })
+  };
+};
+
+// src/FiraCode.ts
+var FiraCode_getInfo = () => ({
+  fontFamily: "Fira Code",
+  importName: "FiraCode",
+  version: "v27",
+  url: "https://fonts.googleapis.com/css2?family=Fira+Code:ital,wght@0,300;0,400;0,500;0,600;0,700",
+  unicodeRanges: {
+    "cyrillic-ext": "U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F",
+    cyrillic: "U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116",
+    "greek-ext": "U+1F00-1FFF",
+    greek: "U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF",
+    symbols2: "U+2000-2001, U+2004-2008, U+200A, U+23B8-23BD, U+2500-259F",
+    "latin-ext": "U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF",
+    latin: "U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD"
+  },
+  fonts: {
+    normal: {
+      "300": {
+        "cyrillic-ext": "https://fonts.gstatic.com/s/firacode/v27/uU9NCBsR6Z2vfE9aq3bh0NSDulI.woff2",
+        cyrillic: "https://fonts.gstatic.com/s/firacode/v27/uU9NCBsR6Z2vfE9aq3bh2dSDulI.woff2",
+        "greek-ext": "https://fonts.gstatic.com/s/firacode/v27/uU9NCBsR6Z2vfE9aq3bh0dSDulI.woff2",
+        greek: "https://fonts.gstatic.com/s/firacode/v27/uU9NCBsR6Z2vfE9aq3bh3tSDulI.woff2",
+        symbols2: "https://fonts.gstatic.com/s/firacode/v27/uU9NCBsR6Z2vfE9aq3bhZ_Wmh2uX.woff2",
+        "latin-ext": "https://fonts.gstatic.com/s/firacode/v27/uU9NCBsR6Z2vfE9aq3bh09SDulI.woff2",
+        latin: "https://fonts.gstatic.com/s/firacode/v27/uU9NCBsR6Z2vfE9aq3bh3dSD.woff2"
+      },
+      "400": {
+        "cyrillic-ext": "https://fonts.gstatic.com/s/firacode/v27/uU9NCBsR6Z2vfE9aq3bh0NSDulI.woff2",
+        cyrillic: "https://fonts.gstatic.com/s/firacode/v27/uU9NCBsR6Z2vfE9aq3bh2dSDulI.woff2",
+        "greek-ext": "https://fonts.gstatic.com/s/firacode/v27/uU9NCBsR6Z2vfE9aq3bh0dSDulI.woff2",
+        greek: "https://fonts.gstatic.com/s/firacode/v27/uU9NCBsR6Z2vfE9aq3bh3tSDulI.woff2",
+        symbols2: "https://fonts.gstatic.com/s/firacode/v27/uU9NCBsR6Z2vfE9aq3bhZ_Wmh2uX.woff2",
+        "latin-ext": "https://fonts.gstatic.com/s/firacode/v27/uU9NCBsR6Z2vfE9aq3bh09SDulI.woff2",
+        latin: "https://fonts.gstatic.com/s/firacode/v27/uU9NCBsR6Z2vfE9aq3bh3dSD.woff2"
+      },
+      "500": {
+        "cyrillic-ext": "https://fonts.gstatic.com/s/firacode/v27/uU9NCBsR6Z2vfE9aq3bh0NSDulI.woff2",
+        cyrillic: "https://fonts.gstatic.com/s/firacode/v27/uU9NCBsR6Z2vfE9aq3bh2dSDulI.woff2",
+        "greek-ext": "https://fonts.gstatic.com/s/firacode/v27/uU9NCBsR6Z2vfE9aq3bh0dSDulI.woff2",
+        greek: "https://fonts.gstatic.com/s/firacode/v27/uU9NCBsR6Z2vfE9aq3bh3tSDulI.woff2",
+        symbols2: "https://fonts.gstatic.com/s/firacode/v27/uU9NCBsR6Z2vfE9aq3bhZ_Wmh2uX.woff2",
+        "latin-ext": "https://fonts.gstatic.com/s/firacode/v27/uU9NCBsR6Z2vfE9aq3bh09SDulI.woff2",
+        latin: "https://fonts.gstatic.com/s/firacode/v27/uU9NCBsR6Z2vfE9aq3bh3dSD.woff2"
+      },
+      "600": {
+        "cyrillic-ext": "https://fonts.gstatic.com/s/firacode/v27/uU9NCBsR6Z2vfE9aq3bh0NSDulI.woff2",
+        cyrillic: "https://fonts.gstatic.com/s/firacode/v27/uU9NCBsR6Z2vfE9aq3bh2dSDulI.woff2",
+        "greek-ext": "https://fonts.gstatic.com/s/firacode/v27/uU9NCBsR6Z2vfE9aq3bh0dSDulI.woff2",
+        greek: "https://fonts.gstatic.com/s/firacode/v27/uU9NCBsR6Z2vfE9aq3bh3tSDulI.woff2",
+        symbols2: "https://fonts.gstatic.com/s/firacode/v27/uU9NCBsR6Z2vfE9aq3bhZ_Wmh2uX.woff2",
+        "latin-ext": "https://fonts.gstatic.com/s/firacode/v27/uU9NCBsR6Z2vfE9aq3bh09SDulI.woff2",
+        latin: "https://fonts.gstatic.com/s/firacode/v27/uU9NCBsR6Z2vfE9aq3bh3dSD.woff2"
+      },
+      "700": {
+        "cyrillic-ext": "https://fonts.gstatic.com/s/firacode/v27/uU9NCBsR6Z2vfE9aq3bh0NSDulI.woff2",
+        cyrillic: "https://fonts.gstatic.com/s/firacode/v27/uU9NCBsR6Z2vfE9aq3bh2dSDulI.woff2",
+        "greek-ext": "https://fonts.gstatic.com/s/firacode/v27/uU9NCBsR6Z2vfE9aq3bh0dSDulI.woff2",
+        greek: "https://fonts.gstatic.com/s/firacode/v27/uU9NCBsR6Z2vfE9aq3bh3tSDulI.woff2",
+        symbols2: "https://fonts.gstatic.com/s/firacode/v27/uU9NCBsR6Z2vfE9aq3bhZ_Wmh2uX.woff2",
+        "latin-ext": "https://fonts.gstatic.com/s/firacode/v27/uU9NCBsR6Z2vfE9aq3bh09SDulI.woff2",
+        latin: "https://fonts.gstatic.com/s/firacode/v27/uU9NCBsR6Z2vfE9aq3bh3dSD.woff2"
+      }
+    }
+  },
+  subsets: [
+    "cyrillic",
+    "cyrillic-ext",
+    "greek",
+    "greek-ext",
+    "latin",
+    "latin-ext",
+    "symbols2"
+  ]
+});
+var FiraCode_fontFamily = "Fira Code";
+var FiraCode_loadFont = (style, options) => {
+  return FiraCode_loadFonts(FiraCode_getInfo(), style, options);
+};
+
 
 ;// ../../node_modules/lucide-react/dist/esm/icons/code.mjs
 /**
@@ -2588,6 +3157,35 @@ const Compass = createLucideIcon("compass", compass_iconNode);
 
 //# sourceMappingURL=compass.mjs.map
 
+// EXTERNAL MODULE: ../../node_modules/css-loader/dist/cjs.js??ruleSet[1].rules[4].use[1]!../../node_modules/@tailwindcss/webpack/dist/index.js!./src/scenes/styles/SceneReact.css
+var SceneReact = __webpack_require__(2990);
+;// ./src/scenes/styles/SceneReact.css
+
+      
+      
+      
+      
+      
+      
+      
+      
+      
+
+var SceneReact_options = {};
+
+SceneReact_options.styleTagTransform = (styleTagTransform_default());
+SceneReact_options.setAttributes = (setAttributesWithoutAttributes_default());
+SceneReact_options.insert = insertBySelector_default().bind(null, "head");
+SceneReact_options.domAPI = (styleDomAPI_default());
+SceneReact_options.insertStyleElement = (insertStyleElement_default());
+
+var SceneReact_update = injectStylesIntoStyleTag_default()(SceneReact/* default */.A, SceneReact_options);
+
+
+
+
+       /* harmony default export */ const styles_SceneReact = (SceneReact/* default */.A && SceneReact/* default */.A.locals ? SceneReact/* default */.A.locals : undefined);
+
 ;// ./src/scenes/SceneReact.tsx
 
 
@@ -2596,153 +3194,326 @@ const Compass = createLucideIcon("compass", compass_iconNode);
 
 
 
-const { fontFamily: SceneReact_serifFont } = loadFont("normal", { weights: ["400"] });
-const { fontFamily: SceneReact_sansFont } = SpaceGrotesk_loadFont("normal", {
-  weights: ["400", "700"]
-});
-const SceneReact = ({
+
+const { fontFamily: monoFont } = FiraCode_loadFont("normal", { weights: ["400"] });
+const { fontFamily: SceneReact_sansFont } = SpaceGrotesk_loadFont("normal", { weights: ["400", "700"] });
+const defaultCode = `import React from "react";
+import { Sequence } from "remotion";
+
+export const MyVideo = () => {
+  return (
+    <Sequence>
+      <div className="text-gold">Ch\xE0o m\u1EEBng Remotion</div>
+    </Sequence>
+  );
+};`;
+const SceneReact_SceneReact = ({
   title,
   subtitle,
   description,
   imageUrl,
-  codeSnippet
+  customProps = {}
 }) => {
-  return /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: "relative flex flex-row items-center justify-between w-full h-full max-w-[1050px] px-12 gap-12", children: [
-    imageUrl && /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { className: "absolute inset-0 -z-20 overflow-hidden", children: /* @__PURE__ */ (0,jsx_runtime.jsx)(
-      esm.Img,
-      {
-        src: imageUrl,
-        className: "w-full h-full object-cover opacity-10 scale-[1.08] animate-subtle-drift",
-        durationInFrames: 151
-      }
-    ) }),
-    /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: "w-[45%] h-[320px] relative rounded-lg overflow-hidden border border-vintage-border/40 bg-vintage-bg/90 shadow-2xl flex flex-col", children: [
-      /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: "h-9 border-b border-vintage-border/30 bg-black/30 flex items-center px-4 justify-between", children: [
-        /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: "flex gap-1.5", children: [
-          /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { className: "w-2.5 h-2.5 rounded-full bg-vintage-rust/60" }),
-          /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { className: "w-2.5 h-2.5 rounded-full bg-vintage-gold/60" }),
-          /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { className: "w-2.5 h-2.5 rounded-full bg-vintage-muted/60" })
-        ] }),
-        /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { className: "text-[9px] text-vintage-muted font-mono tracking-widest", children: "Comp.tsx" }),
-        /* @__PURE__ */ (0,jsx_runtime.jsx)(Code, { className: "w-3.5 h-3.5 text-vintage-gold" })
-      ] }),
-      /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { className: "p-5 font-mono text-[10px] leading-relaxed text-vintage-muted/90 flex-1 overflow-hidden", children: codeSnippet === void 0 || codeSnippet.includes("Ch\xE0o m\u1EEBng Remotion") ? /* @__PURE__ */ (0,jsx_runtime.jsxs)(jsx_runtime.Fragment, { children: [
-        /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: "text-vintage-gold font-bold", children: [
-          "import ",
-          /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { className: "text-vintage-paper", children: "React" }),
-          " from",
-          " ",
-          /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { className: "text-vintage-rust", children: '"react"' }),
-          ";"
-        ] }),
-        /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: "text-vintage-gold font-bold", children: [
-          "import",
-          " ",
-          /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { className: "text-vintage-paper", children: "{ Sequence }" }),
-          " ",
-          "from ",
-          /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { className: "text-vintage-rust", children: '"remotion"' }),
-          ";"
-        ] }),
-        /* @__PURE__ */ (0,jsx_runtime.jsx)("br", {}),
-        /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { children: [
-          /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { className: "text-vintage-gold", children: "export const" }),
-          " ",
-          /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { className: "text-vintage-paper font-bold", children: "MyVideo" }),
-          " = () => ",
-          "{"
-        ] }),
-        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { className: "pl-4", children: "return (" }),
-        /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: "pl-8 text-vintage-paper", children: [
-          "<",
-          /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { className: "text-vintage-gold", children: "Sequence" }),
-          ">"
-        ] }),
-        /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: "pl-12 text-vintage-muted", children: [
-          "<",
-          /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { className: "text-vintage-gold", children: "div" }),
-          " className=",
-          /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { className: "text-vintage-rust", children: '"text-gold"' }),
-          ">"
-        ] }),
-        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { className: "pl-16 text-vintage-paper font-bold", children: "Ch\xE0o m\u1EEBng Remotion" }),
-        /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: "pl-12", children: [
-          "</",
-          /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { className: "text-vintage-gold", children: "div" }),
-          ">"
-        ] }),
-        /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: "pl-8 text-vintage-paper", children: [
-          "</",
-          /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { className: "text-vintage-gold", children: "Sequence" }),
-          ">"
-        ] }),
-        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { className: "pl-4", children: ");" }),
-        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { children: "};" })
-      ] }) : /* @__PURE__ */ (0,jsx_runtime.jsx)("pre", { className: "text-left w-full h-full overflow-auto whitespace-pre font-mono text-[9px] leading-tight text-vintage-muted", children: codeSnippet }) })
-    ] }),
-    /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: "w-[55%] flex flex-col justify-center", children: [
-      /* @__PURE__ */ (0,jsx_runtime.jsxs)(
-        MotionDiv,
-        {
-          initial: { opacity: 0, x: -20 },
-          animate: { opacity: 1, x: 0 },
-          transition: { startFrame: 10, type: "spring", damping: 15 },
-          className: "flex items-center gap-2 mb-3",
-          children: [
-            /* @__PURE__ */ (0,jsx_runtime.jsx)(
-              Compass,
-              {
-                className: "w-4 h-4 text-vintage-gold animate-spin",
-                style: { animationDuration: "12s" }
-              }
-            ),
-            /* @__PURE__ */ (0,jsx_runtime.jsx)(
-              "span",
-              {
-                className: "text-vintage-gold font-sans text-xs tracking-widest uppercase font-bold",
-                style: { fontFamily: SceneReact_sansFont },
-                children: subtitle
-              }
-            )
-          ]
-        }
-      ),
-      /* @__PURE__ */ (0,jsx_runtime.jsx)(
-        MotionDiv,
-        {
-          initial: { opacity: 0, y: 15 },
-          animate: { opacity: 1, y: 0 },
-          transition: { startFrame: 16, type: "spring", damping: 14 },
-          className: "text-vintage-paper font-serif text-3xl md:text-4xl leading-tight mb-4 font-bold",
-          style: { fontFamily: SceneReact_serifFont },
-          children: title
-        }
-      ),
-      description && /* @__PURE__ */ (0,jsx_runtime.jsx)(
-        MotionDiv,
-        {
-          initial: { opacity: 0, y: 15 },
-          animate: { opacity: 0.85, y: 0 },
-          transition: { startFrame: 22, type: "spring", damping: 16 },
-          className: "text-vintage-paper font-sans text-xs md:text-sm leading-relaxed mb-4 font-light",
-          style: { fontFamily: SceneReact_sansFont },
-          children: description
-        }
-      ),
-      /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { className: "w-full h-[1px] bg-vintage-border/30 my-3" }),
-      /* @__PURE__ */ (0,jsx_runtime.jsx)(
-        "span",
-        {
-          className: "text-[10px] text-vintage-muted",
-          style: { fontFamily: SceneReact_sansFont },
-          children: "React 19 \u2022 Tailwind CSS v4 \u2022 Webpack"
-        }
-      )
-    ] })
-  ] });
+  const frame = (0,esm.useCurrentFrame)();
+  const { width, height } = (0,esm.useVideoConfig)();
+  const isVertical = height > width;
+  const codeSnippet = (customProps == null ? void 0 : customProps.codeSnippet) || defaultCode;
+  const tabTitle = (customProps == null ? void 0 : customProps.badgeText) || "Component.tsx";
+  const bgScale = (0,esm.interpolate)(frame, [0, 300], [1.06, 1.12], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp"
+  });
+  const compassRotation = (0,esm.interpolate)(frame, [0, 300], [0, 90]);
+  const startTypingFrame = 15;
+  const charsPerFrame = 2;
+  const totalChars = codeSnippet.length;
+  const typedLength = Math.min(
+    totalChars,
+    Math.floor(Math.max(0, frame - startTypingFrame) * charsPerFrame)
+  );
+  const codeToDisplay = codeSnippet.substring(0, typedLength);
+  const isTypingComplete = typedLength >= totalChars;
+  const showCursor = !isTypingComplete || Math.floor(frame / 8) % 2 === 0;
+  return /* @__PURE__ */ (0,jsx_runtime.jsxs)(
+    "div",
+    {
+      className: `react-container flex items-center w-full h-full ${isVertical ? "flex-col justify-center p-6 gap-6" : "flex-row justify-between px-12 gap-12"}`,
+      children: [
+        imageUrl && /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { className: "absolute inset-0 -z-20 overflow-hidden", children: /* @__PURE__ */ (0,jsx_runtime.jsx)(
+          esm.Img,
+          {
+            src: imageUrl,
+            className: "w-full h-full object-cover opacity-10",
+            style: {
+              transform: `scale(${bgScale})`
+            }
+          }
+        ) }),
+        /* @__PURE__ */ (0,jsx_runtime.jsxs)(
+          MotionDiv,
+          {
+            initial: { opacity: 0, x: isVertical ? 0 : -30, y: isVertical ? 20 : 0, scale: 0.95 },
+            animate: { opacity: 1, x: 0, y: 0, scale: 1 },
+            transition: { startFrame: 5, type: "spring", damping: 15 },
+            className: `relative rounded-lg overflow-hidden ide-window flex flex-col ${isVertical ? "w-full h-[220px]" : "w-[48%] h-[340px]"}`,
+            children: [
+              /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: "h-9 border-b border-white/5 bg-black/30 flex items-center px-4 justify-between", children: [
+                /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: "flex gap-1.5", children: [
+                  /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { className: "w-2.5 h-2.5 rounded-full bg-red-500/50" }),
+                  /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { className: "w-2.5 h-2.5 rounded-full bg-yellow-500/50" }),
+                  /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { className: "w-2.5 h-2.5 rounded-full bg-green-500/50" })
+                ] }),
+                /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { className: "flex items-center gap-1.5 h-full pt-1", children: /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { className: "text-[10px] text-sky-400 font-mono tracking-wider ide-tab-active px-2.5 h-full flex items-center", children: tabTitle }) }),
+                /* @__PURE__ */ (0,jsx_runtime.jsx)(Code, { className: "w-3.5 h-3.5 text-sky-400" })
+              ] }),
+              /* @__PURE__ */ (0,jsx_runtime.jsx)(
+                "div",
+                {
+                  className: "p-4 font-mono text-[9px] leading-normal flex-1 overflow-auto custom-scrollbar",
+                  style: { fontFamily: monoFont },
+                  children: /* @__PURE__ */ (0,jsx_runtime.jsxs)("pre", { className: "text-left w-full h-full whitespace-pre text-[#c5c8c6]", children: [
+                    codeToDisplay,
+                    showCursor && /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { className: "code-cursor" })
+                  ] })
+                }
+              )
+            ]
+          }
+        ),
+        /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: `flex flex-col justify-center ${isVertical ? "w-full text-center items-center" : "w-[52%]"}`, children: [
+          /* @__PURE__ */ (0,jsx_runtime.jsxs)(
+            MotionDiv,
+            {
+              initial: { opacity: 0, x: isVertical ? 0 : 20 },
+              animate: { opacity: 1, x: 0 },
+              transition: { startFrame: 10, type: "spring", damping: 15 },
+              className: "flex items-center gap-2 mb-3",
+              children: [
+                /* @__PURE__ */ (0,jsx_runtime.jsx)(
+                  Compass,
+                  {
+                    className: "w-4 h-4 text-sky-400",
+                    style: { transform: `rotate(${compassRotation}deg)` }
+                  }
+                ),
+                /* @__PURE__ */ (0,jsx_runtime.jsx)(
+                  "span",
+                  {
+                    className: "text-sky-400 font-sans text-xs tracking-widest uppercase font-bold",
+                    style: { fontFamily: SceneReact_sansFont },
+                    children: subtitle
+                  }
+                )
+              ]
+            }
+          ),
+          /* @__PURE__ */ (0,jsx_runtime.jsx)(
+            MotionDiv,
+            {
+              initial: { opacity: 0, y: 15 },
+              animate: { opacity: 1, y: 0 },
+              transition: { startFrame: 16, type: "spring", damping: 14 },
+              className: "text-white font-sans font-bold tracking-tight leading-tight mb-4",
+              style: {
+                fontFamily: SceneReact_sansFont,
+                fontSize: isVertical ? "26px" : "36px"
+              },
+              children: title
+            }
+          ),
+          description && /* @__PURE__ */ (0,jsx_runtime.jsx)(
+            MotionDiv,
+            {
+              initial: { opacity: 0, y: 15 },
+              animate: { opacity: 0.85, y: 0 },
+              transition: { startFrame: 22, type: "spring", damping: 16 },
+              className: "text-stone-300 font-sans text-xs md:text-sm leading-relaxed mb-5 font-light",
+              style: {
+                fontFamily: SceneReact_sansFont,
+                maxWidth: isVertical ? "100%" : "95%"
+              },
+              children: description
+            }
+          ),
+          /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { className: "w-full h-[1px] bg-white/10 my-4" }),
+          /* @__PURE__ */ (0,jsx_runtime.jsx)(
+            "span",
+            {
+              className: "text-[10px] text-stone-500 font-mono",
+              style: { fontFamily: SceneReact_sansFont },
+              children: "React 19 \u2022 TSX Components \u2022 Real-time Playback"
+            }
+          )
+        ] })
+      ]
+    }
+  );
 };
 
-;// ../../node_modules/lucide-react/dist/esm/icons/play.mjs
+;// ../../node_modules/@remotion/google-fonts/dist/esm/ShareTechMono.mjs
+// src/base.ts
+
+
+
+// src/resolve-font-subsets.ts
+var ShareTechMono_isChunkSubset = (subset) => /^\[\d+\]$/.test(subset);
+var ShareTechMono_compareChunkSubsets = (a, b) => {
+  return Number(a.slice(1, -1)) - Number(b.slice(1, -1));
+};
+var ShareTechMono_resolveFontSubsetKeys = ({
+  availableSubsetKeys,
+  metaSubsets,
+  requestedSubset
+}) => {
+  if (availableSubsetKeys.includes(requestedSubset)) {
+    return [requestedSubset];
+  }
+  if (!metaSubsets.includes(requestedSubset)) {
+    return [requestedSubset];
+  }
+  const chunkSubsets = availableSubsetKeys.filter(ShareTechMono_isChunkSubset).sort(ShareTechMono_compareChunkSubsets);
+  return chunkSubsets.length === 0 ? [requestedSubset] : chunkSubsets;
+};
+
+// src/base.ts
+var ShareTechMono_loadedFonts = {};
+var ShareTechMono_withResolvers = function() {
+  let resolve;
+  let reject;
+  const promise = new Promise((res, rej) => {
+    resolve = res;
+    reject = rej;
+  });
+  return { promise, resolve, reject };
+};
+var ShareTechMono_loadFontFaceOrTimeoutAfter20Seconds = (fontFace) => {
+  const timeout = ShareTechMono_withResolvers();
+  const int = setTimeout(() => {
+    timeout.reject(new Error("Timed out loading Google Font"));
+  }, 18000);
+  return Promise.race([
+    fontFace.load().then(() => {
+      clearTimeout(int);
+    }),
+    timeout.promise
+  ]);
+};
+var ShareTechMono_loadFonts = (meta, style, options) => {
+  const weightsAndSubsetsAreSpecified = Array.isArray(options?.weights) && Array.isArray(options?.subsets) && options.weights.length > 0 && options.subsets.length > 0;
+  if (no_react.NoReactInternals.ENABLE_V5_BREAKING_CHANGES && !weightsAndSubsetsAreSpecified) {
+    throw new Error("Loading Google Fonts without specifying weights and subsets is not supported in Remotion v5. Please specify the weights and subsets you need.");
+  }
+  const promises = [];
+  const styles = style ? [style] : Object.keys(meta.fonts);
+  let fontsLoaded = 0;
+  for (const style2 of styles) {
+    if (typeof FontFace === "undefined") {
+      continue;
+    }
+    if (!meta.fonts[style2]) {
+      throw new Error(`The font ${meta.fontFamily} does not have a style ${style2}`);
+    }
+    const weights = options?.weights ?? Object.keys(meta.fonts[style2]);
+    for (const weight of weights) {
+      if (!meta.fonts[style2][weight]) {
+        throw new Error(`The font ${meta.fontFamily} does not  have a weight ${weight} in style ${style2}`);
+      }
+      const requestedSubsets = options?.subsets ?? Object.keys(meta.fonts[style2][weight]);
+      const availableSubsetKeys = Object.keys(meta.fonts[style2][weight]);
+      const subsets = [
+        ...new Set(requestedSubsets.flatMap((requestedSubset) => ShareTechMono_resolveFontSubsetKeys({
+          availableSubsetKeys,
+          metaSubsets: meta.subsets,
+          requestedSubset
+        })))
+      ];
+      for (const subset of subsets) {
+        let font = meta.fonts[style2]?.[weight]?.[subset];
+        if (!font) {
+          throw new Error(`weight: ${weight} subset: ${subset} is not available for '${meta.fontFamily}'`);
+        }
+        let fontKey = `${meta.fontFamily}-${style2}-${weight}-${subset}`;
+        const previousPromise = ShareTechMono_loadedFonts[fontKey];
+        if (previousPromise) {
+          promises.push(previousPromise);
+          continue;
+        }
+        const baseLabel = `Fetching ${meta.fontFamily} font ${JSON.stringify({
+          style: style2,
+          weight,
+          subset
+        })}`;
+        const label = weightsAndSubsetsAreSpecified ? baseLabel : `${baseLabel}. This might be caused by loading too many font variations. Read more: https://www.remotion.dev/docs/troubleshooting/font-loading-errors#render-timeout-when-loading-google-fonts`;
+        const handle = (0,esm.delayRender)(label, { timeoutInMilliseconds: 60000 });
+        fontsLoaded++;
+        const fontFace = new FontFace(meta.fontFamily, `url(${font}) format('woff2')`, {
+          weight,
+          style: style2,
+          unicodeRange: meta.unicodeRanges[subset]
+        });
+        let attempts = 2;
+        const tryToLoad = () => {
+          if (fontFace.status === "loaded") {
+            (0,esm.continueRender)(handle);
+            return;
+          }
+          const promise = ShareTechMono_loadFontFaceOrTimeoutAfter20Seconds(fontFace).then(() => {
+            (options?.document ?? document).fonts.add(fontFace);
+            (0,esm.continueRender)(handle);
+          }).catch((err) => {
+            ShareTechMono_loadedFonts[fontKey] = undefined;
+            if (attempts === 0) {
+              throw err;
+            } else {
+              attempts--;
+              tryToLoad();
+            }
+          });
+          ShareTechMono_loadedFonts[fontKey] = promise;
+          promises.push(promise);
+        };
+        tryToLoad();
+      }
+    }
+    if (fontsLoaded > 20 && !options?.ignoreTooManyRequestsWarning) {
+      console.warn(`Made ${fontsLoaded} network requests to load fonts for ${meta.fontFamily}. Consider loading fewer weights and subsets by passing options to loadFont(). Disable this warning by passing "ignoreTooManyRequestsWarning: true" to "options".`);
+    }
+  }
+  return {
+    fontFamily: meta.fontFamily,
+    fonts: meta.fonts,
+    unicodeRanges: meta.unicodeRanges,
+    waitUntilDone: () => Promise.all(promises).then(() => {
+      return;
+    })
+  };
+};
+
+// src/ShareTechMono.ts
+var ShareTechMono_getInfo = () => ({
+  fontFamily: "Share Tech Mono",
+  importName: "ShareTechMono",
+  version: "v16",
+  url: "https://fonts.googleapis.com/css2?family=Share+Tech+Mono:ital,wght@0,400",
+  unicodeRanges: {
+    latin: "U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD"
+  },
+  fonts: {
+    normal: {
+      "400": {
+        latin: "https://fonts.gstatic.com/s/sharetechmono/v16/J7aHnp1uDWRBEqV98dVQztYldFcLowEF.woff2"
+      }
+    }
+  },
+  subsets: ["latin"]
+});
+var ShareTechMono_fontFamily = "Share Tech Mono";
+var ShareTechMono_loadFont = (style, options) => {
+  return ShareTechMono_loadFonts(ShareTechMono_getInfo(), style, options);
+};
+
+
+;// ../../node_modules/lucide-react/dist/esm/icons/clock.mjs
 /**
  * @license lucide-react v1.18.0 - ISC
  *
@@ -2752,19 +3523,14 @@ const SceneReact = ({
 
 
 
-const play_iconNode = [
-  [
-    "path",
-    {
-      d: "M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z",
-      key: "10ikf1"
-    }
-  ]
+const clock_iconNode = [
+  ["circle", { cx: "12", cy: "12", r: "10", key: "1mglay" }],
+  ["path", { d: "M12 6v6l4 2", key: "mmk7yg" }]
 ];
-const Play = createLucideIcon("play", play_iconNode);
+const Clock = createLucideIcon("clock", clock_iconNode);
 
 
-//# sourceMappingURL=play.mjs.map
+//# sourceMappingURL=clock.mjs.map
 
 ;// ../../node_modules/lucide-react/dist/esm/icons/camera.mjs
 /**
@@ -2791,6 +3557,35 @@ const Camera = createLucideIcon("camera", camera_iconNode);
 
 //# sourceMappingURL=camera.mjs.map
 
+// EXTERNAL MODULE: ../../node_modules/css-loader/dist/cjs.js??ruleSet[1].rules[4].use[1]!../../node_modules/@tailwindcss/webpack/dist/index.js!./src/scenes/styles/ScenePrecision.css
+var ScenePrecision = __webpack_require__(171);
+;// ./src/scenes/styles/ScenePrecision.css
+
+      
+      
+      
+      
+      
+      
+      
+      
+      
+
+var ScenePrecision_options = {};
+
+ScenePrecision_options.styleTagTransform = (styleTagTransform_default());
+ScenePrecision_options.setAttributes = (setAttributesWithoutAttributes_default());
+ScenePrecision_options.insert = insertBySelector_default().bind(null, "head");
+ScenePrecision_options.domAPI = (styleDomAPI_default());
+ScenePrecision_options.insertStyleElement = (insertStyleElement_default());
+
+var ScenePrecision_update = injectStylesIntoStyleTag_default()(ScenePrecision/* default */.A, ScenePrecision_options);
+
+
+
+
+       /* harmony default export */ const styles_ScenePrecision = (ScenePrecision/* default */.A && ScenePrecision/* default */.A.locals ? ScenePrecision/* default */.A.locals : undefined);
+
 ;// ./src/scenes/ScenePrecision.tsx
 
 
@@ -2799,94 +3594,211 @@ const Camera = createLucideIcon("camera", camera_iconNode);
 
 
 
-const { fontFamily: ScenePrecision_serifFont } = loadFont("normal", { weights: ["400"] });
+
+const { fontFamily: ScenePrecision_monoFont } = ShareTechMono_loadFont("normal", { weights: ["400"] });
 const { fontFamily: ScenePrecision_sansFont } = SpaceGrotesk_loadFont("normal", { weights: ["400", "700"] });
-const ScenePrecision = ({
+const ScenePrecision_ScenePrecision = ({
   title,
   subtitle,
   description,
-  imageUrl
+  imageUrl,
+  customProps = {}
 }) => {
   const frame = (0,esm.useCurrentFrame)();
-  const playheadX = (0,esm.interpolate)(frame % 30, [0, 29], [10, 95], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
-  return /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: "relative flex flex-row-reverse items-center justify-between w-full h-full max-w-[1050px] px-12 gap-12", children: [
-    imageUrl && /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { className: "absolute inset-0 -z-20 overflow-hidden", children: /* @__PURE__ */ (0,jsx_runtime.jsx)(
-      esm.Img,
-      {
-        src: imageUrl,
-        className: "w-full h-full object-cover opacity-10 scale-[1.08] animate-subtle-drift"
-      }
-    ) }),
-    /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: "w-[45%] h-[280px] relative rounded-lg overflow-hidden border border-vintage-border/40 bg-vintage-bg/90 shadow-2xl p-5 flex flex-col justify-between", children: [
-      /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: "flex justify-between items-center", children: [
-        /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { className: "text-[9px] text-vintage-muted font-mono tracking-widest uppercase", children: "Tr\xECnh Gi\xE1m S\xE1t Timeline" }),
-        /* @__PURE__ */ (0,jsx_runtime.jsxs)("span", { className: "text-[9px] text-vintage-gold font-mono", children: [
-          "FRAME: ",
-          frame
+  const { width, height } = (0,esm.useVideoConfig)();
+  const isVertical = height > width;
+  const headerBadge = (customProps == null ? void 0 : customProps.badgeText) || "Chronometer Grid";
+  const trackLabel1 = (customProps == null ? void 0 : customProps.metricLabel) || "Audio Track";
+  const trackLabel2 = (customProps == null ? void 0 : customProps.metricValue) || "Video Track";
+  const bgScale = (0,esm.interpolate)(frame, [0, 300], [1.04, 1.1], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp"
+  });
+  const totalSeconds = frame / 30;
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = Math.floor(totalSeconds % 60);
+  const centiseconds = Math.floor(totalSeconds % 1 * 100);
+  const formattedTime = `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}.${centiseconds.toString().padStart(2, "0")}`;
+  const radius = 35;
+  const circumference = 2 * Math.PI * radius;
+  const sweepProgress = frame % 90 / 90;
+  const strokeDashoffset = circumference - sweepProgress * circumference;
+  const playheadX = (0,esm.interpolate)(frame % 90, [0, 89], [12, 88], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp"
+  });
+  return /* @__PURE__ */ (0,jsx_runtime.jsxs)(
+    "div",
+    {
+      className: `precision-container flex items-center w-full h-full ${isVertical ? "flex-col justify-center p-6 gap-6" : "flex-row-reverse justify-between px-12 gap-12"}`,
+      children: [
+        imageUrl && /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { className: "absolute inset-0 -z-20 overflow-hidden", children: /* @__PURE__ */ (0,jsx_runtime.jsx)(
+          esm.Img,
+          {
+            src: imageUrl,
+            className: "w-full h-full object-cover opacity-10",
+            style: {
+              transform: `scale(${bgScale})`
+            }
+          }
+        ) }),
+        /* @__PURE__ */ (0,jsx_runtime.jsxs)(
+          MotionDiv,
+          {
+            initial: { opacity: 0, x: isVertical ? 0 : 30, y: isVertical ? 20 : 0, scale: 0.95 },
+            animate: { opacity: 1, x: 0, y: 0, scale: 1 },
+            transition: { startFrame: 5, type: "spring", damping: 15 },
+            className: `relative rounded-lg overflow-hidden precision-card p-4 flex flex-col justify-between ${isVertical ? "w-full h-[220px]" : "w-[45%] h-[300px]"}`,
+            children: [
+              /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: "flex justify-between items-center border-b border-white/5 pb-2", children: [
+                /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { className: "text-[9px] text-sky-400 font-mono tracking-widest uppercase", children: headerBadge }),
+                /* @__PURE__ */ (0,jsx_runtime.jsxs)("span", { className: "text-[9px] text-[#94a3b8] font-mono", children: [
+                  "FRM: ",
+                  frame
+                ] })
+              ] }),
+              /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: "flex-1 flex items-center justify-center gap-6 my-2", children: [
+                /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: "relative w-20 h-20 flex items-center justify-center", children: [
+                  /* @__PURE__ */ (0,jsx_runtime.jsxs)("svg", { className: "absolute w-full h-full radial-progress-ring", viewBox: "0 0 96 96", children: [
+                    /* @__PURE__ */ (0,jsx_runtime.jsx)(
+                      "circle",
+                      {
+                        cx: "48",
+                        cy: "48",
+                        r: radius,
+                        className: "stroke-slate-800 fill-none",
+                        strokeWidth: "3.5"
+                      }
+                    ),
+                    /* @__PURE__ */ (0,jsx_runtime.jsx)(
+                      "circle",
+                      {
+                        cx: "48",
+                        cy: "48",
+                        r: radius,
+                        className: "stroke-sky-400 fill-none",
+                        strokeWidth: "3.5",
+                        strokeDasharray: circumference,
+                        strokeDashoffset,
+                        strokeLinecap: "round"
+                      }
+                    )
+                  ] }),
+                  /* @__PURE__ */ (0,jsx_runtime.jsx)(Clock, { className: "w-5 h-5 text-sky-400/80" })
+                ] }),
+                /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: "flex flex-col", children: [
+                  /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { className: "text-[8px] text-slate-500 font-mono uppercase tracking-widest mb-0.5", children: "Elapsed Time" }),
+                  /* @__PURE__ */ (0,jsx_runtime.jsx)(
+                    "span",
+                    {
+                      className: "text-xl md:text-2xl text-white font-mono font-bold tabular-nums",
+                      style: { fontFamily: ScenePrecision_monoFont },
+                      children: formattedTime
+                    }
+                  )
+                ] })
+              ] }),
+              /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: "h-16 border-t border-white/5 pt-2 relative", children: [
+                /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: "flex flex-col gap-1", children: [
+                  /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: "h-4.5 rounded bg-slate-900/60 border border-white/5 flex items-center px-2 justify-between", children: [
+                    /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { className: "text-[7px] text-slate-500 font-mono uppercase truncate max-w-[50%]", children: trackLabel1 }),
+                    /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { className: "flex gap-[2px] items-center", children: [6, 12, 18, 14, 10, 16, 20].map((h, i) => /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { className: "w-[1px] bg-slate-600 rounded", style: { height: `${h * 0.5}px` } }, i)) })
+                  ] }),
+                  /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: "h-4.5 rounded timeline-clip-active flex items-center px-2 justify-between", children: [
+                    /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { className: "text-[7px] text-sky-400 font-mono uppercase font-bold truncate max-w-[70%]", children: trackLabel2 }),
+                    /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { className: "text-[7px] text-sky-400/85 font-mono", children: "100% Sync" })
+                  ] })
+                ] }),
+                /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { className: "absolute top-2 w-[1.5px] h-10 bg-sky-400 shadow-[0_0_8px_rgba(56,189,248,0.8)]", style: { left: `${playheadX}%` } })
+              ] })
+            ]
+          }
+        ),
+        /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: `flex flex-col justify-center ${isVertical ? "w-full text-center items-center" : "w-[55%]"}`, children: [
+          /* @__PURE__ */ (0,jsx_runtime.jsxs)(
+            MotionDiv,
+            {
+              initial: { opacity: 0, x: isVertical ? 0 : -20 },
+              animate: { opacity: 1, x: 0 },
+              transition: { startFrame: 10, type: "spring", damping: 15 },
+              className: "flex items-center gap-2 mb-3",
+              children: [
+                /* @__PURE__ */ (0,jsx_runtime.jsx)(Camera, { className: "w-4 h-4 text-sky-400" }),
+                /* @__PURE__ */ (0,jsx_runtime.jsx)(
+                  "span",
+                  {
+                    className: "text-sky-400 font-sans text-xs tracking-widest uppercase font-bold",
+                    style: { fontFamily: ScenePrecision_sansFont },
+                    children: subtitle
+                  }
+                )
+              ]
+            }
+          ),
+          /* @__PURE__ */ (0,jsx_runtime.jsx)(
+            MotionDiv,
+            {
+              initial: { opacity: 0, y: 15 },
+              animate: { opacity: 1, y: 0 },
+              transition: { startFrame: 16, type: "spring", damping: 14 },
+              className: "text-white font-sans font-bold tracking-tight leading-tight mb-4",
+              style: {
+                fontFamily: ScenePrecision_sansFont,
+                fontSize: isVertical ? "26px" : "36px"
+              },
+              children: title
+            }
+          ),
+          description && /* @__PURE__ */ (0,jsx_runtime.jsx)(
+            MotionDiv,
+            {
+              initial: { opacity: 0, y: 15 },
+              animate: { opacity: 0.85, y: 0 },
+              transition: { startFrame: 22, type: "spring", damping: 16 },
+              className: "text-stone-300 font-sans text-xs md:text-sm leading-relaxed mb-5 font-light",
+              style: {
+                fontFamily: ScenePrecision_sansFont,
+                maxWidth: isVertical ? "100%" : "95%"
+              },
+              children: description
+            }
+          ),
+          /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { className: "w-full h-[1px] bg-white/10 my-4" }),
+          /* @__PURE__ */ (0,jsx_runtime.jsx)(
+            "span",
+            {
+              className: "text-[10px] text-stone-500 font-mono",
+              style: { fontFamily: ScenePrecision_sansFont },
+              children: "Subsecond Precision \u2022 Multi-Track Audio Matching \u2022 Frame-Locked"
+            }
+          )
         ] })
-      ] }),
-      /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: "flex-1 my-4 flex flex-col gap-2.5 justify-center", children: [
-        /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: "h-7 rounded bg-vintage-border/20 border border-vintage-border/30 flex items-center px-3 justify-between", children: [
-          /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { className: "text-[8px] text-vintage-muted font-mono uppercase", children: "Audio Layer" }),
-          /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { className: "flex gap-[2px] items-center", children: [6, 12, 20, 14, 10, 12, 22, 16, 8, 12, 18, 10, 6].map((h, i) => /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { className: "w-[2px] bg-vintage-muted/50 rounded", style: { height: `${h}px` } }, i)) })
-        ] }),
-        /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: "h-7 rounded bg-vintage-gold/15 border border-vintage-gold/30 flex items-center px-3 justify-between", children: [
-          /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { className: "text-[8px] text-vintage-gold font-mono uppercase font-bold", children: "Video Track" }),
-          /* @__PURE__ */ (0,jsx_runtime.jsx)(Play, { className: "w-2.5 h-2.5 text-vintage-gold" })
-        ] })
-      ] }),
-      /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: "h-8 border-t border-vintage-border/40 pt-1 relative", children: [
-        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { className: "w-full h-1 bg-vintage-border/30 rounded-full relative" }),
-        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { className: "absolute top-0.5 w-[2px] h-3 bg-vintage-gold", style: { left: `${playheadX}%` } }),
-        /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: "flex justify-between text-[7px] text-vintage-muted font-mono mt-2", children: [
-          /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { children: "00s" }),
-          /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { children: "10s" }),
-          /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { children: "20s" }),
-          /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { children: "30s" })
-        ] })
-      ] })
-    ] }),
-    /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: "w-[55%] flex flex-col justify-center", children: [
-      /* @__PURE__ */ (0,jsx_runtime.jsxs)(
-        MotionDiv,
-        {
-          initial: { opacity: 0, x: 20 },
-          animate: { opacity: 1, x: 0 },
-          transition: { startFrame: 10, type: "spring", damping: 15 },
-          className: "flex items-center gap-2 mb-3",
-          children: [
-            /* @__PURE__ */ (0,jsx_runtime.jsx)(Camera, { className: "w-4 h-4 text-vintage-gold" }),
-            /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { className: "text-vintage-gold font-sans text-xs tracking-widest uppercase font-bold", style: { fontFamily: ScenePrecision_sansFont }, children: subtitle })
-          ]
-        }
-      ),
-      /* @__PURE__ */ (0,jsx_runtime.jsx)(
-        MotionDiv,
-        {
-          initial: { opacity: 0, y: 15 },
-          animate: { opacity: 1, y: 0 },
-          transition: { startFrame: 16, type: "spring", damping: 14 },
-          className: "text-vintage-paper font-serif text-3xl md:text-4xl leading-tight mb-4 font-bold",
-          style: { fontFamily: ScenePrecision_serifFont },
-          children: title
-        }
-      ),
-      description && /* @__PURE__ */ (0,jsx_runtime.jsx)(
-        MotionDiv,
-        {
-          initial: { opacity: 0, y: 15 },
-          animate: { opacity: 0.85, y: 0 },
-          transition: { startFrame: 22, type: "spring", damping: 16 },
-          className: "text-vintage-paper font-sans text-xs md:text-sm leading-relaxed mb-4 font-light",
-          style: { fontFamily: ScenePrecision_sansFont },
-          children: description
-        }
-      ),
-      /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { className: "w-full h-[1px] bg-vintage-border/30 my-3" }),
-      /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { className: "text-[10px] text-vintage-muted", style: { fontFamily: ScenePrecision_sansFont }, children: "Frame-Accurate \u2022 Determinisitic Rendering" })
-    ] })
-  ] });
+      ]
+    }
+  );
 };
+
+;// ../../node_modules/lucide-react/dist/esm/icons/radio.mjs
+/**
+ * @license lucide-react v1.18.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
+
+const radio_iconNode = [
+  ["path", { d: "M16.247 7.761a6 6 0 0 1 0 8.478", key: "1fwjs5" }],
+  ["path", { d: "M19.075 4.933a10 10 0 0 1 0 14.134", key: "ehdyv1" }],
+  ["path", { d: "M4.925 19.067a10 10 0 0 1 0-14.134", key: "1q22gi" }],
+  ["path", { d: "M7.753 16.239a6 6 0 0 1 0-8.478", key: "r2q7qm" }],
+  ["circle", { cx: "12", cy: "12", r: "2", key: "1c9p78" }]
+];
+const Radio = createLucideIcon("radio", radio_iconNode);
+
+
+//# sourceMappingURL=radio.mjs.map
 
 ;// ../../node_modules/lucide-react/dist/esm/icons/music.mjs
 /**
@@ -2908,6 +3820,35 @@ const Music = createLucideIcon("music", music_iconNode);
 
 //# sourceMappingURL=music.mjs.map
 
+// EXTERNAL MODULE: ../../node_modules/css-loader/dist/cjs.js??ruleSet[1].rules[4].use[1]!../../node_modules/@tailwindcss/webpack/dist/index.js!./src/scenes/styles/SceneAudio.css
+var SceneAudio = __webpack_require__(349);
+;// ./src/scenes/styles/SceneAudio.css
+
+      
+      
+      
+      
+      
+      
+      
+      
+      
+
+var SceneAudio_options = {};
+
+SceneAudio_options.styleTagTransform = (styleTagTransform_default());
+SceneAudio_options.setAttributes = (setAttributesWithoutAttributes_default());
+SceneAudio_options.insert = insertBySelector_default().bind(null, "head");
+SceneAudio_options.domAPI = (styleDomAPI_default());
+SceneAudio_options.insertStyleElement = (insertStyleElement_default());
+
+var SceneAudio_update = injectStylesIntoStyleTag_default()(SceneAudio/* default */.A, SceneAudio_options);
+
+
+
+
+       /* harmony default export */ const styles_SceneAudio = (SceneAudio/* default */.A && SceneAudio/* default */.A.locals ? SceneAudio/* default */.A.locals : undefined);
+
 ;// ./src/scenes/SceneAudio.tsx
 
 
@@ -2916,105 +3857,156 @@ const Music = createLucideIcon("music", music_iconNode);
 
 
 
-const { fontFamily: SceneAudio_serifFont } = loadFont("normal", { weights: ["400"] });
-const { fontFamily: SceneAudio_sansFont } = SpaceGrotesk_loadFont("normal", {
-  weights: ["400", "700"]
-});
-const SceneAudio = ({
+const { fontFamily: SceneAudio_sansFont } = SpaceGrotesk_loadFont("normal", { weights: ["400", "700"] });
+const SceneAudio_SceneAudio = ({
   title,
   subtitle,
   description,
-  imageUrl
+  imageUrl,
+  customProps = {}
 }) => {
   const frame = (0,esm.useCurrentFrame)();
-  return /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: "relative flex flex-row items-center justify-between w-full h-full max-w-[1050px] px-12 gap-12", children: [
-    imageUrl && /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { className: "absolute inset-0 -z-20 overflow-hidden", children: /* @__PURE__ */ (0,jsx_runtime.jsx)(
-      esm.Img,
-      {
-        src: imageUrl,
-        className: "w-full h-full object-cover opacity-10 scale-[1.08] animate-subtle-drift",
-        style: {
-          translate: "-375.5px 44.3px"
-        }
-      }
-    ) }),
-    /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: "w-[45%] h-[280px] relative rounded-lg overflow-hidden border border-vintage-border/40 bg-vintage-bg/90 shadow-2xl p-6 flex flex-col justify-between", children: [
-      /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: "flex justify-between items-center border-b border-vintage-border/30 pb-2", children: [
-        /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { className: "text-[9px] text-vintage-muted font-mono tracking-widest uppercase", children: "Ph\xE2n T\xEDch S\xF3ng \xC2m (Bass)" }),
-        /* @__PURE__ */ (0,jsx_runtime.jsx)(Music, { className: "w-4 h-4 text-vintage-gold animate-bounce" })
-      ] }),
-      /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { className: "flex-1 flex items-end justify-center gap-2 px-4 py-8", children: [...Array(9)].map((_, i) => {
-        const height = (0,esm.interpolate)(
-          Math.sin((frame + i * 4) * 0.25) + Math.cos((frame - i * 2) * 0.12),
-          [-2, 2],
-          [15, 120],
-          { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
-        );
-        return /* @__PURE__ */ (0,jsx_runtime.jsx)(
-          "div",
+  const { width, height } = (0,esm.useVideoConfig)();
+  const isVertical = height > width;
+  const headerBadge = (customProps == null ? void 0 : customProps.badgeText) || "Stereo EQ Monitor";
+  const footerMetric = (customProps == null ? void 0 : customProps.metricLabel) ? `${customProps.metricLabel.toUpperCase()}: ${customProps.metricValue || "ON"}` : "PEAK LEVELS: -3.5dB \u2022 SAMPLE RATE: 48kHz";
+  const bgScale = (0,esm.interpolate)(frame, [0, 300], [1.05, 1.12], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp"
+  });
+  const vinylRotation = frame * 1.5 % 360;
+  const radioPulse = (0,esm.interpolate)(Math.sin(frame * 0.15), [-1, 1], [0.85, 1.15]);
+  const barCount = isVertical ? 10 : 15;
+  const barHeightLimit = isVertical ? 35 : 55;
+  return /* @__PURE__ */ (0,jsx_runtime.jsxs)(
+    "div",
+    {
+      className: `audio-container flex items-center w-full h-full ${isVertical ? "flex-col justify-center p-6 gap-6" : "flex-row justify-between px-12 gap-12"}`,
+      children: [
+        imageUrl && /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { className: "absolute inset-0 -z-20 overflow-hidden", children: /* @__PURE__ */ (0,jsx_runtime.jsx)(
+          esm.Img,
           {
-            className: "w-6 rounded-t bg-gradient-to-t from-vintage-border to-vintage-gold opacity-90 transition-all duration-75",
-            style: { height: `${height}px` }
-          },
-          i
-        );
-      }) }),
-      /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { className: "text-center text-[8px] text-vintage-muted font-mono tracking-widest", children: "FREQ RANGE: 20Hz - 20kHz \u2022 LIVE AUDIO BASS" })
-    ] }),
-    /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: "w-[55%] flex flex-col justify-center", children: [
-      /* @__PURE__ */ (0,jsx_runtime.jsxs)(
-        MotionDiv,
-        {
-          initial: { opacity: 0, x: -20 },
-          animate: { opacity: 1, x: 0 },
-          transition: { startFrame: 10, type: "spring", damping: 15 },
-          className: "flex items-center gap-2 mb-3",
-          children: [
-            /* @__PURE__ */ (0,jsx_runtime.jsx)(Music, { className: "w-4 h-4 text-vintage-gold" }),
-            /* @__PURE__ */ (0,jsx_runtime.jsx)(
-              "span",
-              {
-                className: "text-vintage-gold font-sans text-xs tracking-widest uppercase font-bold",
-                style: { fontFamily: SceneAudio_sansFont },
-                children: subtitle
-              }
-            )
-          ]
-        }
-      ),
-      /* @__PURE__ */ (0,jsx_runtime.jsx)(
-        MotionDiv,
-        {
-          initial: { opacity: 0, y: 15 },
-          animate: { opacity: 1, y: 0 },
-          transition: { startFrame: 16, type: "spring", damping: 14 },
-          className: "text-vintage-paper font-serif text-3xl md:text-4xl leading-tight mb-4 font-bold",
-          style: { fontFamily: SceneAudio_serifFont },
-          children: title
-        }
-      ),
-      description && /* @__PURE__ */ (0,jsx_runtime.jsx)(
-        MotionDiv,
-        {
-          initial: { opacity: 0, y: 15 },
-          animate: { opacity: 0.85, y: 0 },
-          transition: { startFrame: 22, type: "spring", damping: 16 },
-          className: "text-vintage-paper font-sans text-xs md:text-sm leading-relaxed mb-4 font-light",
-          style: { fontFamily: SceneAudio_sansFont },
-          children: description
-        }
-      ),
-      /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { className: "w-full h-[1px] bg-vintage-border/30 my-3" }),
-      /* @__PURE__ */ (0,jsx_runtime.jsx)(
-        "span",
-        {
-          className: "text-[10px] text-vintage-muted",
-          style: { fontFamily: SceneAudio_sansFont },
-          children: "Audio Analysis \u2022 Bass Reactivity \u2022 Audio Visualization"
-        }
-      )
-    ] })
-  ] });
+            src: imageUrl,
+            className: "w-full h-full object-cover opacity-10",
+            style: {
+              transform: `scale(${bgScale})`
+            }
+          }
+        ) }),
+        /* @__PURE__ */ (0,jsx_runtime.jsxs)(
+          MotionDiv,
+          {
+            initial: { opacity: 0, scale: 0.95, y: isVertical ? 20 : 25 },
+            animate: { opacity: 1, scale: 1, y: 0 },
+            transition: { startFrame: 5, type: "spring", damping: 15 },
+            className: `relative rounded-lg overflow-hidden audio-card flex flex-col justify-between ${isVertical ? "w-full h-[220px] p-4" : "w-[48%] h-[320px] p-6"}`,
+            children: [
+              /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: "flex justify-between items-center border-b border-purple-500/10 pb-2", children: [
+                /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { className: "text-[9px] text-purple-400 font-mono tracking-widest uppercase", children: headerBadge }),
+                /* @__PURE__ */ (0,jsx_runtime.jsx)(
+                  Radio,
+                  {
+                    className: "w-4 h-4 text-purple-400",
+                    style: { transform: `scale(${radioPulse})` }
+                  }
+                )
+              ] }),
+              /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: `flex-1 flex justify-center items-center gap-5 my-2 ${isVertical ? "flex-row" : "flex-col"}`, children: [
+                /* @__PURE__ */ (0,jsx_runtime.jsxs)(
+                  "div",
+                  {
+                    className: `rounded-full vinyl-record flex items-center justify-center relative shrink-0 ${isVertical ? "w-16 h-16" : "w-24 h-24"}`,
+                    style: { transform: `rotate(${vinylRotation}deg)` },
+                    children: [
+                      /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { className: "absolute inset-2 border border-white/5 rounded-full" }),
+                      /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { className: "absolute inset-4 border border-white/5 rounded-full" }),
+                      /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { className: "w-6 h-6 rounded-full vinyl-center flex items-center justify-center", children: /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { className: "w-1.5 h-1.5 rounded-full bg-[#1b121f]" }) })
+                    ]
+                  }
+                ),
+                /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { className: `flex items-end justify-center gap-1.5 w-full px-2 ${isVertical ? "h-14" : "h-16"}`, children: [...Array(barCount)].map((_, i) => {
+                  const height2 = (0,esm.interpolate)(
+                    Math.sin((frame + i * 3.5) * 0.28) + Math.cos((frame - i * 1.8) * 0.16) * 1.2,
+                    [-2.2, 2.2],
+                    [6, barHeightLimit],
+                    { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
+                  );
+                  return /* @__PURE__ */ (0,jsx_runtime.jsx)(
+                    "div",
+                    {
+                      className: "w-2 rounded-t waveform-bar",
+                      style: { height: `${height2}px` }
+                    },
+                    i
+                  );
+                }) })
+              ] }),
+              /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { className: "text-center text-[8px] text-purple-400/60 font-mono tracking-widest uppercase", children: footerMetric })
+            ]
+          }
+        ),
+        /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: `flex flex-col justify-center ${isVertical ? "w-full text-center items-center" : "w-[52%]"}`, children: [
+          /* @__PURE__ */ (0,jsx_runtime.jsxs)(
+            MotionDiv,
+            {
+              initial: { opacity: 0, x: isVertical ? 0 : 20 },
+              animate: { opacity: 1, x: 0 },
+              transition: { startFrame: 10, type: "spring", damping: 15 },
+              className: "flex items-center gap-2 mb-3",
+              children: [
+                /* @__PURE__ */ (0,jsx_runtime.jsx)(Music, { className: "w-4 h-4 text-purple-400" }),
+                /* @__PURE__ */ (0,jsx_runtime.jsx)(
+                  "span",
+                  {
+                    className: "text-purple-400 font-sans text-xs tracking-widest uppercase font-bold",
+                    style: { fontFamily: SceneAudio_sansFont },
+                    children: subtitle
+                  }
+                )
+              ]
+            }
+          ),
+          /* @__PURE__ */ (0,jsx_runtime.jsx)(
+            MotionDiv,
+            {
+              initial: { opacity: 0, y: 15 },
+              animate: { opacity: 1, y: 0 },
+              transition: { startFrame: 16, type: "spring", damping: 14 },
+              className: "text-white font-sans font-bold tracking-tight leading-tight mb-4",
+              style: {
+                fontFamily: SceneAudio_sansFont,
+                fontSize: isVertical ? "26px" : "36px"
+              },
+              children: title
+            }
+          ),
+          description && /* @__PURE__ */ (0,jsx_runtime.jsx)(
+            MotionDiv,
+            {
+              initial: { opacity: 0, y: 15 },
+              animate: { opacity: 0.85, y: 0 },
+              transition: { startFrame: 22, type: "spring", damping: 16 },
+              className: "text-stone-300 font-sans text-xs md:text-sm leading-relaxed mb-5 font-light",
+              style: {
+                fontFamily: SceneAudio_sansFont,
+                maxWidth: isVertical ? "100%" : "95%"
+              },
+              children: description
+            }
+          ),
+          /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { className: "w-full h-[1px] bg-white/10 my-4" }),
+          /* @__PURE__ */ (0,jsx_runtime.jsx)(
+            "span",
+            {
+              className: "text-[10px] text-stone-500 font-mono",
+              style: { fontFamily: SceneAudio_sansFont },
+              children: "Frequency Analysis \u2022 Bass-Reactive Shapes \u2022 Stereo Audio"
+            }
+          )
+        ] })
+      ]
+    }
+  );
 };
 
 ;// ../../node_modules/lucide-react/dist/esm/icons/database.mjs
@@ -3036,25 +4028,6 @@ const Database = createLucideIcon("database", database_iconNode);
 
 
 //# sourceMappingURL=database.mjs.map
-
-;// ../../node_modules/lucide-react/dist/esm/icons/arrow-right.mjs
-/**
- * @license lucide-react v1.18.0 - ISC
- *
- * This source code is licensed under the ISC license.
- * See the LICENSE file in the root directory of this source tree.
- */
-
-
-
-const arrow_right_iconNode = [
-  ["path", { d: "M5 12h14", key: "1ays0h" }],
-  ["path", { d: "m12 5 7 7-7 7", key: "xquz4c" }]
-];
-const ArrowRight = createLucideIcon("arrow-right", arrow_right_iconNode);
-
-
-//# sourceMappingURL=arrow-right.mjs.map
 
 ;// ../../node_modules/lucide-react/dist/esm/icons/cpu.mjs
 /**
@@ -3086,6 +4059,30 @@ const Cpu = createLucideIcon("cpu", cpu_iconNode);
 
 
 //# sourceMappingURL=cpu.mjs.map
+
+;// ../../node_modules/lucide-react/dist/esm/icons/play.mjs
+/**
+ * @license lucide-react v1.18.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
+
+const play_iconNode = [
+  [
+    "path",
+    {
+      d: "M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z",
+      key: "10ikf1"
+    }
+  ]
+];
+const Play = createLucideIcon("play", play_iconNode);
+
+
+//# sourceMappingURL=play.mjs.map
 
 ;// ../../node_modules/lucide-react/dist/esm/icons/layers.mjs
 /**
@@ -3125,6 +4122,35 @@ const Layers = createLucideIcon("layers", layers_iconNode);
 
 //# sourceMappingURL=layers.mjs.map
 
+// EXTERNAL MODULE: ../../node_modules/css-loader/dist/cjs.js??ruleSet[1].rules[4].use[1]!../../node_modules/@tailwindcss/webpack/dist/index.js!./src/scenes/styles/SceneScale.css
+var SceneScale = __webpack_require__(3885);
+;// ./src/scenes/styles/SceneScale.css
+
+      
+      
+      
+      
+      
+      
+      
+      
+      
+
+var SceneScale_options = {};
+
+SceneScale_options.styleTagTransform = (styleTagTransform_default());
+SceneScale_options.setAttributes = (setAttributesWithoutAttributes_default());
+SceneScale_options.insert = insertBySelector_default().bind(null, "head");
+SceneScale_options.domAPI = (styleDomAPI_default());
+SceneScale_options.insertStyleElement = (insertStyleElement_default());
+
+var SceneScale_update = injectStylesIntoStyleTag_default()(SceneScale/* default */.A, SceneScale_options);
+
+
+
+
+       /* harmony default export */ const styles_SceneScale = (SceneScale/* default */.A && SceneScale/* default */.A.locals ? SceneScale/* default */.A.locals : undefined);
+
 ;// ./src/scenes/SceneScale.tsx
 
 
@@ -3133,131 +4159,249 @@ const Layers = createLucideIcon("layers", layers_iconNode);
 
 
 
-const { fontFamily: SceneScale_serifFont } = loadFont("normal", { weights: ["400"] });
-const { fontFamily: SceneScale_sansFont } = SpaceGrotesk_loadFont("normal", {
-  weights: ["400", "700"]
-});
-const SceneScale = ({
+
+const { fontFamily: SceneScale_monoFont } = ShareTechMono_loadFont("normal", { weights: ["400"] });
+const { fontFamily: SceneScale_sansFont } = SpaceGrotesk_loadFont("normal", { weights: ["400", "700"] });
+const SceneScale_SceneScale = ({
   title,
   subtitle,
   description,
-  imageUrl
+  imageUrl,
+  customProps = {}
 }) => {
-  return /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: "relative flex flex-row-reverse items-center justify-between w-full h-full max-w-[1050px] px-12 gap-12", children: [
-    imageUrl && /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { className: "absolute inset-0 -z-20 overflow-hidden", children: /* @__PURE__ */ (0,jsx_runtime.jsx)(
-      esm.Img,
-      {
-        src: imageUrl,
-        className: "w-full h-full object-cover opacity-10 scale-[1.08] animate-subtle-drift"
-      }
-    ) }),
-    /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: "w-[45%] h-[280px] relative flex items-center justify-center", children: [
-      /* @__PURE__ */ (0,jsx_runtime.jsxs)(
-        MotionDiv,
-        {
-          initial: { opacity: 0, x: -40, scale: 0.8 },
-          animate: { opacity: 1, x: 0, scale: 1 },
-          transition: { startFrame: 15, type: "spring", damping: 12 },
-          className: "absolute left-1 w-24 h-24 rounded bg-vintage-bg border border-vintage-border/50 shadow-lg p-3 flex flex-col justify-between",
-          children: [
-            /* @__PURE__ */ (0,jsx_runtime.jsx)(Database, { className: "w-5 h-5 text-vintage-gold" }),
-            /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: "font-mono text-[7px] text-vintage-muted leading-tight", children: [
-              "{",
-              /* @__PURE__ */ (0,jsx_runtime.jsx)("br", {}),
-              '\xA0\xA0"id": 9812,',
-              /* @__PURE__ */ (0,jsx_runtime.jsx)("br", {}),
-              '\xA0\xA0"title": "Remo"',
-              /* @__PURE__ */ (0,jsx_runtime.jsx)("br", {}),
-              "}"
-            ] }),
-            /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { className: "text-[7px] text-vintage-muted tracking-wider uppercase font-bold", children: "JSON" })
-          ]
-        }
-      ),
-      /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { className: "flex items-center gap-1.5 z-10", children: /* @__PURE__ */ (0,jsx_runtime.jsx)(ArrowRight, { className: "w-5 h-5 text-vintage-gold animate-pulse" }) }),
-      /* @__PURE__ */ (0,jsx_runtime.jsxs)(
-        MotionDiv,
-        {
-          initial: { opacity: 0, y: -30, scale: 0.8 },
-          animate: { opacity: 1, y: 0, scale: 1 },
-          transition: { startFrame: 25, type: "spring", damping: 13 },
-          className: "absolute w-28 h-28 rounded bg-vintage-bg border border-vintage-gold/50 shadow-2xl p-3 flex flex-col justify-between items-center text-center z-20",
-          children: [
-            /* @__PURE__ */ (0,jsx_runtime.jsx)(Cpu, { className: "w-7 h-7 text-vintage-gold animate-pulse" }),
-            /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { className: "text-[9px] text-vintage-paper font-sans font-bold", children: "AWS Lambda" }),
-            /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { className: "text-[6px] text-vintage-muted uppercase tracking-widest font-mono", children: "Render Engine" })
-          ]
-        }
-      ),
-      /* @__PURE__ */ (0,jsx_runtime.jsxs)(
-        MotionDiv,
-        {
-          initial: { opacity: 0, x: 40, scale: 0.8 },
-          animate: { opacity: 1, x: 0, scale: 1 },
-          transition: { startFrame: 35, type: "spring", damping: 12 },
-          className: "absolute right-1 w-24 h-24 rounded bg-vintage-bg border border-vintage-border/50 shadow-lg p-3 flex flex-col justify-between",
-          children: [
-            /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { className: "w-full h-10 rounded bg-vintage-border/20 flex items-center justify-center", children: /* @__PURE__ */ (0,jsx_runtime.jsx)(Play, { className: "w-4 h-4 text-vintage-gold" }) }),
-            /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { className: "text-[8px] text-vintage-paper font-bold font-mono text-center", children: "video.mp4" })
-          ]
-        }
-      )
-    ] }),
-    /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: "w-[55%] flex flex-col justify-center", children: [
-      /* @__PURE__ */ (0,jsx_runtime.jsxs)(
-        MotionDiv,
-        {
-          initial: { opacity: 0, x: 20 },
-          animate: { opacity: 1, x: 0 },
-          transition: { startFrame: 10, type: "spring", damping: 15 },
-          className: "flex items-center gap-2 mb-3",
-          children: [
-            /* @__PURE__ */ (0,jsx_runtime.jsx)(Layers, { className: "w-4 h-4 text-vintage-gold" }),
-            /* @__PURE__ */ (0,jsx_runtime.jsx)(
-              "span",
-              {
-                className: "text-vintage-gold font-sans text-xs tracking-widest uppercase font-bold",
-                style: { fontFamily: SceneScale_sansFont },
-                children: subtitle
-              }
-            )
-          ]
-        }
-      ),
-      /* @__PURE__ */ (0,jsx_runtime.jsx)(
-        MotionDiv,
-        {
-          initial: { opacity: 0, y: 15 },
-          animate: { opacity: 1, y: 0 },
-          transition: { startFrame: 16, type: "spring", damping: 14 },
-          className: "text-vintage-paper font-serif text-3xl md:text-4xl leading-tight mb-4 font-bold",
-          style: { fontFamily: SceneScale_serifFont },
-          children: title
-        }
-      ),
-      description && /* @__PURE__ */ (0,jsx_runtime.jsx)(
-        MotionDiv,
-        {
-          initial: { opacity: 0, y: 15 },
-          animate: { opacity: 0.85, y: 0 },
-          transition: { startFrame: 22, type: "spring", damping: 16 },
-          className: "text-vintage-paper font-sans text-xs md:text-sm leading-relaxed mb-4 font-light",
-          style: { fontFamily: SceneScale_sansFont },
-          children: description
-        }
-      ),
-      /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { className: "w-full h-[1px] bg-vintage-border/30 my-3" }),
-      /* @__PURE__ */ (0,jsx_runtime.jsx)(
-        "span",
-        {
-          className: "text-[10px] text-vintage-muted",
-          style: { fontFamily: SceneScale_sansFont },
-          children: "Dynamic Content \u2022 Scalable Pipelines \u2022 Automation"
-        }
-      )
-    ] })
-  ] });
+  var _a, _b;
+  const frame = (0,esm.useCurrentFrame)();
+  const { width, height } = (0,esm.useVideoConfig)();
+  const isVertical = height > width;
+  const nodeLabel1 = ((_a = customProps == null ? void 0 : customProps.chips) == null ? void 0 : _a[0]) || "DB Source";
+  const nodeLabel2 = (customProps == null ? void 0 : customProps.metricLabel) || "AWS Lambda";
+  const nodeLabel3 = ((_b = customProps == null ? void 0 : customProps.chips) == null ? void 0 : _b[1]) || "render.mp4";
+  const nodeStatus = (customProps == null ? void 0 : customProps.metricValue) || "SUCCESS";
+  const bgScale = (0,esm.interpolate)(frame, [0, 300], [1.05, 1.12], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp"
+  });
+  const floatA = Math.cos(frame * 0.06) * 4;
+  const floatB = Math.sin(frame * 0.07) * 5;
+  const floatC = Math.cos(frame * 0.08) * 3;
+  const flowDash = -frame * 2.5;
+  return /* @__PURE__ */ (0,jsx_runtime.jsxs)(
+    "div",
+    {
+      className: `scale-container flex items-center w-full h-full ${isVertical ? "flex-col justify-center p-6 gap-6" : "flex-row-reverse justify-between px-12 gap-12"}`,
+      children: [
+        imageUrl && /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { className: "absolute inset-0 -z-20 overflow-hidden", children: /* @__PURE__ */ (0,jsx_runtime.jsx)(
+          esm.Img,
+          {
+            src: imageUrl,
+            className: "w-full h-full object-cover opacity-10",
+            style: {
+              transform: `scale(${bgScale})`
+            }
+          }
+        ) }),
+        /* @__PURE__ */ (0,jsx_runtime.jsxs)(
+          "div",
+          {
+            className: `relative flex px-2 shrink-0 ${isVertical ? "w-full h-[220px] flex-col items-center justify-between py-2" : "w-[45%] h-[280px] flex-row items-center justify-between"}`,
+            children: [
+              /* @__PURE__ */ (0,jsx_runtime.jsx)("svg", { className: "absolute inset-0 w-full h-full pointer-events-none", style: { zIndex: 0 }, children: isVertical ? /* @__PURE__ */ (0,jsx_runtime.jsxs)(jsx_runtime.Fragment, { children: [
+                /* @__PURE__ */ (0,jsx_runtime.jsx)(
+                  "line",
+                  {
+                    x1: width ? width * 0.45 / 2 : 160,
+                    y1: "40",
+                    x2: width ? width * 0.45 / 2 : 160,
+                    y2: "110",
+                    className: "node-connector",
+                    strokeWidth: "2",
+                    style: { strokeDashoffset: flowDash }
+                  }
+                ),
+                /* @__PURE__ */ (0,jsx_runtime.jsx)(
+                  "line",
+                  {
+                    x1: width ? width * 0.45 / 2 : 160,
+                    y1: "110",
+                    x2: width ? width * 0.45 / 2 : 160,
+                    y2: "180",
+                    className: "node-connector",
+                    strokeWidth: "2",
+                    style: { strokeDashoffset: flowDash }
+                  }
+                )
+              ] }) : /* @__PURE__ */ (0,jsx_runtime.jsxs)(jsx_runtime.Fragment, { children: [
+                /* @__PURE__ */ (0,jsx_runtime.jsx)(
+                  "line",
+                  {
+                    x1: "70",
+                    y1: "140",
+                    x2: "210",
+                    y2: "140",
+                    className: "node-connector",
+                    strokeWidth: "2",
+                    style: { strokeDashoffset: flowDash }
+                  }
+                ),
+                /* @__PURE__ */ (0,jsx_runtime.jsx)(
+                  "line",
+                  {
+                    x1: "210",
+                    y1: "140",
+                    x2: "330",
+                    y2: "140",
+                    className: "node-connector",
+                    strokeWidth: "2",
+                    style: { strokeDashoffset: flowDash }
+                  }
+                )
+              ] }) }),
+              /* @__PURE__ */ (0,jsx_runtime.jsxs)(
+                MotionDiv,
+                {
+                  initial: { opacity: 0, scale: 0.8 },
+                  animate: { opacity: 1, scale: 1 },
+                  transition: { startFrame: 10, type: "spring", damping: 13 },
+                  className: `rounded scale-window p-2 flex flex-col justify-between items-center text-center relative z-10 ${isVertical ? "w-48 h-12 flex-row gap-4" : "w-20 h-28"}`,
+                  style: { transform: isVertical ? `translateX(${floatA}px)` : `translateY(${floatA}px)` },
+                  children: [
+                    /* @__PURE__ */ (0,jsx_runtime.jsx)(Database, { className: "w-4.5 h-4.5 text-sky-400 shrink-0" }),
+                    /* @__PURE__ */ (0,jsx_runtime.jsx)(
+                      "div",
+                      {
+                        className: "font-mono text-[7px] leading-tight text-slate-400 text-left truncate",
+                        style: { fontFamily: SceneScale_monoFont },
+                        children: "ID: 9812"
+                      }
+                    ),
+                    /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { className: "text-[7px] text-sky-400 font-bold uppercase tracking-wider truncate", children: nodeLabel1 })
+                  ]
+                }
+              ),
+              /* @__PURE__ */ (0,jsx_runtime.jsxs)(
+                MotionDiv,
+                {
+                  initial: { opacity: 0, scale: 0.8 },
+                  animate: { opacity: 1, scale: 1 },
+                  transition: { startFrame: 20, type: "spring", damping: 12 },
+                  className: `rounded scale-window p-2 flex flex-col justify-between items-center text-center relative z-20 border-sky-400/40 ${isVertical ? "w-52 h-14 flex-row gap-4" : "w-24 h-32"}`,
+                  style: { transform: isVertical ? `translateX(${floatB}px)` : `translateY(${floatB}px)` },
+                  children: [
+                    /* @__PURE__ */ (0,jsx_runtime.jsx)(Cpu, { className: "w-5.5 h-5.5 text-sky-400 drop-shadow-[0_0_8px_rgba(56,189,248,0.4)] shrink-0" }),
+                    /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: "flex flex-col items-center justify-center flex-1", children: [
+                      /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { className: "text-[8px] text-white font-bold truncate max-w-[80px]", children: nodeLabel2 }),
+                      /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { className: "text-[5px] text-sky-400/60 font-mono tracking-wider mt-0.5 uppercase", children: "Processing" })
+                    ] }),
+                    /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { className: "text-[6px] text-slate-500 font-mono tracking-widest uppercase shrink-0", children: "Cluster Core" })
+                  ]
+                }
+              ),
+              /* @__PURE__ */ (0,jsx_runtime.jsxs)(
+                MotionDiv,
+                {
+                  initial: { opacity: 0, scale: 0.8 },
+                  animate: { opacity: 1, scale: 1 },
+                  transition: { startFrame: 30, type: "spring", damping: 13 },
+                  className: `rounded scale-window p-2 flex flex-col justify-between items-center text-center relative z-10 ${isVertical ? "w-48 h-12 flex-row gap-4" : "w-20 h-28"}`,
+                  style: { transform: isVertical ? `translateX(${floatC}px)` : `translateY(${floatC}px)` },
+                  children: [
+                    /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { className: "rounded bg-slate-900/60 flex items-center justify-center border border-white/5 p-1 shrink-0", children: /* @__PURE__ */ (0,jsx_runtime.jsx)(Play, { className: "w-3.5 h-3.5 text-sky-400" }) }),
+                    /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: "flex flex-col items-start justify-center flex-1", children: [
+                      /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { className: "text-[7px] text-white font-bold font-mono truncate max-w-[80px]", children: nodeLabel3 }),
+                      /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { className: "text-[5px] text-emerald-400 font-mono font-bold", children: nodeStatus })
+                    ] }),
+                    /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { className: "text-[7px] text-sky-400 font-bold uppercase tracking-wider shrink-0", children: "OUTPUT" })
+                  ]
+                }
+              )
+            ]
+          }
+        ),
+        /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: `flex flex-col justify-center ${isVertical ? "w-full text-center items-center" : "w-[55%]"}`, children: [
+          /* @__PURE__ */ (0,jsx_runtime.jsxs)(
+            MotionDiv,
+            {
+              initial: { opacity: 0, x: isVertical ? 0 : 20 },
+              animate: { opacity: 1, x: 0 },
+              transition: { startFrame: 10, type: "spring", damping: 15 },
+              className: "flex items-center gap-2 mb-3",
+              children: [
+                /* @__PURE__ */ (0,jsx_runtime.jsx)(Layers, { className: "w-4 h-4 text-sky-400" }),
+                /* @__PURE__ */ (0,jsx_runtime.jsx)(
+                  "span",
+                  {
+                    className: "text-sky-400 font-sans text-xs tracking-widest uppercase font-bold",
+                    style: { fontFamily: SceneScale_sansFont },
+                    children: subtitle
+                  }
+                )
+              ]
+            }
+          ),
+          /* @__PURE__ */ (0,jsx_runtime.jsx)(
+            MotionDiv,
+            {
+              initial: { opacity: 0, y: 15 },
+              animate: { opacity: 1, y: 0 },
+              transition: { startFrame: 16, type: "spring", damping: 14 },
+              className: "text-white font-sans font-bold tracking-tight leading-tight mb-4",
+              style: {
+                fontFamily: SceneScale_sansFont,
+                fontSize: isVertical ? "26px" : "36px"
+              },
+              children: title
+            }
+          ),
+          description && /* @__PURE__ */ (0,jsx_runtime.jsx)(
+            MotionDiv,
+            {
+              initial: { opacity: 0, y: 15 },
+              animate: { opacity: 0.85, y: 0 },
+              transition: { startFrame: 22, type: "spring", damping: 16 },
+              className: "text-stone-300 font-sans text-xs md:text-sm leading-relaxed mb-5 font-light",
+              style: {
+                fontFamily: SceneScale_sansFont,
+                maxWidth: isVertical ? "100%" : "95%"
+              },
+              children: description
+            }
+          ),
+          /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { className: "w-full h-[1px] bg-white/10 my-4" }),
+          /* @__PURE__ */ (0,jsx_runtime.jsx)(
+            "span",
+            {
+              className: "text-[10px] text-stone-500 font-mono",
+              style: { fontFamily: SceneScale_sansFont },
+              children: "JSON Metadata Input \u2022 Cloud Lambda Functions \u2022 MP4 Bundler"
+            }
+          )
+        ] })
+      ]
+    }
+  );
 };
+
+;// ../../node_modules/lucide-react/dist/esm/icons/focus.mjs
+/**
+ * @license lucide-react v1.18.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
+
+const focus_iconNode = [
+  ["circle", { cx: "12", cy: "12", r: "3", key: "1v7zrd" }],
+  ["path", { d: "M3 7V5a2 2 0 0 1 2-2h2", key: "aa7l1z" }],
+  ["path", { d: "M17 3h2a2 2 0 0 1 2 2v2", key: "4qcy5o" }],
+  ["path", { d: "M21 17v2a2 2 0 0 1-2 2h-2", key: "6vwrx8" }],
+  ["path", { d: "M7 21H5a2 2 0 0 1-2-2v-2", key: "ioqczr" }]
+];
+const Focus = createLucideIcon("focus", focus_iconNode);
+
+
+//# sourceMappingURL=focus.mjs.map
 
 ;// ../../node_modules/lucide-react/dist/esm/icons/sliders-vertical.mjs
 /**
@@ -3285,7 +4429,37 @@ const SlidersVertical = createLucideIcon("sliders-vertical", sliders_vertical_ic
 
 //# sourceMappingURL=sliders-vertical.mjs.map
 
+// EXTERNAL MODULE: ../../node_modules/css-loader/dist/cjs.js??ruleSet[1].rules[4].use[1]!../../node_modules/@tailwindcss/webpack/dist/index.js!./src/scenes/styles/SceneTransitions.css
+var SceneTransitions = __webpack_require__(3855);
+;// ./src/scenes/styles/SceneTransitions.css
+
+      
+      
+      
+      
+      
+      
+      
+      
+      
+
+var SceneTransitions_options = {};
+
+SceneTransitions_options.styleTagTransform = (styleTagTransform_default());
+SceneTransitions_options.setAttributes = (setAttributesWithoutAttributes_default());
+SceneTransitions_options.insert = insertBySelector_default().bind(null, "head");
+SceneTransitions_options.domAPI = (styleDomAPI_default());
+SceneTransitions_options.insertStyleElement = (insertStyleElement_default());
+
+var SceneTransitions_update = injectStylesIntoStyleTag_default()(SceneTransitions/* default */.A, SceneTransitions_options);
+
+
+
+
+       /* harmony default export */ const styles_SceneTransitions = (SceneTransitions/* default */.A && SceneTransitions/* default */.A.locals ? SceneTransitions/* default */.A.locals : undefined);
+
 ;// ./src/scenes/SceneTransitions.tsx
+
 
 
 
@@ -3295,84 +4469,166 @@ const SlidersVertical = createLucideIcon("sliders-vertical", sliders_vertical_ic
 
 const { fontFamily: SceneTransitions_serifFont } = loadFont("normal", { weights: ["400"] });
 const { fontFamily: SceneTransitions_sansFont } = SpaceGrotesk_loadFont("normal", { weights: ["400", "700"] });
-const SceneTransitions = ({
+const SceneTransitions_SceneTransitions = ({
   title,
   subtitle,
   description,
-  imageUrl
+  imageUrl,
+  customProps = {}
 }) => {
+  var _a, _b;
   const frame = (0,esm.useCurrentFrame)();
-  const swipeX = (0,esm.interpolate)(frame % 40, [0, 39], [-100, 100], {
+  const { width, height } = (0,esm.useVideoConfig)();
+  const isVertical = height > width;
+  const headerBadge = (customProps == null ? void 0 : customProps.badgeText) || "LUT Grading Wipe";
+  const labelA = ((_a = customProps == null ? void 0 : customProps.chips) == null ? void 0 : _a[0]) || "ORIGINAL";
+  const labelB = ((_b = customProps == null ? void 0 : customProps.chips) == null ? void 0 : _b[1]) || "CINEMATIC LUT";
+  const footerLabel = (customProps == null ? void 0 : customProps.metricLabel) ? `${customProps.metricLabel.toUpperCase()}: ${customProps.metricValue || "ON"}` : "Transition: Crosswipe \u2022 Easing: Bezier";
+  const bgScale = (0,esm.interpolate)(frame, [0, 300], [1.03, 1.12], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp"
   });
-  return /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: "relative flex flex-row items-center justify-between w-full h-full max-w-[1050px] px-12 gap-12", children: [
-    imageUrl && /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { className: "absolute inset-0 -z-20 overflow-hidden", children: /* @__PURE__ */ (0,jsx_runtime.jsx)(
-      esm.Img,
-      {
-        src: imageUrl,
-        className: "w-full h-full object-cover opacity-10 scale-[1.08] animate-subtle-drift"
-      }
-    ) }),
-    /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: "w-[45%] h-[280px] relative rounded-lg overflow-hidden border border-vintage-border/40 bg-vintage-bg/90 shadow-2xl p-4 flex flex-col justify-between", children: [
-      /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: "flex justify-between items-center border-b border-vintage-border/30 pb-2", children: [
-        /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { className: "text-[9px] text-vintage-muted font-mono tracking-widest uppercase", children: "Th\u1EED Nghi\u1EC7m Chuy\u1EC3n C\u1EA3nh" }),
-        /* @__PURE__ */ (0,jsx_runtime.jsx)(SlidersVertical, { className: "w-4 h-4 text-vintage-gold" })
-      ] }),
-      /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: "flex-1 my-4 border border-vintage-border/20 rounded relative overflow-hidden flex items-center justify-center", children: [
-        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { className: "absolute inset-0 bg-vintage-rust/10 flex items-center justify-center", children: /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { className: "text-[10px] text-vintage-paper font-serif italic", children: "Scene A" }) }),
-        /* @__PURE__ */ (0,jsx_runtime.jsx)(
-          "div",
+  const bgTranslateX = (0,esm.interpolate)(frame, [0, 300], [0, -8], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp"
+  });
+  const cycleFrame = frame % 70;
+  const splitProgress = (0,esm.interpolate)(
+    Math.sin(cycleFrame / 70 * Math.PI * 2),
+    [-1, 1],
+    [15, 85]
+  );
+  return /* @__PURE__ */ (0,jsx_runtime.jsxs)(
+    "div",
+    {
+      className: `transitions-container flex items-center w-full h-full ${isVertical ? "flex-col justify-center p-6 gap-6" : "flex-row justify-between px-12 gap-12"}`,
+      children: [
+        imageUrl && /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { className: "absolute inset-0 -z-20 overflow-hidden", children: /* @__PURE__ */ (0,jsx_runtime.jsx)(
+          esm.Img,
           {
-            className: "absolute inset-0 bg-vintage-gold/20 flex items-center justify-center border-l border-vintage-gold",
-            style: { transform: `translateX(${100 + swipeX}%)` },
-            children: /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { className: "text-[10px] text-vintage-paper font-serif italic", children: "Scene B" })
+            src: imageUrl,
+            className: "w-full h-full object-cover opacity-15",
+            style: {
+              transform: `scale(${bgScale}) translateX(${bgTranslateX}px)`
+            }
           }
-        )
-      ] }),
-      /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { className: "text-center text-[8px] text-vintage-gold font-mono tracking-widest animate-pulse", children: "EFFECT: SLIDE WIPE PREVIEW" })
-    ] }),
-    /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: "w-[55%] flex flex-col justify-center", children: [
-      /* @__PURE__ */ (0,jsx_runtime.jsxs)(
-        MotionDiv,
-        {
-          initial: { opacity: 0, x: -20 },
-          animate: { opacity: 1, x: 0 },
-          transition: { startFrame: 10, type: "spring", damping: 15 },
-          className: "flex items-center gap-2 mb-3",
-          children: [
-            /* @__PURE__ */ (0,jsx_runtime.jsx)(SlidersVertical, { className: "w-4 h-4 text-vintage-gold" }),
-            /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { className: "text-vintage-gold font-sans text-xs tracking-widest uppercase font-bold", style: { fontFamily: SceneTransitions_sansFont }, children: subtitle })
-          ]
-        }
-      ),
-      /* @__PURE__ */ (0,jsx_runtime.jsx)(
-        MotionDiv,
-        {
-          initial: { opacity: 0, y: 15 },
-          animate: { opacity: 1, y: 0 },
-          transition: { startFrame: 16, type: "spring", damping: 14 },
-          className: "text-vintage-paper font-serif text-3xl md:text-4xl leading-tight mb-4 font-bold",
-          style: { fontFamily: SceneTransitions_serifFont },
-          children: title
-        }
-      ),
-      description && /* @__PURE__ */ (0,jsx_runtime.jsx)(
-        MotionDiv,
-        {
-          initial: { opacity: 0, y: 15 },
-          animate: { opacity: 0.85, y: 0 },
-          transition: { startFrame: 22, type: "spring", damping: 16 },
-          className: "text-vintage-paper font-sans text-xs md:text-sm leading-relaxed mb-4 font-light",
-          style: { fontFamily: SceneTransitions_sansFont },
-          children: description
-        }
-      ),
-      /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { className: "w-full h-[1px] bg-vintage-border/30 my-3" }),
-      /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { className: "text-[10px] text-vintage-muted", style: { fontFamily: SceneTransitions_sansFont }, children: "Transitions \u2022 Filters \u2022 Overlays \u2022 Light Leaks" })
-    ] })
-  ] });
+        ) }),
+        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { className: "cinematic-letterbox-top", style: { height: isVertical ? "16px" : "24px" } }),
+        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { className: "cinematic-letterbox-bottom", style: { height: isVertical ? "16px" : "24px" } }),
+        /* @__PURE__ */ (0,jsx_runtime.jsxs)(
+          MotionDiv,
+          {
+            initial: { opacity: 0, scale: 0.95, y: isVertical ? 20 : -25 },
+            animate: { opacity: 1, scale: 1, y: 0 },
+            transition: { startFrame: 5, type: "spring", damping: 15 },
+            className: `relative rounded-lg overflow-hidden transitions-card p-4 flex flex-col justify-between ${isVertical ? "w-full h-[220px]" : "w-[45%] h-[300px]"}`,
+            children: [
+              /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: "flex justify-between items-center border-b border-lime-500/10 pb-2", children: [
+                /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { className: "text-[9px] text-[#bef264] font-mono tracking-widest uppercase", children: headerBadge }),
+                /* @__PURE__ */ (0,jsx_runtime.jsx)(Focus, { className: "w-4 h-4 text-[#bef264]" })
+              ] }),
+              /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: "flex-1 my-3 border border-white/5 rounded relative overflow-hidden flex items-center justify-center", children: [
+                /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { className: "absolute inset-0 bg-[#151b11] flex items-center justify-center text-left", children: /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { className: "text-[8px] text-slate-500 font-mono tracking-wider absolute left-3 bottom-3", children: labelA }) }),
+                /* @__PURE__ */ (0,jsx_runtime.jsx)(
+                  "div",
+                  {
+                    className: "absolute inset-y-0 right-0 bg-[#251f15] border-l border-amber-400 transitions-split-line flex items-center justify-center",
+                    style: { left: `${splitProgress}%` },
+                    children: /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { className: "text-[8px] text-amber-400 font-mono tracking-wider absolute right-3 bottom-3 truncate max-w-[80px]", children: labelB })
+                  }
+                )
+              ] }),
+              /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { className: "text-center text-[8px] text-amber-400/80 font-mono tracking-widest uppercase truncate", children: footerLabel })
+            ]
+          }
+        ),
+        /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: `flex flex-col justify-center ${isVertical ? "w-full text-center items-center" : "w-[55%]"}`, children: [
+          /* @__PURE__ */ (0,jsx_runtime.jsxs)(
+            MotionDiv,
+            {
+              initial: { opacity: 0, x: isVertical ? 0 : 20 },
+              animate: { opacity: 1, x: 0 },
+              transition: { startFrame: 10, type: "spring", damping: 15 },
+              className: "flex items-center gap-2 mb-3",
+              children: [
+                /* @__PURE__ */ (0,jsx_runtime.jsx)(SlidersVertical, { className: "w-4 h-4 text-amber-400" }),
+                /* @__PURE__ */ (0,jsx_runtime.jsx)(
+                  "span",
+                  {
+                    className: "text-amber-400 font-sans text-xs tracking-widest uppercase font-bold",
+                    style: { fontFamily: SceneTransitions_sansFont },
+                    children: subtitle
+                  }
+                )
+              ]
+            }
+          ),
+          /* @__PURE__ */ (0,jsx_runtime.jsx)(
+            MotionDiv,
+            {
+              initial: { opacity: 0, y: 15 },
+              animate: { opacity: 1, y: 0 },
+              transition: { startFrame: 16, type: "spring", damping: 14 },
+              className: "text-white font-serif tracking-widest uppercase font-bold leading-tight mb-4",
+              style: {
+                fontFamily: SceneTransitions_serifFont,
+                fontSize: isVertical ? "26px" : "36px"
+              },
+              children: title
+            }
+          ),
+          description && /* @__PURE__ */ (0,jsx_runtime.jsx)(
+            MotionDiv,
+            {
+              initial: { opacity: 0, y: 15 },
+              animate: { opacity: 0.85, y: 0 },
+              transition: { startFrame: 22, type: "spring", damping: 16 },
+              className: "text-stone-300 font-sans text-xs md:text-sm leading-relaxed mb-5 font-light",
+              style: {
+                fontFamily: SceneTransitions_sansFont,
+                maxWidth: isVertical ? "100%" : "95%"
+              },
+              children: description
+            }
+          ),
+          /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { className: "w-full h-[1px] bg-white/10 my-4" }),
+          /* @__PURE__ */ (0,jsx_runtime.jsx)(
+            "span",
+            {
+              className: "text-[10px] text-stone-500 font-mono",
+              style: { fontFamily: SceneTransitions_sansFont },
+              children: "Slide Swipe Transitions \u2022 Light Leaks Overlay \u2022 Film Look"
+            }
+          )
+        ] })
+      ]
+    }
+  );
 };
+
+;// ../../node_modules/lucide-react/dist/esm/icons/activity.mjs
+/**
+ * @license lucide-react v1.18.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
+
+const activity_iconNode = [
+  [
+    "path",
+    {
+      d: "M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2",
+      key: "169zse"
+    }
+  ]
+];
+const Activity = createLucideIcon("activity", activity_iconNode);
+
+
+//# sourceMappingURL=activity.mjs.map
 
 ;// ../../node_modules/lucide-react/dist/esm/icons/zap.mjs
 /**
@@ -3398,6 +4654,35 @@ const Zap = createLucideIcon("zap", zap_iconNode);
 
 //# sourceMappingURL=zap.mjs.map
 
+// EXTERNAL MODULE: ../../node_modules/css-loader/dist/cjs.js??ruleSet[1].rules[4].use[1]!../../node_modules/@tailwindcss/webpack/dist/index.js!./src/scenes/styles/ScenePerformance.css
+var ScenePerformance = __webpack_require__(8817);
+;// ./src/scenes/styles/ScenePerformance.css
+
+      
+      
+      
+      
+      
+      
+      
+      
+      
+
+var ScenePerformance_options = {};
+
+ScenePerformance_options.styleTagTransform = (styleTagTransform_default());
+ScenePerformance_options.setAttributes = (setAttributesWithoutAttributes_default());
+ScenePerformance_options.insert = insertBySelector_default().bind(null, "head");
+ScenePerformance_options.domAPI = (styleDomAPI_default());
+ScenePerformance_options.insertStyleElement = (insertStyleElement_default());
+
+var ScenePerformance_update = injectStylesIntoStyleTag_default()(ScenePerformance/* default */.A, ScenePerformance_options);
+
+
+
+
+       /* harmony default export */ const styles_ScenePerformance = (ScenePerformance/* default */.A && ScenePerformance/* default */.A.locals ? ScenePerformance/* default */.A.locals : undefined);
+
 ;// ./src/scenes/ScenePerformance.tsx
 
 
@@ -3406,82 +4691,184 @@ const Zap = createLucideIcon("zap", zap_iconNode);
 
 
 
-const { fontFamily: ScenePerformance_serifFont } = loadFont("normal", { weights: ["400"] });
+
 const { fontFamily: ScenePerformance_sansFont } = SpaceGrotesk_loadFont("normal", { weights: ["400", "700"] });
-const ScenePerformance = ({
+const { fontFamily: ScenePerformance_monoFont } = ShareTechMono_loadFont("normal", { weights: ["400"] });
+const ScenePerformance_ScenePerformance = ({
   title,
   subtitle,
   description,
-  imageUrl
+  imageUrl,
+  customProps = {}
 }) => {
-  return /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: "relative flex flex-row-reverse items-center justify-between w-full h-full max-w-[1050px] px-12 gap-12", children: [
-    imageUrl && /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { className: "absolute inset-0 -z-20 overflow-hidden", children: /* @__PURE__ */ (0,jsx_runtime.jsx)(
-      esm.Img,
-      {
-        src: imageUrl,
-        className: "w-full h-full object-cover opacity-10 scale-[1.08] animate-subtle-drift"
-      }
-    ) }),
-    /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: "w-[45%] h-[280px] relative rounded-lg overflow-hidden border border-vintage-border/40 bg-vintage-bg/90 shadow-2xl p-5 flex flex-col justify-between", children: [
-      /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: "flex justify-between items-center border-b border-vintage-border/30 pb-2", children: [
-        /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { className: "text-[9px] text-vintage-muted font-mono tracking-widest uppercase", children: "Tr\xECnh Qu\u1EA3n Tr\u1ECB Render Node" }),
-        /* @__PURE__ */ (0,jsx_runtime.jsx)(Zap, { className: "w-4 h-4 text-vintage-gold animate-pulse" })
-      ] }),
-      /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { className: "flex-1 my-4 flex flex-col justify-center gap-3", children: [1, 2, 3].map((cluster) => /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: "h-6 rounded bg-vintage-border/20 flex items-center px-3 justify-between", children: [
-        /* @__PURE__ */ (0,jsx_runtime.jsxs)("span", { className: "text-[8px] text-vintage-paper font-mono uppercase", children: [
-          "Render Thread #",
-          cluster
-        ] }),
-        /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: "flex gap-1.5 items-center", children: [
-          /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { className: "text-[8px] text-vintage-gold font-mono", children: "100% CPU" }),
-          /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { className: "w-2 h-2 rounded-full bg-vintage-gold animate-ping" })
+  const frame = (0,esm.useCurrentFrame)();
+  const { width, height } = (0,esm.useVideoConfig)();
+  const isVertical = height > width;
+  const headerBadge = (customProps == null ? void 0 : customProps.badgeText) || "Performance Core Monitor";
+  const statLabel = (customProps == null ? void 0 : customProps.metricLabel) || "Avg Server Load";
+  const cpuPercent = (0,esm.interpolate)(
+    Math.sin(frame * 0.1) + Math.cos(frame * 0.05),
+    [-2, 2],
+    [92.4, 99.8],
+    { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
+  ).toFixed(1);
+  const statValue = (customProps == null ? void 0 : customProps.metricValue) || `${cpuPercent}%`;
+  const bgScale = (0,esm.interpolate)(frame, [0, 300], [1.05, 1.13], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp"
+  });
+  const pathLength = 400;
+  const graphDrawOffset = (0,esm.interpolate)(frame, [15, 95], [pathLength, 0], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp"
+  });
+  const threadCount = isVertical ? 2 : 3;
+  return /* @__PURE__ */ (0,jsx_runtime.jsxs)(
+    "div",
+    {
+      className: `performance-container flex items-center w-full h-full ${isVertical ? "flex-col justify-center p-6 gap-6" : "flex-row-reverse justify-between px-12 gap-12"}`,
+      children: [
+        imageUrl && /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { className: "absolute inset-0 -z-20 overflow-hidden", children: /* @__PURE__ */ (0,jsx_runtime.jsx)(
+          esm.Img,
+          {
+            src: imageUrl,
+            className: "w-full h-full object-cover opacity-10",
+            style: {
+              transform: `scale(${bgScale})`
+            }
+          }
+        ) }),
+        /* @__PURE__ */ (0,jsx_runtime.jsxs)(
+          MotionDiv,
+          {
+            initial: { opacity: 0, scale: 0.95, y: isVertical ? 20 : 25 },
+            animate: { opacity: 1, scale: 1, y: 0 },
+            transition: { startFrame: 5, type: "spring", damping: 15 },
+            className: `relative rounded-lg overflow-hidden performance-card flex flex-col justify-between ${isVertical ? "w-full h-[220px] p-4" : "w-[48%] h-[320px] p-5"}`,
+            children: [
+              /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: "flex justify-between items-center border-b border-green-500/10 pb-2", children: [
+                /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { className: "text-[9px] text-green-400 font-mono tracking-widest uppercase", children: headerBadge }),
+                /* @__PURE__ */ (0,jsx_runtime.jsx)(Activity, { className: "w-4 h-4 text-green-400" })
+              ] }),
+              /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: "flex-1 flex flex-col justify-between my-2 gap-2", children: [
+                /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: "flex-1 border border-white/5 rounded bg-black/40 relative overflow-hidden p-2 min-h-[75px]", children: [
+                  /* @__PURE__ */ (0,jsx_runtime.jsxs)("svg", { className: "w-full h-full", viewBox: "0 0 300 100", preserveAspectRatio: "none", children: [
+                    /* @__PURE__ */ (0,jsx_runtime.jsx)("line", { x1: "0", y1: "25", x2: "300", y2: "25", stroke: "rgba(255,255,255,0.03)", strokeWidth: "1" }),
+                    /* @__PURE__ */ (0,jsx_runtime.jsx)("line", { x1: "0", y1: "50", x2: "300", y2: "50", stroke: "rgba(255,255,255,0.03)", strokeWidth: "1" }),
+                    /* @__PURE__ */ (0,jsx_runtime.jsx)("line", { x1: "0", y1: "75", x2: "300", y2: "75", stroke: "rgba(255,255,255,0.03)", strokeWidth: "1" }),
+                    /* @__PURE__ */ (0,jsx_runtime.jsx)(
+                      "path",
+                      {
+                        d: "M 10 90 Q 50 35 90 70 T 170 20 T 250 80 T 290 15",
+                        className: "perf-graph-line",
+                        strokeDasharray: pathLength,
+                        strokeDashoffset: graphDrawOffset
+                      }
+                    )
+                  ] }),
+                  /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: "absolute top-2 left-2 flex flex-col", children: [
+                    /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { className: "text-[7px] text-slate-500 font-mono uppercase", children: statLabel }),
+                    /* @__PURE__ */ (0,jsx_runtime.jsx)(
+                      "span",
+                      {
+                        className: "text-xs text-green-400 font-mono font-bold",
+                        style: { fontFamily: ScenePerformance_monoFont },
+                        children: statValue
+                      }
+                    )
+                  ] })
+                ] }),
+                /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { className: "flex flex-col gap-1.5 shrink-0", children: [...Array(threadCount)].map((_, coreIndex) => {
+                  const coreNum = coreIndex + 1;
+                  const coreScale = (0,esm.interpolate)(
+                    Math.sin(frame * 0.12 + coreNum * 2),
+                    [-1, 1],
+                    [75, 100]
+                  );
+                  return /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: "h-5 rounded bg-black/30 border border-white/5 flex items-center px-2 justify-between", children: [
+                    /* @__PURE__ */ (0,jsx_runtime.jsxs)("span", { className: "text-[7px] text-slate-300 font-mono uppercase", children: [
+                      "Worker thread #",
+                      coreNum
+                    ] }),
+                    /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { className: "w-20 md:w-24 h-1.5 bg-slate-900 rounded-full overflow-hidden", children: /* @__PURE__ */ (0,jsx_runtime.jsx)(
+                      "div",
+                      {
+                        className: "h-full core-progress-bar rounded-full",
+                        style: { width: `${coreScale}%` }
+                      }
+                    ) })
+                  ] }, coreNum);
+                }) })
+              ] }),
+              /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: "flex justify-between text-[8px] text-green-400/60 font-mono tracking-widest shrink-0", children: [
+                /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { children: "CORES: ACTIVE" }),
+                /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { children: "LATENCY: 0.15ms" })
+              ] })
+            ]
+          }
+        ),
+        /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: `flex flex-col justify-center ${isVertical ? "w-full text-center items-center" : "w-[52%]"}`, children: [
+          /* @__PURE__ */ (0,jsx_runtime.jsxs)(
+            MotionDiv,
+            {
+              initial: { opacity: 0, x: isVertical ? 0 : -20 },
+              animate: { opacity: 1, x: 0 },
+              transition: { startFrame: 10, type: "spring", damping: 15 },
+              className: "flex items-center gap-2 mb-3",
+              children: [
+                /* @__PURE__ */ (0,jsx_runtime.jsx)(Zap, { className: "w-4 h-4 text-green-400" }),
+                /* @__PURE__ */ (0,jsx_runtime.jsx)(
+                  "span",
+                  {
+                    className: "text-green-400 font-sans text-xs tracking-widest uppercase font-bold",
+                    style: { fontFamily: ScenePerformance_sansFont },
+                    children: subtitle
+                  }
+                )
+              ]
+            }
+          ),
+          /* @__PURE__ */ (0,jsx_runtime.jsx)(
+            MotionDiv,
+            {
+              initial: { opacity: 0, y: 15 },
+              animate: { opacity: 1, y: 0 },
+              transition: { startFrame: 16, type: "spring", damping: 14 },
+              className: "text-white font-sans font-bold tracking-tight leading-tight mb-4",
+              style: {
+                fontFamily: ScenePerformance_sansFont,
+                fontSize: isVertical ? "26px" : "36px"
+              },
+              children: title
+            }
+          ),
+          description && /* @__PURE__ */ (0,jsx_runtime.jsx)(
+            MotionDiv,
+            {
+              initial: { opacity: 0, y: 15 },
+              animate: { opacity: 0.85, y: 0 },
+              transition: { startFrame: 22, type: "spring", damping: 16 },
+              className: "text-stone-300 font-sans text-xs md:text-sm leading-relaxed mb-5 font-light",
+              style: {
+                fontFamily: ScenePerformance_sansFont,
+                maxWidth: isVertical ? "100%" : "95%"
+              },
+              children: description
+            }
+          ),
+          /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { className: "w-full h-[1px] bg-white/10 my-4" }),
+          /* @__PURE__ */ (0,jsx_runtime.jsx)(
+            "span",
+            {
+              className: "text-[10px] text-stone-500 font-mono",
+              style: { fontFamily: ScenePerformance_sansFont },
+              children: "Parallel Core Bundling \u2022 60fps Native Encoding \u2022 GPU Acceleration"
+            }
+          )
         ] })
-      ] }, cluster)) }),
-      /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: "flex justify-between text-[8px] text-vintage-muted font-mono", children: [
-        /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { children: "CORES: 16/16 ACTIVE" }),
-        /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { children: "SPEED: 4.8 GHz" })
-      ] })
-    ] }),
-    /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: "w-[55%] flex flex-col justify-center", children: [
-      /* @__PURE__ */ (0,jsx_runtime.jsxs)(
-        MotionDiv,
-        {
-          initial: { opacity: 0, x: 20 },
-          animate: { opacity: 1, x: 0 },
-          transition: { startFrame: 10, type: "spring", damping: 15 },
-          className: "flex items-center gap-2 mb-3",
-          children: [
-            /* @__PURE__ */ (0,jsx_runtime.jsx)(Zap, { className: "w-4 h-4 text-vintage-gold" }),
-            /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { className: "text-vintage-gold font-sans text-xs tracking-widest uppercase font-bold", style: { fontFamily: ScenePerformance_sansFont }, children: subtitle })
-          ]
-        }
-      ),
-      /* @__PURE__ */ (0,jsx_runtime.jsx)(
-        MotionDiv,
-        {
-          initial: { opacity: 0, y: 15 },
-          animate: { opacity: 1, y: 0 },
-          transition: { startFrame: 16, type: "spring", damping: 14 },
-          className: "text-vintage-paper font-serif text-3xl md:text-4xl leading-tight mb-4 font-bold",
-          style: { fontFamily: ScenePerformance_serifFont },
-          children: title
-        }
-      ),
-      description && /* @__PURE__ */ (0,jsx_runtime.jsx)(
-        MotionDiv,
-        {
-          initial: { opacity: 0, y: 15 },
-          animate: { opacity: 0.85, y: 0 },
-          transition: { startFrame: 22, type: "spring", damping: 16 },
-          className: "text-vintage-paper font-sans text-xs md:text-sm leading-relaxed mb-4 font-light",
-          style: { fontFamily: ScenePerformance_sansFont },
-          children: description
-        }
-      ),
-      /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { className: "w-full h-[1px] bg-vintage-border/30 my-3" }),
-      /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { className: "text-[10px] text-vintage-muted", style: { fontFamily: ScenePerformance_sansFont }, children: "Multi-core Optimization \u2022 Serverless Parallelism \u2022 Fast Render" })
-    ] })
-  ] });
+      ]
+    }
+  );
 };
 
 ;// ../../node_modules/lucide-react/dist/esm/icons/terminal.mjs
@@ -3503,7 +4890,54 @@ const Terminal = createLucideIcon("terminal", terminal_iconNode);
 
 //# sourceMappingURL=terminal.mjs.map
 
+;// ../../node_modules/lucide-react/dist/esm/icons/chevron-right.mjs
+/**
+ * @license lucide-react v1.18.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
+
+const chevron_right_iconNode = [["path", { d: "m9 18 6-6-6-6", key: "mthhwq" }]];
+const ChevronRight = createLucideIcon("chevron-right", chevron_right_iconNode);
+
+
+//# sourceMappingURL=chevron-right.mjs.map
+
+// EXTERNAL MODULE: ../../node_modules/css-loader/dist/cjs.js??ruleSet[1].rules[4].use[1]!../../node_modules/@tailwindcss/webpack/dist/index.js!./src/scenes/styles/SceneOutro.css
+var SceneOutro = __webpack_require__(2838);
+;// ./src/scenes/styles/SceneOutro.css
+
+      
+      
+      
+      
+      
+      
+      
+      
+      
+
+var SceneOutro_options = {};
+
+SceneOutro_options.styleTagTransform = (styleTagTransform_default());
+SceneOutro_options.setAttributes = (setAttributesWithoutAttributes_default());
+SceneOutro_options.insert = insertBySelector_default().bind(null, "head");
+SceneOutro_options.domAPI = (styleDomAPI_default());
+SceneOutro_options.insertStyleElement = (insertStyleElement_default());
+
+var SceneOutro_update = injectStylesIntoStyleTag_default()(SceneOutro/* default */.A, SceneOutro_options);
+
+
+
+
+       /* harmony default export */ const styles_SceneOutro = (SceneOutro/* default */.A && SceneOutro/* default */.A.locals ? SceneOutro/* default */.A.locals : undefined);
+
 ;// ./src/scenes/SceneOutro.tsx
+
+
 
 
 
@@ -3513,35 +4947,78 @@ const Terminal = createLucideIcon("terminal", terminal_iconNode);
 
 const { fontFamily: SceneOutro_serifFont } = loadFont("normal", { weights: ["400"] });
 const { fontFamily: SceneOutro_sansFont } = SpaceGrotesk_loadFont("normal", { weights: ["400", "700"] });
-const SceneOutro = ({
+const { fontFamily: SceneOutro_monoFont } = FiraCode_loadFont("normal", { weights: ["400"] });
+const SceneOutro_SceneOutro = ({
   title,
   subtitle,
   description,
   imageUrl,
-  terminalCommand = "npx create-video@latest"
+  customProps = {}
 }) => {
-  return /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: "relative flex flex-col items-center justify-center h-full w-full", children: [
+  var _a, _b, _c;
+  const frame = (0,esm.useCurrentFrame)();
+  const { fps, width, height } = (0,esm.useVideoConfig)();
+  const isVertical = height > width;
+  const terminalCommand = (customProps == null ? void 0 : customProps.terminalCommand) || "npx create-video@latest";
+  const headerBadge = (customProps == null ? void 0 : customProps.badgeText) || "Installation Console";
+  const stepLog1 = ((_a = customProps == null ? void 0 : customProps.chips) == null ? void 0 : _a[0]) || "Fetching templates and assets...";
+  const stepLog2 = ((_b = customProps == null ? void 0 : customProps.chips) == null ? void 0 : _b[1]) || "Bundling media configurations... Done.";
+  const stepLog3 = ((_c = customProps == null ? void 0 : customProps.chips) == null ? void 0 : _c[2]) || "Setup completed! Type 'npm run dev' to launch.";
+  const bgScale = (0,esm.interpolate)(frame, [0, 300], [1.05, 1.12], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp"
+  });
+  const sparkleRotation = (0,esm.interpolate)(frame, [0, 300], [0, 60]);
+  const startTypingFrame = 15;
+  const commandTypedLength = Math.min(
+    terminalCommand.length,
+    Math.floor(Math.max(0, frame - startTypingFrame) * 1.5)
+  );
+  const displayCommand = terminalCommand.substring(0, commandTypedLength);
+  const showLog1 = frame > 45;
+  const showLog2 = frame > 65;
+  const showLog3 = frame > 85;
+  const buttonSpring = (0,esm.spring)({
+    frame: Math.max(0, frame - 95),
+    fps,
+    config: { damping: 12, mass: 0.5, stiffness: 140 }
+  });
+  const progressBarPercent = (0,esm.interpolate)(frame, [45, 85], [0, 100], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp"
+  });
+  return /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: "outro-container flex flex-col items-center justify-center h-full w-full p-6 md:p-12 text-center", children: [
     imageUrl && /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { className: "absolute inset-0 -z-20 overflow-hidden", children: /* @__PURE__ */ (0,jsx_runtime.jsx)(
       esm.Img,
       {
         src: imageUrl,
-        className: "w-full h-full object-cover opacity-15 scale-[1.08] animate-subtle-drift"
+        className: "w-full h-full object-cover opacity-15",
+        style: {
+          transform: `scale(${bgScale})`
+        }
       }
     ) }),
     /* @__PURE__ */ (0,jsx_runtime.jsx)(
       MotionDiv,
       {
-        initial: { opacity: 0, scale: 0.5, rotate: 180 },
+        initial: { opacity: 0, scale: 0.4, rotate: 90 },
         animate: { opacity: 1, scale: 1, rotate: 0 },
         transition: { startFrame: 5, type: "spring", damping: 14 },
         className: "mb-5",
-        children: /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { className: "w-14 h-14 rounded-full border border-vintage-gold/50 flex items-center justify-center bg-vintage-bg/80 drop-shadow-[0_0_12px_rgba(200,149,71,0.3)]", children: /* @__PURE__ */ (0,jsx_runtime.jsx)(Sparkles, { className: "w-7 h-7 text-vintage-gold" }) })
+        children: /* @__PURE__ */ (0,jsx_runtime.jsx)(
+          "div",
+          {
+            className: "w-14 h-14 rounded-full border border-vintage-gold/40 flex items-center justify-center bg-black/60 drop-shadow-[0_0_12px_rgba(200,149,71,0.3)]",
+            style: { transform: `rotate(${sparkleRotation}deg)` },
+            children: /* @__PURE__ */ (0,jsx_runtime.jsx)(Sparkles, { className: "w-6 h-6 text-vintage-gold" })
+          }
+        )
       }
     ),
     /* @__PURE__ */ (0,jsx_runtime.jsx)(
       MotionDiv,
       {
-        initial: { opacity: 0, y: 12 },
+        initial: { opacity: 0, y: 10 },
         animate: { opacity: 1, y: 0 },
         transition: { startFrame: 10, type: "spring", damping: 16 },
         className: "text-vintage-muted font-sans text-xs tracking-[0.25em] uppercase mb-3",
@@ -3555,8 +5032,13 @@ const SceneOutro = ({
         initial: { opacity: 0, y: 20, scale: 0.96 },
         animate: { opacity: 1, y: 0, scale: 1 },
         transition: { startFrame: 15, type: "spring", damping: 13 },
-        className: "text-vintage-paper font-serif text-5xl md:text-6xl tracking-wide uppercase text-center max-w-[850px] font-bold",
-        style: { fontFamily: SceneOutro_serifFont },
+        className: "text-vintage-paper font-serif tracking-wide uppercase font-bold",
+        style: {
+          fontFamily: SceneOutro_serifFont,
+          fontSize: isVertical ? "32px" : "52px",
+          maxWidth: isVertical ? "90%" : "850px",
+          lineHeight: 1.15
+        },
         children: title
       }
     ),
@@ -3566,11 +5048,60 @@ const SceneOutro = ({
         initial: { opacity: 0, y: 25 },
         animate: { opacity: 1, y: 0 },
         transition: { startFrame: 22, type: "spring", damping: 15 },
-        className: "mt-6 bg-black/80 rounded border border-vintage-border/50 px-5 py-3 flex items-center gap-4.5 shadow-xl max-w-[280px] w-full",
+        className: `mt-6 outro-terminal rounded border text-left flex flex-col gap-2 font-mono text-[9px] md:text-[10px] ${isVertical ? "w-full p-3.5" : "max-w-[420px] w-full p-4.5"}`,
+        style: { fontFamily: SceneOutro_monoFont },
         children: [
-          /* @__PURE__ */ (0,jsx_runtime.jsx)(Terminal, { className: "w-4 h-4 text-vintage-gold" }),
-          /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { className: "font-mono text-xs text-vintage-paper/90 flex-1", children: terminalCommand })
+          /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: "flex items-center gap-1.5 text-slate-500 border-b border-white/5 pb-1.5 mb-1 justify-between", children: [
+            /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: "flex gap-1", children: [
+              /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { className: "w-1.5 h-1.5 rounded-full bg-red-500/30" }),
+              /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { className: "w-1.5 h-1.5 rounded-full bg-yellow-500/30" }),
+              /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { className: "w-1.5 h-1.5 rounded-full bg-green-500/30" })
+            ] }),
+            /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { className: "text-[8px] tracking-wider uppercase font-bold text-slate-600", children: headerBadge })
+          ] }),
+          /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: "flex gap-2", children: [
+            /* @__PURE__ */ (0,jsx_runtime.jsx)(Terminal, { className: "w-3.5 h-3.5 text-vintage-gold shrink-0 mt-0.5" }),
+            /* @__PURE__ */ (0,jsx_runtime.jsxs)("span", { className: "text-[#a88653] truncate", children: [
+              displayCommand,
+              frame < 45 && /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { className: "code-cursor" })
+            ] })
+          ] }),
+          showLog1 && /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: "text-slate-400 pl-5 truncate", children: [
+            "\u279C ",
+            stepLog1
+          ] }),
+          showLog2 && /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: "text-slate-400 pl-5", children: [
+            /* @__PURE__ */ (0,jsx_runtime.jsxs)("span", { className: "block truncate", children: [
+              "\u279C ",
+              stepLog2
+            ] }),
+            /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { className: "w-full h-1 bg-slate-900 rounded overflow-hidden mt-1.5 relative border border-white/5", children: /* @__PURE__ */ (0,jsx_runtime.jsx)(
+              "div",
+              {
+                className: "h-full bg-vintage-gold",
+                style: { width: `${progressBarPercent}%` }
+              }
+            ) })
+          ] }),
+          showLog3 && /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: "text-[#bef264] font-bold pl-5 truncate", children: [
+            "\u2714 ",
+            stepLog3
+          ] })
         ]
+      }
+    ),
+    /* @__PURE__ */ (0,jsx_runtime.jsx)(
+      MotionDiv,
+      {
+        style: {
+          transform: `scale(${buttonSpring})`,
+          opacity: buttonSpring
+        },
+        className: "mt-8",
+        children: /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: "outro-button px-6 py-2.5 rounded-full flex items-center gap-2 cursor-pointer text-xs", children: [
+          /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { children: "Kh\xE1m ph\xE1 ngay" }),
+          /* @__PURE__ */ (0,jsx_runtime.jsx)(ChevronRight, { className: "w-4 h-4" })
+        ] })
       }
     ),
     description && /* @__PURE__ */ (0,jsx_runtime.jsx)(
@@ -3579,12 +5110,1441 @@ const SceneOutro = ({
         initial: { opacity: 0 },
         animate: { opacity: 0.5 },
         transition: { startFrame: 30, type: "tween", duration: 20 },
-        className: "text-[9px] text-vintage-muted uppercase mt-5 tracking-widest font-mono",
+        className: "text-[9px] text-vintage-muted uppercase mt-6 tracking-widest font-mono",
         style: { fontFamily: SceneOutro_sansFont },
         children: description
       }
     )
   ] });
+};
+
+;// ../../node_modules/lucide-react/dist/esm/icons/crosshair.mjs
+/**
+ * @license lucide-react v1.18.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
+
+const crosshair_iconNode = [
+  ["circle", { cx: "12", cy: "12", r: "10", key: "1mglay" }],
+  ["line", { x1: "22", x2: "18", y1: "12", y2: "12", key: "l9bcsi" }],
+  ["line", { x1: "6", x2: "2", y1: "12", y2: "12", key: "13hhkx" }],
+  ["line", { x1: "12", x2: "12", y1: "6", y2: "2", key: "10w3f3" }],
+  ["line", { x1: "12", x2: "12", y1: "22", y2: "18", key: "15g9kq" }]
+];
+const Crosshair = createLucideIcon("crosshair", crosshair_iconNode);
+
+
+//# sourceMappingURL=crosshair.mjs.map
+
+;// ../../node_modules/lucide-react/dist/esm/icons/shield-alert.mjs
+/**
+ * @license lucide-react v1.18.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
+
+const shield_alert_iconNode = [
+  [
+    "path",
+    {
+      d: "M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z",
+      key: "oel41y"
+    }
+  ],
+  ["path", { d: "M12 8v4", key: "1got3b" }],
+  ["path", { d: "M12 16h.01", key: "1drbdi" }]
+];
+const ShieldAlert = createLucideIcon("shield-alert", shield_alert_iconNode);
+
+
+//# sourceMappingURL=shield-alert.mjs.map
+
+// EXTERNAL MODULE: ../../node_modules/css-loader/dist/cjs.js??ruleSet[1].rules[4].use[1]!../../node_modules/@tailwindcss/webpack/dist/index.js!./src/scenes/styles/SceneCyberpunk.css
+var SceneCyberpunk = __webpack_require__(5616);
+;// ./src/scenes/styles/SceneCyberpunk.css
+
+      
+      
+      
+      
+      
+      
+      
+      
+      
+
+var SceneCyberpunk_options = {};
+
+SceneCyberpunk_options.styleTagTransform = (styleTagTransform_default());
+SceneCyberpunk_options.setAttributes = (setAttributesWithoutAttributes_default());
+SceneCyberpunk_options.insert = insertBySelector_default().bind(null, "head");
+SceneCyberpunk_options.domAPI = (styleDomAPI_default());
+SceneCyberpunk_options.insertStyleElement = (insertStyleElement_default());
+
+var SceneCyberpunk_update = injectStylesIntoStyleTag_default()(SceneCyberpunk/* default */.A, SceneCyberpunk_options);
+
+
+
+
+       /* harmony default export */ const styles_SceneCyberpunk = (SceneCyberpunk/* default */.A && SceneCyberpunk/* default */.A.locals ? SceneCyberpunk/* default */.A.locals : undefined);
+
+;// ./src/scenes/SceneCyberpunk.tsx
+
+
+
+
+
+
+
+const { fontFamily: techFont } = ShareTechMono_loadFont("normal", { weights: ["400"] });
+const SceneCyberpunk_SceneCyberpunk = ({
+  title,
+  subtitle,
+  description,
+  imageUrl,
+  customProps = {}
+}) => {
+  const frame = (0,esm.useCurrentFrame)();
+  const { width, height } = (0,esm.useVideoConfig)();
+  const isVertical = height > width;
+  const headerBadge = (customProps == null ? void 0 : customProps.badgeText) || subtitle || "SYS ALERT";
+  const warningLabel = (customProps == null ? void 0 : customProps.metricLabel) || "THREAT DETECTED";
+  const statusMsg = (customProps == null ? void 0 : customProps.metricValue) || description;
+  const bgScale = (0,esm.interpolate)(frame, [0, 300], [1.04, 1.11], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp"
+  });
+  const scanlineY = (0,esm.interpolate)(frame % 80, [0, 79], [-10, 110]);
+  const crosshairRot = (0,esm.interpolate)(frame, [0, 300], [0, 180]);
+  const warnOpacity = (0,esm.interpolate)(Math.sin(frame * 0.25), [-1, 1], [0.3, 1]);
+  const generateBinaryStream = (seed, length) => {
+    const stream = [];
+    const visibleLength = Math.min(length, Math.floor(frame / 2.5) + seed % 4);
+    for (let j = 0; j < visibleLength; j++) {
+      const bit = Math.sin(seed + j * 0.9) > 0 ? "1" : "0";
+      stream.push(bit);
+    }
+    return stream.join("");
+  };
+  return /* @__PURE__ */ (0,jsx_runtime.jsxs)(
+    "div",
+    {
+      className: "relative flex flex-col items-center justify-center h-full w-full cyber-container overflow-hidden select-none p-6 md:p-12 text-center",
+      style: { fontFamily: techFont },
+      children: [
+        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { className: "absolute inset-0 cyber-grid opacity-15 pointer-events-none -z-10" }),
+        imageUrl && /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { className: "absolute inset-0 -z-20 overflow-hidden opacity-10", children: /* @__PURE__ */ (0,jsx_runtime.jsx)(
+          esm.Img,
+          {
+            src: imageUrl,
+            className: "w-full h-full object-cover filter hue-rotate-60",
+            style: {
+              transform: `scale(${bgScale})`
+            }
+          }
+        ) }),
+        /* @__PURE__ */ (0,jsx_runtime.jsx)(
+          "div",
+          {
+            className: `absolute rounded-full hud-ring flex items-center justify-center pointer-events-none opacity-30 ${isVertical ? "left-4 top-4 w-16 h-16" : "left-10 w-24 h-24"}`,
+            style: { transform: `rotate(${crosshairRot}deg)` },
+            children: /* @__PURE__ */ (0,jsx_runtime.jsx)(Crosshair, { className: "w-6 h-6 text-cyan-400" })
+          }
+        ),
+        /* @__PURE__ */ (0,jsx_runtime.jsx)(
+          "div",
+          {
+            className: `absolute rounded hud-ring flex items-center justify-center pointer-events-none opacity-20 ${isVertical ? "right-4 bottom-4 w-12 h-12" : "right-12 w-16 h-16"}`,
+            style: { transform: `rotate(${-crosshairRot * 1.5}deg)` },
+            children: /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { className: "w-8 h-8 border border-dotted border-cyan-400" })
+          }
+        ),
+        /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: "absolute left-3 top-12 bottom-12 w-8 font-mono text-[8px] text-cyan-400/30 select-none pointer-events-none text-left leading-none tracking-widest break-all overflow-hidden matrix-stream", children: [
+          /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { children: generateBinaryStream(11, 35) }),
+          /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { className: "mt-4", children: generateBinaryStream(25, 25) })
+        ] }),
+        /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: "absolute right-3 top-12 bottom-12 w-8 font-mono text-[8px] text-cyan-400/30 select-none pointer-events-none text-right leading-none tracking-widest break-all overflow-hidden matrix-stream", children: [
+          /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { children: generateBinaryStream(42, 30) }),
+          /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { className: "mt-4", children: generateBinaryStream(57, 40) })
+        ] }),
+        /* @__PURE__ */ (0,jsx_runtime.jsx)(
+          "div",
+          {
+            className: "absolute left-0 right-0 h-[2px] bg-cyan-400/30 shadow-[0_0_10px_#22d3ee] pointer-events-none z-10",
+            style: { top: `${scanlineY}%` }
+          }
+        ),
+        /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: "relative z-20 flex flex-col items-center max-w-[90%] md:max-w-[650px]", children: [
+          /* @__PURE__ */ (0,jsx_runtime.jsx)(
+            MotionDiv,
+            {
+              initial: { opacity: 0, scale: 0.5, rotate: -45 },
+              animate: { opacity: 1, scale: 1, rotate: 0 },
+              transition: { startFrame: 5, type: "spring", damping: 10 },
+              className: "mb-4",
+              children: /* @__PURE__ */ (0,jsx_runtime.jsx)(
+                "div",
+                {
+                  className: "w-11 h-11 rounded-lg bg-pink-500/10 cyber-neon-border flex items-center justify-center",
+                  style: { opacity: warnOpacity },
+                  children: /* @__PURE__ */ (0,jsx_runtime.jsx)(ShieldAlert, { className: "w-5.5 h-5.5 text-pink-400" })
+                }
+              )
+            }
+          ),
+          /* @__PURE__ */ (0,jsx_runtime.jsxs)(
+            MotionDiv,
+            {
+              initial: { opacity: 0, x: -50 },
+              animate: { opacity: 1, x: 0 },
+              transition: { startFrame: 10, type: "spring", damping: 14 },
+              className: "cyber-neon-text-pink text-xs uppercase tracking-[0.4em] mb-2.5 font-bold",
+              children: [
+                "// ",
+                headerBadge
+              ]
+            }
+          ),
+          /* @__PURE__ */ (0,jsx_runtime.jsx)(
+            MotionDiv,
+            {
+              initial: { opacity: 0, y: 30 },
+              animate: { opacity: 1, y: 0 },
+              transition: { startFrame: 15, type: "spring", damping: 12 },
+              className: "cyber-neon-text-cyan tracking-wide uppercase font-black",
+              style: {
+                fontSize: isVertical ? "28px" : "44px",
+                lineHeight: 1.15
+              },
+              children: title
+            }
+          ),
+          statusMsg && /* @__PURE__ */ (0,jsx_runtime.jsxs)(
+            MotionDiv,
+            {
+              initial: { opacity: 0, y: 20 },
+              animate: { opacity: 0.85, y: 0 },
+              transition: { startFrame: 22, type: "spring", damping: 16 },
+              className: "text-cyan-300 font-sans text-xs tracking-wider max-w-[520px] mt-5 leading-relaxed font-light border-l border-cyan-500/35 pl-4 text-left",
+              children: [
+                /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: "text-[9px] text-[#f472b6] font-mono tracking-widest font-bold uppercase mb-1", children: [
+                  "STATUS: ",
+                  warningLabel
+                ] }),
+                statusMsg
+              ]
+            }
+          ),
+          /* @__PURE__ */ (0,jsx_runtime.jsx)(
+            MotionDiv,
+            {
+              initial: { opacity: 0, scale: 0 },
+              animate: { opacity: 0.6, scale: 1 },
+              transition: { startFrame: 28, type: "spring", damping: 15 },
+              className: "w-48 h-[2px] bg-gradient-to-r from-transparent via-cyan-400 to-pink-500 mt-8"
+            }
+          )
+        ] })
+      ]
+    }
+  );
+};
+
+;// ../../node_modules/lucide-react/dist/esm/icons/trending-up.mjs
+/**
+ * @license lucide-react v1.18.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
+
+const trending_up_iconNode = [
+  ["path", { d: "M16 7h6v6", key: "box55l" }],
+  ["path", { d: "m22 7-8.5 8.5-5-5L2 17", key: "1t1m79" }]
+];
+const TrendingUp = createLucideIcon("trending-up", trending_up_iconNode);
+
+
+//# sourceMappingURL=trending-up.mjs.map
+
+;// ../../node_modules/lucide-react/dist/esm/icons/briefcase.mjs
+/**
+ * @license lucide-react v1.18.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
+
+const briefcase_iconNode = [
+  ["path", { d: "M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16", key: "jecpp" }],
+  ["rect", { width: "20", height: "14", x: "2", y: "6", rx: "2", key: "i6l2r4" }]
+];
+const Briefcase = createLucideIcon("briefcase", briefcase_iconNode);
+
+
+//# sourceMappingURL=briefcase.mjs.map
+
+// EXTERNAL MODULE: ../../node_modules/css-loader/dist/cjs.js??ruleSet[1].rules[4].use[1]!../../node_modules/@tailwindcss/webpack/dist/index.js!./src/scenes/styles/SceneCorporate.css
+var SceneCorporate = __webpack_require__(8526);
+;// ./src/scenes/styles/SceneCorporate.css
+
+      
+      
+      
+      
+      
+      
+      
+      
+      
+
+var SceneCorporate_options = {};
+
+SceneCorporate_options.styleTagTransform = (styleTagTransform_default());
+SceneCorporate_options.setAttributes = (setAttributesWithoutAttributes_default());
+SceneCorporate_options.insert = insertBySelector_default().bind(null, "head");
+SceneCorporate_options.domAPI = (styleDomAPI_default());
+SceneCorporate_options.insertStyleElement = (insertStyleElement_default());
+
+var SceneCorporate_update = injectStylesIntoStyleTag_default()(SceneCorporate/* default */.A, SceneCorporate_options);
+
+
+
+
+       /* harmony default export */ const styles_SceneCorporate = (SceneCorporate/* default */.A && SceneCorporate/* default */.A.locals ? SceneCorporate/* default */.A.locals : undefined);
+
+;// ./src/scenes/SceneCorporate.tsx
+
+
+
+
+
+
+
+const { fontFamily: SceneCorporate_sansFont } = SpaceGrotesk_loadFont("normal", { weights: ["400", "700"] });
+const SceneCorporate_SceneCorporate = ({
+  title,
+  subtitle,
+  description,
+  imageUrl,
+  customProps = {}
+}) => {
+  const frame = (0,esm.useCurrentFrame)();
+  const { width, height } = (0,esm.useVideoConfig)();
+  const isVertical = height > width;
+  const headerBadge = (customProps == null ? void 0 : customProps.badgeText) || "Q4 Enterprise Growth";
+  const chartLabel = (customProps == null ? void 0 : customProps.metricLabel) || "Valuation Growth";
+  const chartValue = (customProps == null ? void 0 : customProps.metricValue) || "+245.8% YTD";
+  const bgScale = (0,esm.interpolate)(frame, [0, 300], [1.03, 1.09], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp"
+  });
+  const chartLength = 350;
+  const lineDrawProgress = (0,esm.interpolate)(frame, [15, 90], [chartLength, 0], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp"
+  });
+  const trackingX = (0,esm.interpolate)(frame, [15, 90], [20, 280], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp"
+  });
+  const trackingY = (0,esm.interpolate)(frame, [15, 90], [80, 15], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp"
+  });
+  return /* @__PURE__ */ (0,jsx_runtime.jsxs)(
+    "div",
+    {
+      className: `corp-container flex items-center w-full h-full ${isVertical ? "flex-col justify-center p-6 gap-6" : "flex-row justify-between px-12 gap-12"}`,
+      style: { fontFamily: SceneCorporate_sansFont },
+      children: [
+        imageUrl && /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { className: "absolute inset-0 -z-20 overflow-hidden opacity-10", children: /* @__PURE__ */ (0,jsx_runtime.jsx)(
+          esm.Img,
+          {
+            src: imageUrl,
+            className: "w-full h-full object-cover",
+            style: {
+              transform: `scale(${bgScale})`
+            }
+          }
+        ) }),
+        /* @__PURE__ */ (0,jsx_runtime.jsx)(
+          "div",
+          {
+            className: "absolute inset-x-0 bottom-0 h-48 opacity-10 pointer-events-none -z-10",
+            style: {
+              backgroundImage: "radial-gradient(circle, #38bdf8 1px, transparent 1px)",
+              backgroundSize: "24px 24px"
+            }
+          }
+        ),
+        /* @__PURE__ */ (0,jsx_runtime.jsxs)(
+          MotionDiv,
+          {
+            initial: { opacity: 0, x: isVertical ? 0 : -30, y: isVertical ? 20 : 0, scale: 0.95 },
+            animate: { opacity: 1, x: 0, y: 0, scale: 1 },
+            transition: { startFrame: 5, type: "spring", damping: 15 },
+            className: `rounded-xl corp-panel p-4 flex flex-col justify-between ${isVertical ? "w-full h-[220px]" : "w-[45%] h-[300px]"}`,
+            children: [
+              /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: "flex justify-between items-center border-b border-sky-500/10 pb-2", children: [
+                /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { className: "text-[9px] text-sky-400 font-mono tracking-widest uppercase", children: headerBadge }),
+                /* @__PURE__ */ (0,jsx_runtime.jsx)(TrendingUp, { className: "w-4 h-4 text-sky-400" })
+              ] }),
+              /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: "flex-1 my-2 border border-white/5 rounded bg-slate-950/40 relative overflow-hidden p-2 min-h-[80px]", children: [
+                /* @__PURE__ */ (0,jsx_runtime.jsxs)("svg", { className: "w-full h-full", viewBox: "0 0 300 100", preserveAspectRatio: "none", children: [
+                  /* @__PURE__ */ (0,jsx_runtime.jsx)("line", { x1: "0", y1: "20", x2: "300", y2: "20", stroke: "rgba(56, 189, 248, 0.05)", strokeWidth: "1" }),
+                  /* @__PURE__ */ (0,jsx_runtime.jsx)("line", { x1: "0", y1: "50", x2: "300", y2: "50", stroke: "rgba(56, 189, 248, 0.05)", strokeWidth: "1" }),
+                  /* @__PURE__ */ (0,jsx_runtime.jsx)("line", { x1: "0", y1: "80", x2: "300", y2: "80", stroke: "rgba(56, 189, 248, 0.05)", strokeWidth: "1" }),
+                  /* @__PURE__ */ (0,jsx_runtime.jsx)(
+                    "path",
+                    {
+                      d: "M 20 80 Q 70 85 110 65 T 200 40 T 280 15",
+                      className: "corp-chart-path",
+                      strokeDasharray: chartLength,
+                      strokeDashoffset: lineDrawProgress
+                    }
+                  ),
+                  frame >= 15 && /* @__PURE__ */ (0,jsx_runtime.jsx)(
+                    "circle",
+                    {
+                      cx: trackingX,
+                      cy: trackingY,
+                      r: "4.5",
+                      fill: "#38bdf8",
+                      className: "corp-grid-dot",
+                      style: {
+                        filter: "drop-shadow(0 0 4px #38bdf8)"
+                      }
+                    }
+                  )
+                ] }),
+                /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: "absolute top-2 left-2 flex flex-col", children: [
+                  /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { className: "text-[6px] text-slate-500 uppercase", children: chartLabel }),
+                  /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { className: "text-xs text-white font-mono font-bold", children: chartValue })
+                ] })
+              ] }),
+              /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: "flex justify-between text-[8px] text-sky-400/60 font-mono tracking-widest shrink-0", children: [
+                /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { children: "TICKER: RETN" }),
+                /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { children: "MARKET: SECURE" })
+              ] })
+            ]
+          }
+        ),
+        /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: `flex flex-col justify-center ${isVertical ? "w-full text-center items-center" : "w-[55%]"}`, children: [
+          /* @__PURE__ */ (0,jsx_runtime.jsx)(
+            MotionDiv,
+            {
+              initial: { opacity: 0, y: -15 },
+              animate: { opacity: 1, y: 0 },
+              transition: { startFrame: 10, type: "spring", damping: 18 },
+              className: "mb-4",
+              children: /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { className: "w-10 h-10 rounded-full bg-sky-500/10 border border-sky-500/30 flex items-center justify-center text-sky-400", children: /* @__PURE__ */ (0,jsx_runtime.jsx)(Briefcase, { className: "w-5 h-5" }) })
+            }
+          ),
+          /* @__PURE__ */ (0,jsx_runtime.jsx)(
+            MotionDiv,
+            {
+              initial: { opacity: 0 },
+              animate: { opacity: 0.6, y: 0 },
+              transition: { startFrame: 12, type: "tween", duration: 25 },
+              className: "text-sky-400 text-[10px] uppercase tracking-[0.35em] font-bold mb-3",
+              children: subtitle
+            }
+          ),
+          /* @__PURE__ */ (0,jsx_runtime.jsx)(
+            MotionDiv,
+            {
+              initial: { opacity: 0, scale: 0.97 },
+              animate: { opacity: 1, scale: 1 },
+              transition: { startFrame: 16, type: "spring", damping: 15 },
+              className: "text-white font-bold uppercase leading-tight",
+              style: {
+                fontSize: isVertical ? "26px" : "36px"
+              },
+              children: title
+            }
+          ),
+          description && /* @__PURE__ */ (0,jsx_runtime.jsx)(
+            MotionDiv,
+            {
+              initial: { opacity: 0, y: 15 },
+              animate: { opacity: 0.75, y: 0 },
+              transition: { startFrame: 22, type: "tween", duration: 30 },
+              className: "text-slate-300 text-xs md:text-sm tracking-wide mt-4 max-w-[480px] leading-relaxed font-light",
+              children: description
+            }
+          ),
+          /* @__PURE__ */ (0,jsx_runtime.jsx)(
+            MotionDiv,
+            {
+              initial: { opacity: 0, scale: 0 },
+              animate: { opacity: 0.4, scale: 1 },
+              transition: { startFrame: 28, type: "spring", damping: 16 },
+              className: "w-16 h-[2px] bg-sky-400 mt-6"
+            }
+          )
+        ] })
+      ]
+    }
+  );
+};
+
+// EXTERNAL MODULE: ../../node_modules/css-loader/dist/cjs.js??ruleSet[1].rules[4].use[1]!../../node_modules/@tailwindcss/webpack/dist/index.js!./src/scenes/styles/SceneVintage.css
+var SceneVintage = __webpack_require__(685);
+;// ./src/scenes/styles/SceneVintage.css
+
+      
+      
+      
+      
+      
+      
+      
+      
+      
+
+var SceneVintage_options = {};
+
+SceneVintage_options.styleTagTransform = (styleTagTransform_default());
+SceneVintage_options.setAttributes = (setAttributesWithoutAttributes_default());
+SceneVintage_options.insert = insertBySelector_default().bind(null, "head");
+SceneVintage_options.domAPI = (styleDomAPI_default());
+SceneVintage_options.insertStyleElement = (insertStyleElement_default());
+
+var SceneVintage_update = injectStylesIntoStyleTag_default()(SceneVintage/* default */.A, SceneVintage_options);
+
+
+
+
+       /* harmony default export */ const styles_SceneVintage = (SceneVintage/* default */.A && SceneVintage/* default */.A.locals ? SceneVintage/* default */.A.locals : undefined);
+
+;// ./src/scenes/SceneVintage.tsx
+
+
+
+
+
+
+
+
+const { fontFamily: SceneVintage_serifFont } = loadFont("normal", { weights: ["400"] });
+const { fontFamily: SceneVintage_sansFont } = SpaceGrotesk_loadFont("normal", { weights: ["400", "700"] });
+const SceneVintage_SceneVintage = ({
+  title,
+  subtitle,
+  description,
+  imageUrl,
+  customProps = {}
+}) => {
+  const frame = (0,esm.useCurrentFrame)();
+  const { width, height } = (0,esm.useVideoConfig)();
+  const isVertical = height > width;
+  const headerBadge = (customProps == null ? void 0 : customProps.badgeText) || subtitle;
+  const bgScale = (0,esm.interpolate)(frame, [0, 300], [1.08, 1.16], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp"
+  });
+  const typingStartFrame = 24;
+  const typedLength = description ? Math.min(description.length, Math.floor(Math.max(0, frame - typingStartFrame) * 0.8)) : 0;
+  const typedText = description ? description.substring(0, typedLength) : "";
+  const isTypingComplete = description ? typedLength >= description.length : true;
+  const jitterX = Math.sin(frame * 1.5) * Math.cos(frame * 2.7) * 1.2;
+  const jitterY = Math.cos(frame * 1.9) * Math.sin(frame * 3.1) * 1.2;
+  const dustX = (0,esm.interpolate)((Math.sin(frame * 4.3) + 1) / 2, [0, 1], [40, isVertical ? 320 : 960]);
+  const dustY = (0,esm.interpolate)((Math.cos(frame * 3.1) + 1) / 2, [0, 1], [40, isVertical ? 600 : 680]);
+  const showDust = frame % 7 === 0 || frame % 11 === 0;
+  const flickerOpacity = (0,esm.interpolate)(Math.sin(frame * 0.9), [-1, 1], [0.03, 0.08]);
+  return /* @__PURE__ */ (0,jsx_runtime.jsxs)(
+    "div",
+    {
+      className: "relative flex flex-col items-center justify-center h-full w-full vintage-container select-none p-6 md:p-12 text-center",
+      style: {
+        fontFamily: SceneVintage_sansFont,
+        transform: `translate(${jitterX}px, ${jitterY}px)`
+      },
+      children: [
+        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { className: "vintage-vignette" }),
+        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { className: "vintage-lut-tint", style: { backgroundColor: `rgba(217, 119, 6, ${flickerOpacity})` } }),
+        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { className: "vintage-frame-lines", style: { inset: isVertical ? "16px" : "30px" } }),
+        showDust && /* @__PURE__ */ (0,jsx_runtime.jsx)(
+          "div",
+          {
+            className: "vintage-dust",
+            style: {
+              left: `${dustX}px`,
+              top: `${dustY}px`,
+              transform: `rotate(${frame * 45}deg)`,
+              width: `${1 + frame % 3}px`,
+              height: `${8 + frame % 8}px`
+            }
+          }
+        ),
+        imageUrl && /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { className: "absolute inset-0 -z-20 overflow-hidden", children: /* @__PURE__ */ (0,jsx_runtime.jsx)(
+          esm.Img,
+          {
+            src: imageUrl,
+            className: "w-full h-full object-cover filter grayscale-[40%] sepia-[25%]",
+            style: {
+              transform: `scale(${bgScale})`
+            }
+          }
+        ) }),
+        /* @__PURE__ */ (0,jsx_runtime.jsx)(
+          MotionDiv,
+          {
+            initial: { opacity: 0, scale: 0.8 },
+            animate: { opacity: 1, scale: 1 },
+            transition: { startFrame: 6, type: "spring", damping: 20 },
+            className: "mb-4 text-vintage-gold/80 z-20",
+            children: /* @__PURE__ */ (0,jsx_runtime.jsx)(Camera, { className: "w-8 h-8" })
+          }
+        ),
+        /* @__PURE__ */ (0,jsx_runtime.jsx)(
+          MotionDiv,
+          {
+            initial: { opacity: 0, y: -10 },
+            animate: { opacity: 0.75, y: 0 },
+            transition: { startFrame: 12, type: "tween", duration: 30 },
+            className: "text-vintage-gold text-xs uppercase tracking-[0.4em] mb-4 font-semibold z-20",
+            children: headerBadge
+          }
+        ),
+        /* @__PURE__ */ (0,jsx_runtime.jsx)(
+          MotionDiv,
+          {
+            initial: { opacity: 0, y: 20 },
+            animate: { opacity: 1, y: 0 },
+            transition: { startFrame: 16, type: "spring", damping: 16 },
+            className: "text-[#f5ebd7] tracking-widest uppercase text-center max-w-[800px] font-medium z-20 leading-tight",
+            style: {
+              fontFamily: SceneVintage_serifFont,
+              fontSize: isVertical ? "30px" : "46px"
+            },
+            children: title
+          }
+        ),
+        description && /* @__PURE__ */ (0,jsx_runtime.jsxs)(
+          MotionDiv,
+          {
+            className: "text-[#e2d5c3] text-xs tracking-wider text-center mt-6 leading-relaxed font-light z-20 italic font-serif h-12",
+            style: {
+              fontFamily: SceneVintage_serifFont,
+              maxWidth: isVertical ? "90%" : "460px"
+            },
+            children: [
+              typedText && `"${typedText}"`,
+              !isTypingComplete && frame >= typingStartFrame && /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { className: "inline-block w-1.5 h-3.5 bg-vintage-gold ml-1.5 align-middle opacity-80" })
+            ]
+          }
+        ),
+        /* @__PURE__ */ (0,jsx_runtime.jsxs)(
+          MotionDiv,
+          {
+            initial: { opacity: 0, scale: 0 },
+            animate: { opacity: 0.35, scale: 1 },
+            transition: { startFrame: 30, type: "spring", damping: 18 },
+            className: "flex items-center gap-1.5 mt-8 z-20",
+            children: [
+              /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { className: "w-1.5 h-1.5 rounded-full bg-vintage-gold" }),
+              /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { className: "w-1.5 h-1.5 rounded-full bg-vintage-gold" }),
+              /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { className: "w-1.5 h-1.5 rounded-full bg-vintage-gold" })
+            ]
+          }
+        )
+      ]
+    }
+  );
+};
+
+;// ../../node_modules/@remotion/google-fonts/dist/esm/ArchivoBlack.mjs
+// src/base.ts
+
+
+
+// src/resolve-font-subsets.ts
+var ArchivoBlack_isChunkSubset = (subset) => /^\[\d+\]$/.test(subset);
+var ArchivoBlack_compareChunkSubsets = (a, b) => {
+  return Number(a.slice(1, -1)) - Number(b.slice(1, -1));
+};
+var ArchivoBlack_resolveFontSubsetKeys = ({
+  availableSubsetKeys,
+  metaSubsets,
+  requestedSubset
+}) => {
+  if (availableSubsetKeys.includes(requestedSubset)) {
+    return [requestedSubset];
+  }
+  if (!metaSubsets.includes(requestedSubset)) {
+    return [requestedSubset];
+  }
+  const chunkSubsets = availableSubsetKeys.filter(ArchivoBlack_isChunkSubset).sort(ArchivoBlack_compareChunkSubsets);
+  return chunkSubsets.length === 0 ? [requestedSubset] : chunkSubsets;
+};
+
+// src/base.ts
+var ArchivoBlack_loadedFonts = {};
+var ArchivoBlack_withResolvers = function() {
+  let resolve;
+  let reject;
+  const promise = new Promise((res, rej) => {
+    resolve = res;
+    reject = rej;
+  });
+  return { promise, resolve, reject };
+};
+var ArchivoBlack_loadFontFaceOrTimeoutAfter20Seconds = (fontFace) => {
+  const timeout = ArchivoBlack_withResolvers();
+  const int = setTimeout(() => {
+    timeout.reject(new Error("Timed out loading Google Font"));
+  }, 18000);
+  return Promise.race([
+    fontFace.load().then(() => {
+      clearTimeout(int);
+    }),
+    timeout.promise
+  ]);
+};
+var ArchivoBlack_loadFonts = (meta, style, options) => {
+  const weightsAndSubsetsAreSpecified = Array.isArray(options?.weights) && Array.isArray(options?.subsets) && options.weights.length > 0 && options.subsets.length > 0;
+  if (no_react.NoReactInternals.ENABLE_V5_BREAKING_CHANGES && !weightsAndSubsetsAreSpecified) {
+    throw new Error("Loading Google Fonts without specifying weights and subsets is not supported in Remotion v5. Please specify the weights and subsets you need.");
+  }
+  const promises = [];
+  const styles = style ? [style] : Object.keys(meta.fonts);
+  let fontsLoaded = 0;
+  for (const style2 of styles) {
+    if (typeof FontFace === "undefined") {
+      continue;
+    }
+    if (!meta.fonts[style2]) {
+      throw new Error(`The font ${meta.fontFamily} does not have a style ${style2}`);
+    }
+    const weights = options?.weights ?? Object.keys(meta.fonts[style2]);
+    for (const weight of weights) {
+      if (!meta.fonts[style2][weight]) {
+        throw new Error(`The font ${meta.fontFamily} does not  have a weight ${weight} in style ${style2}`);
+      }
+      const requestedSubsets = options?.subsets ?? Object.keys(meta.fonts[style2][weight]);
+      const availableSubsetKeys = Object.keys(meta.fonts[style2][weight]);
+      const subsets = [
+        ...new Set(requestedSubsets.flatMap((requestedSubset) => ArchivoBlack_resolveFontSubsetKeys({
+          availableSubsetKeys,
+          metaSubsets: meta.subsets,
+          requestedSubset
+        })))
+      ];
+      for (const subset of subsets) {
+        let font = meta.fonts[style2]?.[weight]?.[subset];
+        if (!font) {
+          throw new Error(`weight: ${weight} subset: ${subset} is not available for '${meta.fontFamily}'`);
+        }
+        let fontKey = `${meta.fontFamily}-${style2}-${weight}-${subset}`;
+        const previousPromise = ArchivoBlack_loadedFonts[fontKey];
+        if (previousPromise) {
+          promises.push(previousPromise);
+          continue;
+        }
+        const baseLabel = `Fetching ${meta.fontFamily} font ${JSON.stringify({
+          style: style2,
+          weight,
+          subset
+        })}`;
+        const label = weightsAndSubsetsAreSpecified ? baseLabel : `${baseLabel}. This might be caused by loading too many font variations. Read more: https://www.remotion.dev/docs/troubleshooting/font-loading-errors#render-timeout-when-loading-google-fonts`;
+        const handle = (0,esm.delayRender)(label, { timeoutInMilliseconds: 60000 });
+        fontsLoaded++;
+        const fontFace = new FontFace(meta.fontFamily, `url(${font}) format('woff2')`, {
+          weight,
+          style: style2,
+          unicodeRange: meta.unicodeRanges[subset]
+        });
+        let attempts = 2;
+        const tryToLoad = () => {
+          if (fontFace.status === "loaded") {
+            (0,esm.continueRender)(handle);
+            return;
+          }
+          const promise = ArchivoBlack_loadFontFaceOrTimeoutAfter20Seconds(fontFace).then(() => {
+            (options?.document ?? document).fonts.add(fontFace);
+            (0,esm.continueRender)(handle);
+          }).catch((err) => {
+            ArchivoBlack_loadedFonts[fontKey] = undefined;
+            if (attempts === 0) {
+              throw err;
+            } else {
+              attempts--;
+              tryToLoad();
+            }
+          });
+          ArchivoBlack_loadedFonts[fontKey] = promise;
+          promises.push(promise);
+        };
+        tryToLoad();
+      }
+    }
+    if (fontsLoaded > 20 && !options?.ignoreTooManyRequestsWarning) {
+      console.warn(`Made ${fontsLoaded} network requests to load fonts for ${meta.fontFamily}. Consider loading fewer weights and subsets by passing options to loadFont(). Disable this warning by passing "ignoreTooManyRequestsWarning: true" to "options".`);
+    }
+  }
+  return {
+    fontFamily: meta.fontFamily,
+    fonts: meta.fonts,
+    unicodeRanges: meta.unicodeRanges,
+    waitUntilDone: () => Promise.all(promises).then(() => {
+      return;
+    })
+  };
+};
+
+// src/ArchivoBlack.ts
+var ArchivoBlack_getInfo = () => ({
+  fontFamily: "Archivo Black",
+  importName: "ArchivoBlack",
+  version: "v23",
+  url: "https://fonts.googleapis.com/css2?family=Archivo+Black:ital,wght@0,400",
+  unicodeRanges: {
+    "latin-ext": "U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF",
+    latin: "U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD"
+  },
+  fonts: {
+    normal: {
+      "400": {
+        "latin-ext": "https://fonts.gstatic.com/s/archivoblack/v23/HTxqL289NzCGg4MzN6KJ7eW6CYKF_i7y.woff2",
+        latin: "https://fonts.gstatic.com/s/archivoblack/v23/HTxqL289NzCGg4MzN6KJ7eW6CYyF_g.woff2"
+      }
+    }
+  },
+  subsets: ["latin", "latin-ext"]
+});
+var ArchivoBlack_fontFamily = "Archivo Black";
+var ArchivoBlack_loadFont = (style, options) => {
+  return ArchivoBlack_loadFonts(ArchivoBlack_getInfo(), style, options);
+};
+
+
+;// ../../node_modules/lucide-react/dist/esm/icons/gamepad-2.mjs
+/**
+ * @license lucide-react v1.18.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
+
+const gamepad_2_iconNode = [
+  ["line", { x1: "6", x2: "10", y1: "11", y2: "11", key: "1gktln" }],
+  ["line", { x1: "8", x2: "8", y1: "9", y2: "13", key: "qnk9ow" }],
+  ["line", { x1: "15", x2: "15.01", y1: "12", y2: "12", key: "krot7o" }],
+  ["line", { x1: "18", x2: "18.01", y1: "10", y2: "10", key: "1lcuu1" }],
+  [
+    "path",
+    {
+      d: "M17.32 5H6.68a4 4 0 0 0-3.978 3.59c-.006.052-.01.101-.017.152C2.604 9.416 2 14.456 2 16a3 3 0 0 0 3 3c1 0 1.5-.5 2-1l1.414-1.414A2 2 0 0 1 9.828 16h4.344a2 2 0 0 1 1.414.586L17 18c.5.5 1 1 2 1a3 3 0 0 0 3-3c0-1.545-.604-6.584-.685-7.258-.007-.05-.011-.1-.017-.151A4 4 0 0 0 17.32 5z",
+      key: "mfqc10"
+    }
+  ]
+];
+const Gamepad2 = createLucideIcon("gamepad-2", gamepad_2_iconNode);
+
+
+//# sourceMappingURL=gamepad-2.mjs.map
+
+// EXTERNAL MODULE: ../../node_modules/css-loader/dist/cjs.js??ruleSet[1].rules[4].use[1]!../../node_modules/@tailwindcss/webpack/dist/index.js!./src/scenes/styles/ScenePlayful.css
+var ScenePlayful = __webpack_require__(4688);
+;// ./src/scenes/styles/ScenePlayful.css
+
+      
+      
+      
+      
+      
+      
+      
+      
+      
+
+var ScenePlayful_options = {};
+
+ScenePlayful_options.styleTagTransform = (styleTagTransform_default());
+ScenePlayful_options.setAttributes = (setAttributesWithoutAttributes_default());
+ScenePlayful_options.insert = insertBySelector_default().bind(null, "head");
+ScenePlayful_options.domAPI = (styleDomAPI_default());
+ScenePlayful_options.insertStyleElement = (insertStyleElement_default());
+
+var ScenePlayful_update = injectStylesIntoStyleTag_default()(ScenePlayful/* default */.A, ScenePlayful_options);
+
+
+
+
+       /* harmony default export */ const styles_ScenePlayful = (ScenePlayful/* default */.A && ScenePlayful/* default */.A.locals ? ScenePlayful/* default */.A.locals : undefined);
+
+;// ./src/scenes/ScenePlayful.tsx
+
+
+
+
+
+
+
+const { fontFamily: heavyFont } = ArchivoBlack_loadFont("normal");
+const ScenePlayful_ScenePlayful = ({
+  title,
+  subtitle,
+  description,
+  imageUrl,
+  customProps = {}
+}) => {
+  const frame = (0,esm.useCurrentFrame)();
+  const { fps, width, height } = (0,esm.useVideoConfig)();
+  const isVertical = height > width;
+  const headerBadge = (customProps == null ? void 0 : customProps.badgeText) || subtitle;
+  const springA = (0,esm.spring)({
+    frame: Math.max(0, frame - 5),
+    fps,
+    config: { damping: 6, stiffness: 180, mass: 0.5 }
+  });
+  const springB = (0,esm.spring)({
+    frame: Math.max(0, frame - 12),
+    fps,
+    config: { damping: 7, stiffness: 160, mass: 0.5 }
+  });
+  const springC = (0,esm.spring)({
+    frame: Math.max(0, frame - 18),
+    fps,
+    config: { damping: 6, stiffness: 170, mass: 0.6 }
+  });
+  const starRotation = frame * 2.8;
+  const floatY = Math.sin(frame * 0.1) * 8;
+  return /* @__PURE__ */ (0,jsx_runtime.jsxs)(
+    "div",
+    {
+      className: "relative flex flex-col items-center justify-center h-full w-full playful-container select-none p-6 md:p-12",
+      style: { fontFamily: heavyFont },
+      children: [
+        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { className: "absolute inset-0 playful-grid-dots opacity-15 pointer-events-none -z-10" }),
+        imageUrl && /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { className: "absolute inset-0 -z-20 overflow-hidden opacity-25", children: /* @__PURE__ */ (0,jsx_runtime.jsx)(
+          esm.Img,
+          {
+            src: imageUrl,
+            className: "w-full h-full object-cover scale-[1.03] rotate-[1deg] border-4 border-black"
+          }
+        ) }),
+        /* @__PURE__ */ (0,jsx_runtime.jsx)(
+          "div",
+          {
+            className: `absolute opacity-30 text-black pointer-events-none ${isVertical ? "left-6 top-6" : "left-16 top-16"}`,
+            style: { transform: `translateY(${floatY}px) rotate(${starRotation}deg)` },
+            children: /* @__PURE__ */ (0,jsx_runtime.jsx)(Sparkles, { className: "w-8 h-8" })
+          }
+        ),
+        /* @__PURE__ */ (0,jsx_runtime.jsx)(
+          "div",
+          {
+            className: `absolute opacity-30 text-black pointer-events-none ${isVertical ? "right-6 bottom-6" : "right-16 bottom-16"}`,
+            style: { transform: `translateY(${-floatY}px) rotate(${-starRotation}deg)` },
+            children: /* @__PURE__ */ (0,jsx_runtime.jsx)(Gamepad2, { className: "w-10 h-10" })
+          }
+        ),
+        /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: "flex flex-col items-center text-center p-4 max-w-[700px] w-full", children: [
+          /* @__PURE__ */ (0,jsx_runtime.jsx)(
+            MotionDiv,
+            {
+              style: {
+                transform: `scale(${springA}) rotate(${starRotation}deg)`,
+                opacity: springA
+              },
+              className: "mb-4 bg-[#c084fc] border-[3px] border-black p-2 rounded-lg neobrutalism-card text-black z-20",
+              children: /* @__PURE__ */ (0,jsx_runtime.jsx)(Sparkles, { className: "w-7 h-7 fill-current" })
+            }
+          ),
+          /* @__PURE__ */ (0,jsx_runtime.jsx)(
+            MotionDiv,
+            {
+              style: {
+                transform: `scale(${springB}) rotate(${-2 + (1 - springB) * 15}deg)`,
+                opacity: springB
+              },
+              className: "bg-white border-[3px] border-black px-4 py-1.5 rounded-md neobrutalism-card text-black text-xs uppercase tracking-wider font-extrabold mb-5 z-20",
+              children: headerBadge
+            }
+          ),
+          /* @__PURE__ */ (0,jsx_runtime.jsx)(
+            MotionDiv,
+            {
+              style: {
+                transform: `scale(${springC}) rotate(${1 - (1 - springC) * 10}deg)`,
+                opacity: springC
+              },
+              className: "bg-[#fb7185] border-[3px] border-black p-5 md:p-6 rounded-xl neobrutalism-card text-black uppercase font-black tracking-tighter leading-none z-20",
+              children: /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { style: { fontSize: isVertical ? "28px" : "44px" }, children: title })
+            }
+          ),
+          description && /* @__PURE__ */ (0,jsx_runtime.jsx)(
+            MotionDiv,
+            {
+              initial: { opacity: 0, y: 30 },
+              animate: { opacity: 1, y: 0 },
+              transition: { startFrame: 24, type: "spring", damping: 10 },
+              className: "bg-[#818cf8] border-[3px] border-black p-4 rounded-lg neobrutalism-card text-black text-xs md:text-sm tracking-wide mt-6 leading-relaxed font-sans font-bold max-w-[500px] z-20",
+              children: description
+            }
+          )
+        ] })
+      ]
+    }
+  );
+};
+
+;// ../../node_modules/lucide-react/dist/esm/icons/shield.mjs
+/**
+ * @license lucide-react v1.18.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
+
+const shield_iconNode = [
+  [
+    "path",
+    {
+      d: "M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z",
+      key: "oel41y"
+    }
+  ]
+];
+const Shield = createLucideIcon("shield", shield_iconNode);
+
+
+//# sourceMappingURL=shield.mjs.map
+
+;// ../../node_modules/lucide-react/dist/esm/icons/globe.mjs
+/**
+ * @license lucide-react v1.18.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
+
+const globe_iconNode = [
+  ["circle", { cx: "12", cy: "12", r: "10", key: "1mglay" }],
+  ["path", { d: "M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20", key: "13o1zl" }],
+  ["path", { d: "M2 12h20", key: "9i4pu4" }]
+];
+const Globe = createLucideIcon("globe", globe_iconNode);
+
+
+//# sourceMappingURL=globe.mjs.map
+
+;// ../../node_modules/lucide-react/dist/esm/icons/leaf.mjs
+/**
+ * @license lucide-react v1.18.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
+
+const leaf_iconNode = [
+  [
+    "path",
+    {
+      d: "M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z",
+      key: "nnexq3"
+    }
+  ],
+  ["path", { d: "M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12", key: "mt58a7" }]
+];
+const Leaf = createLucideIcon("leaf", leaf_iconNode);
+
+
+//# sourceMappingURL=leaf.mjs.map
+
+;// ../../node_modules/lucide-react/dist/esm/icons/book-open.mjs
+/**
+ * @license lucide-react v1.18.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
+
+const book_open_iconNode = [
+  ["path", { d: "M12 7v14", key: "1akyts" }],
+  [
+    "path",
+    {
+      d: "M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z",
+      key: "ruj8y"
+    }
+  ]
+];
+const BookOpen = createLucideIcon("book-open", book_open_iconNode);
+
+
+//# sourceMappingURL=book-open.mjs.map
+
+;// ../../node_modules/lucide-react/dist/esm/icons/eye.mjs
+/**
+ * @license lucide-react v1.18.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
+
+const eye_iconNode = [
+  [
+    "path",
+    {
+      d: "M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0",
+      key: "1nclc0"
+    }
+  ],
+  ["circle", { cx: "12", cy: "12", r: "3", key: "1v7zrd" }]
+];
+const Eye = createLucideIcon("eye", eye_iconNode);
+
+
+//# sourceMappingURL=eye.mjs.map
+
+;// ./src/scenes/SceneDynamic.tsx
+
+
+
+
+
+
+
+const { fontFamily: SceneDynamic_serifFont } = loadFont("normal", { weights: ["400", "700"] });
+const { fontFamily: SceneDynamic_sansFont } = SpaceGrotesk_loadFont("normal", { weights: ["400", "700"] });
+const getIcon = (type) => {
+  const t = type.toLowerCase();
+  if (t.includes("code") || t.includes("react") || t.includes("program") || t.includes("dev") || t.includes("soft") || t.includes("web")) {
+    return Code;
+  }
+  if (t.includes("music") || t.includes("sound") || t.includes("audio") || t.includes("podcast") || t.includes("voice") || t.includes("sing")) {
+    return Music;
+  }
+  if (t.includes("finance") || t.includes("money") || t.includes("coin") || t.includes("bank") || t.includes("invest") || t.includes("price") || t.includes("market") || t.includes("grow") || t.includes("sale")) {
+    return TrendingUp;
+  }
+  if (t.includes("corp") || t.includes("biz") || t.includes("business") || t.includes("work") || t.includes("office") || t.includes("job") || t.includes("strategy")) {
+    return Briefcase;
+  }
+  if (t.includes("cyber") || t.includes("security") || t.includes("hack") || t.includes("shield") || t.includes("safe") || t.includes("lock")) {
+    return Shield;
+  }
+  if (t.includes("system") || t.includes("server") || t.includes("performance") || t.includes("data") || t.includes("db") || t.includes("infra") || t.includes("cloud")) {
+    return Database;
+  }
+  if (t.includes("tech") || t.includes("cpu") || t.includes("chip") || t.includes("ai") || t.includes("robot") || t.includes("hardware")) {
+    return Cpu;
+  }
+  if (t.includes("camera") || t.includes("photo") || t.includes("vintage") || t.includes("film") || t.includes("movie") || t.includes("video") || t.includes("art")) {
+    return Camera;
+  }
+  if (t.includes("game") || t.includes("play") || t.includes("fun") || t.includes("toy") || t.includes("sport") || t.includes("gaming")) {
+    return Gamepad2;
+  }
+  if (t.includes("globe") || t.includes("world") || t.includes("earth") || t.includes("space") || t.includes("scale") || t.includes("orbit") || t.includes("network")) {
+    return Globe;
+  }
+  if (t.includes("nature") || t.includes("forest") || t.includes("leaf") || t.includes("flower") || t.includes("green") || t.includes("eco") || t.includes("garden")) {
+    return Leaf;
+  }
+  if (t.includes("learn") || t.includes("school") || t.includes("book") || t.includes("study") || t.includes("edu") || t.includes("course")) {
+    return BookOpen;
+  }
+  if (t.includes("terminal") || t.includes("command") || t.includes("cmd") || t.includes("shell") || t.includes("bash")) {
+    return Terminal;
+  }
+  if (t.includes("analyze") || t.includes("chart") || t.includes("metrics") || t.includes("stat") || t.includes("graph")) {
+    return Activity;
+  }
+  if (t.includes("view") || t.includes("look") || t.includes("eye") || t.includes("vision")) {
+    return Eye;
+  }
+  if (t.includes("speed") || t.includes("fast") || t.includes("zap") || t.includes("quick") || t.includes("power")) {
+    return Zap;
+  }
+  return Sparkles;
+};
+const sentenceCase = (value) => {
+  const lower = value.toLocaleLowerCase("vi-VN");
+  return lower.charAt(0).toLocaleUpperCase("vi-VN") + lower.slice(1);
+};
+const SceneDynamic = ({
+  type,
+  title,
+  subtitle,
+  description,
+  imageUrl,
+  themeColor = "#c89547",
+  customProps = {}
+}) => {
+  const frame = (0,esm.useCurrentFrame)();
+  const { width, height } = (0,esm.useVideoConfig)();
+  const isVertical = height > width;
+  const Icon = getIcon(type);
+  const {
+    codeSnippet,
+    terminalCommand,
+    layoutVariant = "center",
+    visualStyle = "cinematic",
+    badgeText,
+    metricLabel,
+    metricValue,
+    chips = [],
+    shotType = visualStyle === "technical" ? "data-insert" : "editorial",
+    focalPoint,
+    captionStyle = layoutVariant === "dashboard" ? "annotation" : "lower-third",
+    textureLevel = "subtle",
+    overlayDensity = layoutVariant === "dashboard" ? "medium" : "low",
+    supportingDetails = []
+  } = customProps;
+  const isDataScene = shotType === "data-insert" || visualStyle === "technical" || layoutVariant === "dashboard" || Boolean(codeSnippet || terminalCommand || metricLabel || metricValue);
+  const imageScale = (0,esm.interpolate)(frame, [0, 240], [1.04, 1.1], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp",
+    easing: esm.Easing.bezier(0.16, 1, 0.3, 1)
+  });
+  const imageX = (0,esm.interpolate)(
+    frame,
+    [0, 240],
+    layoutVariant === "spotlight" ? [12, -8] : [-10, 8],
+    {
+      extrapolateLeft: "clamp",
+      extrapolateRight: "clamp"
+    }
+  );
+  const textureOpacity = textureLevel === "medium" ? 0.12 : textureLevel === "subtle" ? 0.055 : 0;
+  const overlayOpacity = overlayDensity === "medium" ? 0.72 : overlayDensity === "low" ? 0.48 : 0.26;
+  const contentPosition = isVertical ? {
+    left: 34,
+    right: 34,
+    bottom: 70,
+    maxWidth: "none",
+    alignItems: "flex-start",
+    textAlign: "left"
+  } : layoutVariant === "spotlight" ? {
+    right: 76,
+    bottom: 68,
+    maxWidth: 540,
+    alignItems: "flex-end",
+    textAlign: "right"
+  } : layoutVariant === "split" ? {
+    left: 72,
+    bottom: 64,
+    maxWidth: 560,
+    alignItems: "flex-start",
+    textAlign: "left"
+  } : {
+    left: 76,
+    bottom: 68,
+    maxWidth: 620,
+    alignItems: "flex-start",
+    textAlign: "left"
+  };
+  const titleFont = visualStyle === "technical" ? SceneDynamic_sansFont : SceneDynamic_serifFont;
+  const titleSize = isVertical ? 34 : isDataScene ? 42 : 58;
+  const showCaptionChrome = captionStyle !== "none" && !isDataScene;
+  const showDetails = supportingDetails.length > 0 && overlayDensity !== "none";
+  const showChips = isDataScene && chips.length > 0;
+  return /* @__PURE__ */ (0,jsx_runtime.jsxs)(
+    "div",
+    {
+      className: "relative h-full w-full overflow-hidden select-none",
+      style: {
+        backgroundColor: "#0d0b09",
+        color: "#f7f2ea",
+        fontFamily: SceneDynamic_sansFont
+      },
+      children: [
+        imageUrl ? /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { className: "absolute inset-0 overflow-hidden", children: /* @__PURE__ */ (0,jsx_runtime.jsx)(
+          esm.Img,
+          {
+            src: imageUrl,
+            className: "h-full w-full object-cover",
+            style: {
+              transform: `translateX(${imageX}px) scale(${imageScale})`,
+              filter: visualStyle === "minimal" ? "saturate(0.9) contrast(1.04)" : visualStyle === "technical" ? "saturate(0.62) contrast(1.14)" : "saturate(0.82) contrast(1.08)"
+            }
+          }
+        ) }) : /* @__PURE__ */ (0,jsx_runtime.jsx)(
+          "div",
+          {
+            className: "absolute inset-0",
+            style: {
+              background: `linear-gradient(135deg, #15110e 0%, ${themeColor}22 46%, #080706 100%)`
+            }
+          }
+        ),
+        /* @__PURE__ */ (0,jsx_runtime.jsx)(
+          "div",
+          {
+            className: "absolute inset-0",
+            style: {
+              background: isVertical ? `linear-gradient(180deg, rgba(0,0,0,0.08), rgba(0,0,0,${overlayOpacity}) 54%, rgba(0,0,0,0.86))` : `linear-gradient(90deg, rgba(0,0,0,${overlayOpacity}) 0%, rgba(0,0,0,0.36) 43%, rgba(0,0,0,0.1) 100%)`
+            }
+          }
+        ),
+        textureOpacity > 0 && /* @__PURE__ */ (0,jsx_runtime.jsx)(
+          "div",
+          {
+            className: "absolute inset-0 pointer-events-none",
+            style: {
+              opacity: textureOpacity,
+              backgroundImage: "linear-gradient(rgba(255,255,255,0.22) 1px, transparent 1px)",
+              backgroundSize: "100% 5px",
+              mixBlendMode: "overlay"
+            }
+          }
+        ),
+        isDataScene && /* @__PURE__ */ (0,jsx_runtime.jsxs)(
+          MotionDiv,
+          {
+            initial: { opacity: 0, x: isVertical ? 0 : 28, y: isVertical ? -14 : 0 },
+            animate: { opacity: 1, x: 0, y: 0 },
+            transition: { startFrame: 10, type: "spring", damping: 18 },
+            className: "absolute border border-white/[0.12] bg-black/[0.45]",
+            style: {
+              right: isVertical ? 34 : 72,
+              top: isVertical ? 54 : 72,
+              width: isVertical ? "calc(100% - 68px)" : 360,
+              borderRadius: 8,
+              padding: 18
+            },
+            children: [
+              /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: "flex items-center justify-between gap-3 border-b border-white/10 pb-3", children: [
+                /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { className: "text-[10px] font-semibold text-white/60", children: badgeText || focalPoint || sentenceCase(type) }),
+                /* @__PURE__ */ (0,jsx_runtime.jsx)(Icon, { className: "h-4 w-4", style: { color: themeColor } })
+              ] }),
+              (metricValue || metricLabel) && /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: "mt-4", children: [
+                metricValue && /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { className: "text-[34px] leading-none font-bold", children: metricValue }),
+                metricLabel && /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { className: "mt-2 text-[11px] text-white/58", children: metricLabel })
+              ] }),
+              (codeSnippet || terminalCommand) && /* @__PURE__ */ (0,jsx_runtime.jsx)(
+                "pre",
+                {
+                  className: "mt-4 max-h-[150px] overflow-hidden whitespace-pre-wrap text-[10px] leading-relaxed text-white/70",
+                  style: { fontFamily: "ui-monospace, SFMono-Regular, Consolas, monospace" },
+                  children: codeSnippet || `$ ${terminalCommand}`
+                }
+              ),
+              showChips && /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { className: "mt-4 flex flex-wrap gap-2", children: chips.slice(0, 3).map((chip) => /* @__PURE__ */ (0,jsx_runtime.jsx)(
+                "span",
+                {
+                  className: "rounded border border-white/[0.12] px-2 py-1 text-[10px] text-white/60",
+                  children: chip
+                },
+                chip
+              )) })
+            ]
+          }
+        ),
+        /* @__PURE__ */ (0,jsx_runtime.jsxs)(
+          "div",
+          {
+            className: "absolute flex flex-col",
+            style: {
+              ...contentPosition
+            },
+            children: [
+              showCaptionChrome && /* @__PURE__ */ (0,jsx_runtime.jsx)(
+                MotionDiv,
+                {
+                  initial: { opacity: 0, scale: 0.9 },
+                  animate: { opacity: 1, scale: 1 },
+                  transition: { startFrame: 6, type: "spring", damping: 18 },
+                  className: "mb-5 h-[1px]",
+                  style: {
+                    width: isVertical ? 78 : 116,
+                    backgroundColor: themeColor
+                  }
+                }
+              ),
+              /* @__PURE__ */ (0,jsx_runtime.jsx)(
+                MotionDiv,
+                {
+                  initial: { opacity: 0, y: 16 },
+                  animate: { opacity: 0.74, y: 0 },
+                  transition: { startFrame: 8, type: "tween", duration: 22 },
+                  className: "mb-3 text-[12px] font-semibold",
+                  style: {
+                    color: themeColor,
+                    letterSpacing: "0.08em"
+                  },
+                  children: subtitle
+                }
+              ),
+              /* @__PURE__ */ (0,jsx_runtime.jsx)(
+                MotionDiv,
+                {
+                  initial: { opacity: 0, y: 20 },
+                  animate: { opacity: 1, y: 0 },
+                  transition: { startFrame: 12, type: "spring", damping: 18 },
+                  className: "leading-[0.98]",
+                  style: {
+                    fontFamily: titleFont,
+                    fontSize: titleSize,
+                    fontWeight: visualStyle === "minimal" ? 400 : 700,
+                    letterSpacing: 0,
+                    textTransform: visualStyle === "technical" ? "uppercase" : "none"
+                  },
+                  children: visualStyle === "technical" ? title : sentenceCase(title)
+                }
+              ),
+              description && /* @__PURE__ */ (0,jsx_runtime.jsx)(
+                MotionDiv,
+                {
+                  initial: { opacity: 0, y: 14 },
+                  animate: { opacity: 0.78, y: 0 },
+                  transition: { startFrame: 20, type: "tween", duration: 26 },
+                  className: "mt-5 text-[14px] leading-relaxed",
+                  style: {
+                    maxWidth: isVertical ? "100%" : 480,
+                    color: "#eee4d8"
+                  },
+                  children: description
+                }
+              ),
+              showDetails && /* @__PURE__ */ (0,jsx_runtime.jsx)(
+                MotionDiv,
+                {
+                  initial: { opacity: 0, y: 12 },
+                  animate: { opacity: 0.68, y: 0 },
+                  transition: { startFrame: 28, type: "tween", duration: 24 },
+                  className: "mt-6 grid gap-1.5 text-[11px] leading-snug text-white/70",
+                  children: supportingDetails.slice(0, 3).map((detail) => /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { className: "flex gap-2", children: [
+                    /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { style: { color: themeColor }, children: "-" }),
+                    /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { children: detail })
+                  ] }, detail))
+                }
+              )
+            ]
+          }
+        )
+      ]
+    }
+  );
 };
 
 ;// ./src/Composition.tsx
@@ -3604,129 +6564,220 @@ const SceneOutro = ({
 
 
 
+
+
+
+
+
+
 const MyComposition = ({
   themeColor = "#c89547",
+  textColor,
+  backgroundColor,
+  borderColor,
   audioUrl,
   scenes = []
 }) => {
-  return /* @__PURE__ */ (0,jsx_runtime.jsxs)(AestheticContainer, { themeColor, children: [
-    audioUrl && /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.Audio, { src: audioUrl, volume: 0.5 }),
-    /* @__PURE__ */ (0,jsx_runtime.jsx)(TransitionSeries, { children: scenes.map((scene, index) => {
-      var _a, _b;
-      const isLast = index === scenes.length - 1;
-      let component = null;
-      switch (scene.type) {
-        case "intro":
-          component = /* @__PURE__ */ (0,jsx_runtime.jsx)(
-            SceneIntro,
-            {
-              title: scene.title,
-              subtitle: scene.subtitle,
-              description: scene.description,
-              imageUrl: scene.imageUrl
-            }
-          );
-          break;
-        case "react":
-          component = /* @__PURE__ */ (0,jsx_runtime.jsx)(
-            SceneReact,
-            {
-              title: scene.title,
-              subtitle: scene.subtitle,
-              description: scene.description,
-              imageUrl: scene.imageUrl,
-              codeSnippet: (_a = scene.customProps) == null ? void 0 : _a.codeSnippet
-            }
-          );
-          break;
-        case "precision":
-          component = /* @__PURE__ */ (0,jsx_runtime.jsx)(
-            ScenePrecision,
-            {
-              title: scene.title,
-              subtitle: scene.subtitle,
-              description: scene.description,
-              imageUrl: scene.imageUrl
-            }
-          );
-          break;
-        case "audio":
-          component = /* @__PURE__ */ (0,jsx_runtime.jsx)(
-            SceneAudio,
-            {
-              title: scene.title,
-              subtitle: scene.subtitle,
-              description: scene.description,
-              imageUrl: scene.imageUrl
-            }
-          );
-          break;
-        case "scale":
-          component = /* @__PURE__ */ (0,jsx_runtime.jsx)(
-            SceneScale,
-            {
-              title: scene.title,
-              subtitle: scene.subtitle,
-              description: scene.description,
-              imageUrl: scene.imageUrl
-            }
-          );
-          break;
-        case "transitions":
-          component = /* @__PURE__ */ (0,jsx_runtime.jsx)(
-            SceneTransitions,
-            {
-              title: scene.title,
-              subtitle: scene.subtitle,
-              description: scene.description,
-              imageUrl: scene.imageUrl
-            }
-          );
-          break;
-        case "performance":
-          component = /* @__PURE__ */ (0,jsx_runtime.jsx)(
-            ScenePerformance,
-            {
-              title: scene.title,
-              subtitle: scene.subtitle,
-              description: scene.description,
-              imageUrl: scene.imageUrl
-            }
-          );
-          break;
-        case "outro":
-          component = /* @__PURE__ */ (0,jsx_runtime.jsx)(
-            SceneOutro,
-            {
-              title: scene.title,
-              subtitle: scene.subtitle,
-              description: scene.description,
-              imageUrl: scene.imageUrl,
-              terminalCommand: (_b = scene.customProps) == null ? void 0 : _b.terminalCommand
-            }
-          );
-          break;
-        default:
-          component = null;
-      }
-      let presentation = fade();
-      if (scene.effect === "slide-left") {
-        presentation = slide_slide({ direction: "from-right" });
-      } else if (scene.effect === "slide-right") {
-        presentation = slide_slide({ direction: "from-left" });
-      }
-      return /* @__PURE__ */ (0,jsx_runtime.jsxs)(react.Fragment, { children: [
-        /* @__PURE__ */ (0,jsx_runtime.jsx)(TransitionSeries.Sequence, { durationInFrames: scene.durationInFrames, children: component }),
-        !isLast && scene.effect !== "none" && /* @__PURE__ */ (0,jsx_runtime.jsx)(
-          TransitionSeries.Transition,
-          {
-            presentation,
-            timing: linearTiming({ durationInFrames: 10 })
+  return /* @__PURE__ */ (0,jsx_runtime.jsxs)(
+    AestheticContainer,
+    {
+      themeColor,
+      textColor,
+      backgroundColor,
+      borderColor,
+      children: [
+        audioUrl && /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.Audio, { src: audioUrl, volume: 0.5 }),
+        /* @__PURE__ */ (0,jsx_runtime.jsx)(TransitionSeries, { children: scenes.map((scene, index) => {
+          const isLast = index === scenes.length - 1;
+          let component = null;
+          switch (scene.type) {
+            case "intro":
+              component = /* @__PURE__ */ (0,jsx_runtime.jsx)(
+                SceneIntro_SceneIntro,
+                {
+                  title: scene.title,
+                  subtitle: scene.subtitle,
+                  description: scene.description,
+                  imageUrl: scene.imageUrl,
+                  customProps: scene.customProps
+                }
+              );
+              break;
+            case "react":
+              component = /* @__PURE__ */ (0,jsx_runtime.jsx)(
+                SceneReact_SceneReact,
+                {
+                  title: scene.title,
+                  subtitle: scene.subtitle,
+                  description: scene.description,
+                  imageUrl: scene.imageUrl,
+                  customProps: scene.customProps
+                }
+              );
+              break;
+            case "precision":
+              component = /* @__PURE__ */ (0,jsx_runtime.jsx)(
+                ScenePrecision_ScenePrecision,
+                {
+                  title: scene.title,
+                  subtitle: scene.subtitle,
+                  description: scene.description,
+                  imageUrl: scene.imageUrl,
+                  customProps: scene.customProps
+                }
+              );
+              break;
+            case "audio":
+              component = /* @__PURE__ */ (0,jsx_runtime.jsx)(
+                SceneAudio_SceneAudio,
+                {
+                  title: scene.title,
+                  subtitle: scene.subtitle,
+                  description: scene.description,
+                  imageUrl: scene.imageUrl,
+                  customProps: scene.customProps
+                }
+              );
+              break;
+            case "scale":
+              component = /* @__PURE__ */ (0,jsx_runtime.jsx)(
+                SceneScale_SceneScale,
+                {
+                  title: scene.title,
+                  subtitle: scene.subtitle,
+                  description: scene.description,
+                  imageUrl: scene.imageUrl,
+                  customProps: scene.customProps
+                }
+              );
+              break;
+            case "transitions":
+              component = /* @__PURE__ */ (0,jsx_runtime.jsx)(
+                SceneTransitions_SceneTransitions,
+                {
+                  title: scene.title,
+                  subtitle: scene.subtitle,
+                  description: scene.description,
+                  imageUrl: scene.imageUrl,
+                  customProps: scene.customProps
+                }
+              );
+              break;
+            case "performance":
+              component = /* @__PURE__ */ (0,jsx_runtime.jsx)(
+                ScenePerformance_ScenePerformance,
+                {
+                  title: scene.title,
+                  subtitle: scene.subtitle,
+                  description: scene.description,
+                  imageUrl: scene.imageUrl,
+                  customProps: scene.customProps
+                }
+              );
+              break;
+            case "outro":
+              component = /* @__PURE__ */ (0,jsx_runtime.jsx)(
+                SceneOutro_SceneOutro,
+                {
+                  title: scene.title,
+                  subtitle: scene.subtitle,
+                  description: scene.description,
+                  imageUrl: scene.imageUrl,
+                  customProps: scene.customProps
+                }
+              );
+              break;
+            case "cyberpunk":
+              component = /* @__PURE__ */ (0,jsx_runtime.jsx)(
+                SceneCyberpunk_SceneCyberpunk,
+                {
+                  title: scene.title,
+                  subtitle: scene.subtitle,
+                  description: scene.description,
+                  imageUrl: scene.imageUrl,
+                  customProps: scene.customProps
+                }
+              );
+              break;
+            case "corporate":
+              component = /* @__PURE__ */ (0,jsx_runtime.jsx)(
+                SceneCorporate_SceneCorporate,
+                {
+                  title: scene.title,
+                  subtitle: scene.subtitle,
+                  description: scene.description,
+                  imageUrl: scene.imageUrl,
+                  customProps: scene.customProps
+                }
+              );
+              break;
+            case "vintage":
+              component = /* @__PURE__ */ (0,jsx_runtime.jsx)(
+                SceneVintage_SceneVintage,
+                {
+                  title: scene.title,
+                  subtitle: scene.subtitle,
+                  description: scene.description,
+                  imageUrl: scene.imageUrl,
+                  customProps: scene.customProps
+                }
+              );
+              break;
+            case "playful":
+              component = /* @__PURE__ */ (0,jsx_runtime.jsx)(
+                ScenePlayful_ScenePlayful,
+                {
+                  title: scene.title,
+                  subtitle: scene.subtitle,
+                  description: scene.description,
+                  imageUrl: scene.imageUrl,
+                  customProps: scene.customProps
+                }
+              );
+              break;
+            default:
+              component = /* @__PURE__ */ (0,jsx_runtime.jsx)(
+                SceneDynamic,
+                {
+                  type: scene.type,
+                  title: scene.title,
+                  subtitle: scene.subtitle,
+                  description: scene.description,
+                  imageUrl: scene.imageUrl,
+                  themeColor,
+                  customProps: scene.customProps
+                }
+              );
           }
-        )
-      ] }, index);
-    }) })
-  ] });
+          let presentation = fade();
+          if (scene.effect === "slide-left") {
+            presentation = slide_slide({ direction: "from-right" });
+          } else if (scene.effect === "slide-right") {
+            presentation = slide_slide({ direction: "from-left" });
+          }
+          return /* @__PURE__ */ (0,jsx_runtime.jsxs)(react.Fragment, { children: [
+            /* @__PURE__ */ (0,jsx_runtime.jsx)(TransitionSeries.Sequence, { durationInFrames: scene.durationInFrames, children: /* @__PURE__ */ (0,jsx_runtime.jsxs)(jsx_runtime.Fragment, { children: [
+              component,
+              /* @__PURE__ */ (0,jsx_runtime.jsx)(
+                SceneDirectorOverlay,
+                {
+                  customProps: scene.customProps,
+                  themeColor
+                }
+              )
+            ] }) }),
+            !isLast && scene.effect !== "none" && /* @__PURE__ */ (0,jsx_runtime.jsx)(
+              TransitionSeries.Transition,
+              {
+                presentation,
+                timing: linearTiming({ durationInFrames: 10 })
+              }
+            )
+          ] }, index);
+        }) })
+      ]
+    }
+  );
 };
 
 // EXTERNAL MODULE: ../../node_modules/zod/v4/classic/external.js + 74 modules
@@ -3738,30 +6789,45 @@ var dist_esm = __webpack_require__(4028);
 
 
 const VideoSceneSchema = external.object({
-  type: external["enum"]([
-    "intro",
-    "react",
-    "precision",
-    "audio",
-    "scale",
-    "transitions",
-    "performance",
-    "outro"
-  ]),
+  type: external.string(),
   title: external.string(),
   subtitle: external.string(),
   description: external.string().optional(),
   imageUrl: external.string().optional(),
+  imageSearchKeyword: external.string().optional(),
   durationInFrames: external.number().int().min(1),
   effect: external["enum"](["fade", "slide-left", "slide-right", "none"]),
   customProps: external.object({
     codeSnippet: external.string().optional(),
-    terminalCommand: external.string().optional()
-  }).optional()
-});
+    terminalCommand: external.string().optional(),
+    layoutVariant: external["enum"](["center", "split", "spotlight", "dashboard"]).optional(),
+    visualStyle: external["enum"](["cinematic", "minimal", "technical", "bold"]).optional(),
+    badgeText: external.string().optional(),
+    metricLabel: external.string().optional(),
+    metricValue: external.string().optional(),
+    chips: external.array(external.string()).optional(),
+    shotType: external["enum"]([
+      "wide",
+      "close-up",
+      "detail",
+      "editorial",
+      "documentary",
+      "data-insert"
+    ]).optional(),
+    focalPoint: external.string().optional(),
+    captionStyle: external["enum"](["none", "lower-third", "chapter", "caption", "annotation"]).optional(),
+    textureLevel: external["enum"](["none", "subtle", "medium"]).optional(),
+    overlayDensity: external["enum"](["none", "low", "medium"]).optional(),
+    supportingDetails: external.array(external.string()).optional()
+  }).catchall(external.unknown()).optional()
+}).catchall(external.unknown());
 const VideoMetadataSchema = external.object({
   themeColor: (0,dist_esm.zColor)(),
+  textColor: (0,dist_esm.zColor)().optional(),
+  backgroundColor: (0,dist_esm.zColor)().optional(),
+  borderColor: (0,dist_esm.zColor)().optional(),
   audioUrl: external.string().optional(),
+  aspectRatio: external["enum"](["16:9", "9:16"]).optional(),
   scenes: external.array(VideoSceneSchema)
 });
 
@@ -3784,8 +6850,11 @@ const calculateMetadata = async ({
       totalDuration -= 10;
     }
   });
+  const isVertical = props.aspectRatio === "9:16";
   return {
-    durationInFrames: totalDuration || 900
+    durationInFrames: totalDuration || 900,
+    width: isVertical ? 720 : 1280,
+    height: isVertical ? 1280 : 720
   };
 };
 const RemotionRoot = () => {
@@ -4141,8 +7210,33 @@ ___CSS_LOADER_EXPORT___.push([module.id, `/*! tailwindcss v4.2.0 | MIT License |
     --color-red-300: oklch(80.8% 0.114 19.571);
     --color-red-400: oklch(70.4% 0.191 22.216);
     --color-red-500: oklch(63.7% 0.237 25.331);
+    --color-amber-400: oklch(82.8% 0.189 84.429);
     --color-amber-900: oklch(41.4% 0.112 45.904);
+    --color-yellow-500: oklch(79.5% 0.184 86.047);
+    --color-lime-500: oklch(76.8% 0.233 130.85);
+    --color-green-400: oklch(79.2% 0.209 151.711);
+    --color-green-500: oklch(72.3% 0.219 149.579);
+    --color-emerald-400: oklch(76.5% 0.177 163.223);
+    --color-cyan-300: oklch(86.5% 0.127 207.078);
+    --color-cyan-400: oklch(78.9% 0.154 211.53);
+    --color-cyan-500: oklch(71.5% 0.143 215.221);
+    --color-sky-400: oklch(74.6% 0.16 232.661);
+    --color-sky-500: oklch(68.5% 0.169 237.323);
+    --color-purple-400: oklch(71.4% 0.203 305.504);
+    --color-purple-500: oklch(62.7% 0.265 303.9);
+    --color-pink-400: oklch(71.8% 0.202 349.761);
+    --color-pink-500: oklch(65.6% 0.241 354.308);
+    --color-slate-300: oklch(86.9% 0.022 252.894);
+    --color-slate-400: oklch(70.4% 0.04 256.788);
+    --color-slate-500: oklch(55.4% 0.046 257.417);
+    --color-slate-600: oklch(44.6% 0.043 257.281);
+    --color-slate-800: oklch(27.9% 0.041 260.031);
+    --color-slate-900: oklch(20.8% 0.042 265.755);
+    --color-slate-950: oklch(12.9% 0.042 264.695);
+    --color-stone-200: oklch(92.3% 0.003 48.717);
+    --color-stone-300: oklch(86.9% 0.005 56.366);
     --color-stone-400: oklch(70.9% 0.01 56.259);
+    --color-stone-500: oklch(55.3% 0.013 58.071);
     --color-black: #000;
     --color-white: #fff;
     --spacing: 0.25rem;
@@ -4151,20 +7245,18 @@ ___CSS_LOADER_EXPORT___.push([module.id, `/*! tailwindcss v4.2.0 | MIT License |
     --text-xs--line-height: calc(1 / 0.75);
     --text-sm: 0.875rem;
     --text-sm--line-height: calc(1.25 / 0.875);
-    --text-3xl: 1.875rem;
-    --text-3xl--line-height: calc(2.25 / 1.875);
-    --text-4xl: 2.25rem;
-    --text-4xl--line-height: calc(2.5 / 2.25);
-    --text-5xl: 3rem;
-    --text-5xl--line-height: 1;
-    --text-6xl: 3.75rem;
-    --text-6xl--line-height: 1;
-    --text-7xl: 4.5rem;
-    --text-7xl--line-height: 1;
+    --text-xl: 1.25rem;
+    --text-xl--line-height: calc(1.75 / 1.25);
+    --text-2xl: 1.5rem;
+    --text-2xl--line-height: calc(2 / 1.5);
     --font-weight-light: 300;
     --font-weight-medium: 500;
     --font-weight-semibold: 600;
     --font-weight-bold: 700;
+    --font-weight-extrabold: 800;
+    --font-weight-black: 900;
+    --tracking-tighter: -0.05em;
+    --tracking-tight: -0.025em;
     --tracking-wide: 0.025em;
     --tracking-wider: 0.05em;
     --tracking-widest: 0.1em;
@@ -4173,12 +7265,10 @@ ___CSS_LOADER_EXPORT___.push([module.id, `/*! tailwindcss v4.2.0 | MIT License |
     --leading-normal: 1.5;
     --leading-relaxed: 1.625;
     --radius-sm: 0.25rem;
+    --radius-md: 0.375rem;
     --radius-lg: 0.5rem;
     --radius-xl: 0.75rem;
     --animate-spin: spin 1s linear infinite;
-    --animate-ping: ping 1s cubic-bezier(0, 0, 0.2, 1) infinite;
-    --animate-pulse: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-    --animate-bounce: bounce 1s infinite;
     --blur-xl: 24px;
     --blur-2xl: 40px;
     --default-transition-duration: 150ms;
@@ -4363,8 +7453,20 @@ ___CSS_LOADER_EXPORT___.push([module.id, `/*! tailwindcss v4.2.0 | MIT License |
   .inset-0 {
     inset: calc(var(--spacing) * 0);
   }
+  .inset-2 {
+    inset: calc(var(--spacing) * 2);
+  }
+  .inset-4 {
+    inset: calc(var(--spacing) * 4);
+  }
   .inset-6 {
     inset: calc(var(--spacing) * 6);
+  }
+  .inset-x-0 {
+    inset-inline: calc(var(--spacing) * 0);
+  }
+  .inset-y-0 {
+    inset-block: calc(var(--spacing) * 0);
   }
   .start {
     inset-inline-start: var(--spacing);
@@ -4375,14 +7477,23 @@ ___CSS_LOADER_EXPORT___.push([module.id, `/*! tailwindcss v4.2.0 | MIT License |
   .top-0 {
     top: calc(var(--spacing) * 0);
   }
-  .top-0\\.5 {
-    top: calc(var(--spacing) * 0.5);
-  }
   .top-2 {
     top: calc(var(--spacing) * 2);
   }
   .top-2\\.5 {
     top: calc(var(--spacing) * 2.5);
+  }
+  .top-4 {
+    top: calc(var(--spacing) * 4);
+  }
+  .top-6 {
+    top: calc(var(--spacing) * 6);
+  }
+  .top-12 {
+    top: calc(var(--spacing) * 12);
+  }
+  .top-16 {
+    top: calc(var(--spacing) * 16);
   }
   .top-\\[-3px\\] {
     top: -3px;
@@ -4396,6 +7507,18 @@ ___CSS_LOADER_EXPORT___.push([module.id, `/*! tailwindcss v4.2.0 | MIT License |
   .right-3 {
     right: calc(var(--spacing) * 3);
   }
+  .right-4 {
+    right: calc(var(--spacing) * 4);
+  }
+  .right-6 {
+    right: calc(var(--spacing) * 6);
+  }
+  .right-12 {
+    right: calc(var(--spacing) * 12);
+  }
+  .right-16 {
+    right: calc(var(--spacing) * 16);
+  }
   .right-\\[-3px\\] {
     right: -3px;
   }
@@ -4405,8 +7528,23 @@ ___CSS_LOADER_EXPORT___.push([module.id, `/*! tailwindcss v4.2.0 | MIT License |
   .bottom-1 {
     bottom: calc(var(--spacing) * 1);
   }
+  .bottom-3 {
+    bottom: calc(var(--spacing) * 3);
+  }
+  .bottom-4 {
+    bottom: calc(var(--spacing) * 4);
+  }
+  .bottom-6 {
+    bottom: calc(var(--spacing) * 6);
+  }
   .bottom-10 {
     bottom: calc(var(--spacing) * 10);
+  }
+  .bottom-12 {
+    bottom: calc(var(--spacing) * 12);
+  }
+  .bottom-16 {
+    bottom: calc(var(--spacing) * 16);
   }
   .-left-1 {
     left: calc(var(--spacing) * -1);
@@ -4414,17 +7552,32 @@ ___CSS_LOADER_EXPORT___.push([module.id, `/*! tailwindcss v4.2.0 | MIT License |
   .left-0 {
     left: calc(var(--spacing) * 0);
   }
-  .left-1 {
-    left: calc(var(--spacing) * 1);
+  .left-2 {
+    left: calc(var(--spacing) * 2);
   }
   .left-2\\.5 {
     left: calc(var(--spacing) * 2.5);
   }
+  .left-3 {
+    left: calc(var(--spacing) * 3);
+  }
+  .left-4 {
+    left: calc(var(--spacing) * 4);
+  }
+  .left-6 {
+    left: calc(var(--spacing) * 6);
+  }
   .left-10 {
     left: calc(var(--spacing) * 10);
   }
+  .left-16 {
+    left: calc(var(--spacing) * 16);
+  }
   .left-\\[-3px\\] {
     left: -3px;
+  }
+  .-z-10 {
+    z-index: calc(10 * -1);
   }
   .-z-20 {
     z-index: calc(20 * -1);
@@ -4465,11 +7618,20 @@ ___CSS_LOADER_EXPORT___.push([module.id, `/*! tailwindcss v4.2.0 | MIT License |
       max-width: 96rem;
     }
   }
+  .my-2 {
+    margin-block: calc(var(--spacing) * 2);
+  }
   .my-3 {
     margin-block: calc(var(--spacing) * 3);
   }
   .my-4 {
     margin-block: calc(var(--spacing) * 4);
+  }
+  .mt-0\\.5 {
+    margin-top: calc(var(--spacing) * 0.5);
+  }
+  .mt-1 {
+    margin-top: calc(var(--spacing) * 1);
   }
   .mt-1\\.5 {
     margin-top: calc(var(--spacing) * 1.5);
@@ -4486,8 +7648,17 @@ ___CSS_LOADER_EXPORT___.push([module.id, `/*! tailwindcss v4.2.0 | MIT License |
   .mt-6 {
     margin-top: calc(var(--spacing) * 6);
   }
+  .mt-8 {
+    margin-top: calc(var(--spacing) * 8);
+  }
+  .mb-0\\.5 {
+    margin-bottom: calc(var(--spacing) * 0.5);
+  }
   .mb-1 {
     margin-bottom: calc(var(--spacing) * 1);
+  }
+  .mb-2\\.5 {
+    margin-bottom: calc(var(--spacing) * 2.5);
   }
   .mb-3 {
     margin-bottom: calc(var(--spacing) * 3);
@@ -4501,6 +7672,18 @@ ___CSS_LOADER_EXPORT___.push([module.id, `/*! tailwindcss v4.2.0 | MIT License |
   .ml-0\\.5 {
     margin-left: calc(var(--spacing) * 0.5);
   }
+  .ml-1\\.5 {
+    margin-left: calc(var(--spacing) * 1.5);
+  }
+  .line-clamp-1 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 1;
+  }
+  .block {
+    display: block;
+  }
   .flex {
     display: flex;
   }
@@ -4509,6 +7692,9 @@ ___CSS_LOADER_EXPORT___.push([module.id, `/*! tailwindcss v4.2.0 | MIT License |
   }
   .hidden {
     display: none;
+  }
+  .inline-block {
+    display: inline-block;
   }
   .h-1 {
     height: calc(var(--spacing) * 1);
@@ -4531,8 +7717,14 @@ ___CSS_LOADER_EXPORT___.push([module.id, `/*! tailwindcss v4.2.0 | MIT License |
   .h-4 {
     height: calc(var(--spacing) * 4);
   }
+  .h-4\\.5 {
+    height: calc(var(--spacing) * 4.5);
+  }
   .h-5 {
     height: calc(var(--spacing) * 5);
+  }
+  .h-5\\.5 {
+    height: calc(var(--spacing) * 5.5);
   }
   .h-6 {
     height: calc(var(--spacing) * 6);
@@ -4558,6 +7750,12 @@ ___CSS_LOADER_EXPORT___.push([module.id, `/*! tailwindcss v4.2.0 | MIT License |
   .h-14 {
     height: calc(var(--spacing) * 14);
   }
+  .h-16 {
+    height: calc(var(--spacing) * 16);
+  }
+  .h-20 {
+    height: calc(var(--spacing) * 20);
+  }
   .h-24 {
     height: calc(var(--spacing) * 24);
   }
@@ -4567,17 +7765,35 @@ ___CSS_LOADER_EXPORT___.push([module.id, `/*! tailwindcss v4.2.0 | MIT License |
   .h-32 {
     height: calc(var(--spacing) * 32);
   }
+  .h-48 {
+    height: calc(var(--spacing) * 48);
+  }
   .h-\\[1px\\] {
     height: 1px;
+  }
+  .h-\\[2px\\] {
+    height: 2px;
   }
   .h-\\[200\\%\\] {
     height: 200%;
   }
+  .h-\\[220px\\] {
+    height: 220px;
+  }
   .h-\\[280px\\] {
     height: 280px;
   }
+  .h-\\[300px\\] {
+    height: 300px;
+  }
   .h-\\[320px\\] {
     height: 320px;
+  }
+  .h-\\[340px\\] {
+    height: 340px;
+  }
+  .h-\\[500px\\] {
+    height: 500px;
   }
   .h-full {
     height: 100%;
@@ -4585,14 +7801,26 @@ ___CSS_LOADER_EXPORT___.push([module.id, `/*! tailwindcss v4.2.0 | MIT License |
   .h-screen {
     height: 100vh;
   }
+  .max-h-56 {
+    max-height: calc(var(--spacing) * 56);
+  }
+  .max-h-\\[85vh\\] {
+    max-height: 85vh;
+  }
+  .max-h-\\[150px\\] {
+    max-height: 150px;
+  }
   .min-h-0 {
     min-height: calc(var(--spacing) * 0);
   }
+  .min-h-\\[75px\\] {
+    min-height: 75px;
+  }
+  .min-h-\\[80px\\] {
+    min-height: 80px;
+  }
   .min-h-\\[300px\\] {
     min-height: 300px;
-  }
-  .min-h-\\[380px\\] {
-    min-height: 380px;
   }
   .min-h-full {
     min-height: 100%;
@@ -4615,8 +7843,14 @@ ___CSS_LOADER_EXPORT___.push([module.id, `/*! tailwindcss v4.2.0 | MIT License |
   .w-4 {
     width: calc(var(--spacing) * 4);
   }
+  .w-4\\.5 {
+    width: calc(var(--spacing) * 4.5);
+  }
   .w-5 {
     width: calc(var(--spacing) * 5);
+  }
+  .w-5\\.5 {
+    width: calc(var(--spacing) * 5.5);
   }
   .w-6 {
     width: calc(var(--spacing) * 6);
@@ -4630,6 +7864,9 @@ ___CSS_LOADER_EXPORT___.push([module.id, `/*! tailwindcss v4.2.0 | MIT License |
   .w-10 {
     width: calc(var(--spacing) * 10);
   }
+  .w-11 {
+    width: calc(var(--spacing) * 11);
+  }
   .w-12 {
     width: calc(var(--spacing) * 12);
   }
@@ -4638,6 +7875,9 @@ ___CSS_LOADER_EXPORT___.push([module.id, `/*! tailwindcss v4.2.0 | MIT License |
   }
   .w-16 {
     width: calc(var(--spacing) * 16);
+  }
+  .w-20 {
+    width: calc(var(--spacing) * 20);
   }
   .w-24 {
     width: calc(var(--spacing) * 24);
@@ -4651,6 +7891,12 @@ ___CSS_LOADER_EXPORT___.push([module.id, `/*! tailwindcss v4.2.0 | MIT License |
   .w-48 {
     width: calc(var(--spacing) * 48);
   }
+  .w-52 {
+    width: calc(var(--spacing) * 52);
+  }
+  .w-\\[1\\.5px\\] {
+    width: 1.5px;
+  }
   .w-\\[1px\\] {
     width: 1px;
   }
@@ -4662,6 +7908,12 @@ ___CSS_LOADER_EXPORT___.push([module.id, `/*! tailwindcss v4.2.0 | MIT License |
   }
   .w-\\[45\\%\\] {
     width: 45%;
+  }
+  .w-\\[48\\%\\] {
+    width: 48%;
+  }
+  .w-\\[52\\%\\] {
+    width: 52%;
   }
   .w-\\[55\\%\\] {
     width: 55%;
@@ -4678,23 +7930,41 @@ ___CSS_LOADER_EXPORT___.push([module.id, `/*! tailwindcss v4.2.0 | MIT License |
   .w-screen {
     width: 100vw;
   }
-  .max-w-\\[280px\\] {
-    max-width: 280px;
+  .max-w-\\[50\\%\\] {
+    max-width: 50%;
+  }
+  .max-w-\\[70\\%\\] {
+    max-width: 70%;
+  }
+  .max-w-\\[80px\\] {
+    max-width: 80px;
+  }
+  .max-w-\\[90\\%\\] {
+    max-width: 90%;
+  }
+  .max-w-\\[420px\\] {
+    max-width: 420px;
+  }
+  .max-w-\\[480px\\] {
+    max-width: 480px;
   }
   .max-w-\\[500px\\] {
     max-width: 500px;
   }
+  .max-w-\\[520px\\] {
+    max-width: 520px;
+  }
   .max-w-\\[680px\\] {
     max-width: 680px;
   }
-  .max-w-\\[760px\\] {
-    max-width: 760px;
+  .max-w-\\[700px\\] {
+    max-width: 700px;
   }
-  .max-w-\\[850px\\] {
-    max-width: 850px;
+  .max-w-\\[800px\\] {
+    max-width: 800px;
   }
-  .max-w-\\[1050px\\] {
-    max-width: 1050px;
+  .max-w-\\[860px\\] {
+    max-width: 860px;
   }
   .max-w-xs {
     max-width: var(--container-xs);
@@ -4711,20 +7981,20 @@ ___CSS_LOADER_EXPORT___.push([module.id, `/*! tailwindcss v4.2.0 | MIT License |
   .shrink-0 {
     flex-shrink: 0;
   }
-  .scale-\\[1\\.08\\] {
-    scale: 1.08;
+  .grow {
+    flex-grow: 1;
+  }
+  .scale-\\[1\\.03\\] {
+    scale: 1.03;
+  }
+  .rotate-180 {
+    rotate: 180deg;
+  }
+  .rotate-\\[1deg\\] {
+    rotate: 1deg;
   }
   .transform {
     transform: var(--tw-rotate-x,) var(--tw-rotate-y,) var(--tw-rotate-z,) var(--tw-skew-x,) var(--tw-skew-y,);
-  }
-  .animate-bounce {
-    animation: var(--animate-bounce);
-  }
-  .animate-ping {
-    animation: var(--animate-ping);
-  }
-  .animate-pulse {
-    animation: var(--animate-pulse);
   }
   .animate-spin {
     animation: var(--animate-spin);
@@ -4750,6 +8020,9 @@ ___CSS_LOADER_EXPORT___.push([module.id, `/*! tailwindcss v4.2.0 | MIT License |
   .grid-cols-2 {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+  .grid-cols-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
   .grid-cols-\\[180px_1fr\\] {
     grid-template-columns: 180px 1fr;
   }
@@ -4762,11 +8035,17 @@ ___CSS_LOADER_EXPORT___.push([module.id, `/*! tailwindcss v4.2.0 | MIT License |
   .flex-row-reverse {
     flex-direction: row-reverse;
   }
+  .flex-wrap {
+    flex-wrap: wrap;
+  }
   .items-center {
     align-items: center;
   }
   .items-end {
     align-items: flex-end;
+  }
+  .items-start {
+    align-items: flex-start;
   }
   .justify-between {
     justify-content: space-between;
@@ -4792,11 +8071,11 @@ ___CSS_LOADER_EXPORT___.push([module.id, `/*! tailwindcss v4.2.0 | MIT License |
   .gap-4 {
     gap: calc(var(--spacing) * 4);
   }
-  .gap-4\\.5 {
-    gap: calc(var(--spacing) * 4.5);
-  }
   .gap-5 {
     gap: calc(var(--spacing) * 5);
+  }
+  .gap-6 {
+    gap: calc(var(--spacing) * 6);
   }
   .gap-12 {
     gap: calc(var(--spacing) * 12);
@@ -4847,6 +8126,9 @@ ___CSS_LOADER_EXPORT___.push([module.id, `/*! tailwindcss v4.2.0 | MIT License |
   .rounded-lg {
     border-radius: var(--radius-lg);
   }
+  .rounded-md {
+    border-radius: var(--radius-md);
+  }
   .rounded-sm {
     border-radius: var(--radius-sm);
   }
@@ -4865,6 +8147,14 @@ ___CSS_LOADER_EXPORT___.push([module.id, `/*! tailwindcss v4.2.0 | MIT License |
     border-style: var(--tw-border-style);
     border-width: 2px;
   }
+  .border-4 {
+    border-style: var(--tw-border-style);
+    border-width: 4px;
+  }
+  .border-\\[3px\\] {
+    border-style: var(--tw-border-style);
+    border-width: 3px;
+  }
   .border-t {
     border-top-style: var(--tw-border-style);
     border-top-width: 1px;
@@ -4880,6 +8170,10 @@ ___CSS_LOADER_EXPORT___.push([module.id, `/*! tailwindcss v4.2.0 | MIT License |
   .border-l {
     border-left-style: var(--tw-border-style);
     border-left-width: 1px;
+  }
+  .border-dotted {
+    --tw-border-style: dotted;
+    border-style: dotted;
   }
   .border-none {
     --tw-border-style: none;
@@ -4900,6 +8194,9 @@ ___CSS_LOADER_EXPORT___.push([module.id, `/*! tailwindcss v4.2.0 | MIT License |
   .border-\\[\\#3e342c\\] {
     border-color: #3e342c;
   }
+  .border-\\[\\#3e342c\\]\\/20 {
+    border-color: color-mix(in oklab, #3e342c 20%, transparent);
+  }
   .border-\\[\\#3e342c\\]\\/30 {
     border-color: color-mix(in oklab, #3e342c 30%, transparent);
   }
@@ -4912,8 +8209,38 @@ ___CSS_LOADER_EXPORT___.push([module.id, `/*! tailwindcss v4.2.0 | MIT License |
   .border-\\[\\#3e342c\\]\\/60 {
     border-color: color-mix(in oklab, #3e342c 60%, transparent);
   }
+  .border-amber-400 {
+    border-color: var(--color-amber-400);
+  }
   .border-black {
     border-color: var(--color-black);
+  }
+  .border-cyan-400 {
+    border-color: var(--color-cyan-400);
+  }
+  .border-cyan-500\\/35 {
+    border-color: color-mix(in srgb, oklch(71.5% 0.143 215.221) 35%, transparent);
+    @supports (color: color-mix(in lab, red, red)) {
+      border-color: color-mix(in oklab, var(--color-cyan-500) 35%, transparent);
+    }
+  }
+  .border-green-500\\/10 {
+    border-color: color-mix(in srgb, oklch(72.3% 0.219 149.579) 10%, transparent);
+    @supports (color: color-mix(in lab, red, red)) {
+      border-color: color-mix(in oklab, var(--color-green-500) 10%, transparent);
+    }
+  }
+  .border-lime-500\\/10 {
+    border-color: color-mix(in srgb, oklch(76.8% 0.233 130.85) 10%, transparent);
+    @supports (color: color-mix(in lab, red, red)) {
+      border-color: color-mix(in oklab, var(--color-lime-500) 10%, transparent);
+    }
+  }
+  .border-purple-500\\/10 {
+    border-color: color-mix(in srgb, oklch(62.7% 0.265 303.9) 10%, transparent);
+    @supports (color: color-mix(in lab, red, red)) {
+      border-color: color-mix(in oklab, var(--color-purple-500) 10%, transparent);
+    }
   }
   .border-red-500\\/30 {
     border-color: color-mix(in srgb, oklch(63.7% 0.237 25.331) 30%, transparent);
@@ -4921,14 +8248,26 @@ ___CSS_LOADER_EXPORT___.push([module.id, `/*! tailwindcss v4.2.0 | MIT License |
       border-color: color-mix(in oklab, var(--color-red-500) 30%, transparent);
     }
   }
+  .border-sky-400\\/40 {
+    border-color: color-mix(in srgb, oklch(74.6% 0.16 232.661) 40%, transparent);
+    @supports (color: color-mix(in lab, red, red)) {
+      border-color: color-mix(in oklab, var(--color-sky-400) 40%, transparent);
+    }
+  }
+  .border-sky-500\\/10 {
+    border-color: color-mix(in srgb, oklch(68.5% 0.169 237.323) 10%, transparent);
+    @supports (color: color-mix(in lab, red, red)) {
+      border-color: color-mix(in oklab, var(--color-sky-500) 10%, transparent);
+    }
+  }
+  .border-sky-500\\/30 {
+    border-color: color-mix(in srgb, oklch(68.5% 0.169 237.323) 30%, transparent);
+    @supports (color: color-mix(in lab, red, red)) {
+      border-color: color-mix(in oklab, var(--color-sky-500) 30%, transparent);
+    }
+  }
   .border-transparent {
     border-color: transparent;
-  }
-  .border-vintage-border\\/20 {
-    border-color: color-mix(in srgb, #3e342c 20%, transparent);
-    @supports (color: color-mix(in lab, red, red)) {
-      border-color: color-mix(in oklab, var(--color-vintage-border) 20%, transparent);
-    }
   }
   .border-vintage-border\\/30 {
     border-color: color-mix(in srgb, #3e342c 30%, transparent);
@@ -4940,21 +8279,6 @@ ___CSS_LOADER_EXPORT___.push([module.id, `/*! tailwindcss v4.2.0 | MIT License |
     border-color: color-mix(in srgb, #3e342c 40%, transparent);
     @supports (color: color-mix(in lab, red, red)) {
       border-color: color-mix(in oklab, var(--color-vintage-border) 40%, transparent);
-    }
-  }
-  .border-vintage-border\\/50 {
-    border-color: color-mix(in srgb, #3e342c 50%, transparent);
-    @supports (color: color-mix(in lab, red, red)) {
-      border-color: color-mix(in oklab, var(--color-vintage-border) 50%, transparent);
-    }
-  }
-  .border-vintage-gold {
-    border-color: var(--color-vintage-gold);
-  }
-  .border-vintage-gold\\/20 {
-    border-color: color-mix(in srgb, #c89547 20%, transparent);
-    @supports (color: color-mix(in lab, red, red)) {
-      border-color: color-mix(in oklab, var(--color-vintage-gold) 20%, transparent);
     }
   }
   .border-vintage-gold\\/25 {
@@ -4969,10 +8293,34 @@ ___CSS_LOADER_EXPORT___.push([module.id, `/*! tailwindcss v4.2.0 | MIT License |
       border-color: color-mix(in oklab, var(--color-vintage-gold) 30%, transparent);
     }
   }
+  .border-vintage-gold\\/40 {
+    border-color: color-mix(in srgb, #c89547 40%, transparent);
+    @supports (color: color-mix(in lab, red, red)) {
+      border-color: color-mix(in oklab, var(--color-vintage-gold) 40%, transparent);
+    }
+  }
   .border-vintage-gold\\/50 {
     border-color: color-mix(in srgb, #c89547 50%, transparent);
     @supports (color: color-mix(in lab, red, red)) {
       border-color: color-mix(in oklab, var(--color-vintage-gold) 50%, transparent);
+    }
+  }
+  .border-white\\/5 {
+    border-color: color-mix(in srgb, #fff 5%, transparent);
+    @supports (color: color-mix(in lab, red, red)) {
+      border-color: color-mix(in oklab, var(--color-white) 5%, transparent);
+    }
+  }
+  .border-white\\/10 {
+    border-color: color-mix(in srgb, #fff 10%, transparent);
+    @supports (color: color-mix(in lab, red, red)) {
+      border-color: color-mix(in oklab, var(--color-white) 10%, transparent);
+    }
+  }
+  .border-white\\/\\[0\\.12\\] {
+    border-color: color-mix(in srgb, #fff 12%, transparent);
+    @supports (color: color-mix(in lab, red, red)) {
+      border-color: color-mix(in oklab, var(--color-white) 12%, transparent);
     }
   }
   .border-t-transparent {
@@ -4981,11 +8329,17 @@ ___CSS_LOADER_EXPORT___.push([module.id, `/*! tailwindcss v4.2.0 | MIT License |
   .bg-\\[\\#1a1613\\] {
     background-color: #1a1613;
   }
+  .bg-\\[\\#1b121f\\] {
+    background-color: #1b121f;
+  }
   .bg-\\[\\#1b1714\\] {
     background-color: #1b1714;
   }
   .bg-\\[\\#1c1815\\] {
     background-color: #1c1815;
+  }
+  .bg-\\[\\#1e1916\\]\\/30 {
+    background-color: color-mix(in oklab, #1e1916 30%, transparent);
   }
   .bg-\\[\\#1e1916\\]\\/40 {
     background-color: color-mix(in oklab, #1e1916 40%, transparent);
@@ -5014,6 +8368,15 @@ ___CSS_LOADER_EXPORT___.push([module.id, `/*! tailwindcss v4.2.0 | MIT License |
   .bg-\\[\\#110e0c\\] {
     background-color: #110e0c;
   }
+  .bg-\\[\\#151b11\\] {
+    background-color: #151b11;
+  }
+  .bg-\\[\\#251f15\\] {
+    background-color: #251f15;
+  }
+  .bg-\\[\\#818cf8\\] {
+    background-color: #818cf8;
+  }
   .bg-\\[\\#14110f\\] {
     background-color: #14110f;
   }
@@ -5025,6 +8388,12 @@ ___CSS_LOADER_EXPORT___.push([module.id, `/*! tailwindcss v4.2.0 | MIT License |
   }
   .bg-\\[\\#181412\\] {
     background-color: #181412;
+  }
+  .bg-\\[\\#c084fc\\] {
+    background-color: #c084fc;
+  }
+  .bg-\\[\\#fb7185\\] {
+    background-color: #fb7185;
   }
   .bg-amber-900\\/10 {
     background-color: color-mix(in srgb, oklch(41.4% 0.112 45.904) 10%, transparent);
@@ -5065,6 +8434,12 @@ ___CSS_LOADER_EXPORT___.push([module.id, `/*! tailwindcss v4.2.0 | MIT License |
       background-color: color-mix(in oklab, var(--color-black) 40%, transparent);
     }
   }
+  .bg-black\\/60 {
+    background-color: color-mix(in srgb, #000 60%, transparent);
+    @supports (color: color-mix(in lab, red, red)) {
+      background-color: color-mix(in oklab, var(--color-black) 60%, transparent);
+    }
+  }
   .bg-black\\/70 {
     background-color: color-mix(in srgb, #000 70%, transparent);
     @supports (color: color-mix(in lab, red, red)) {
@@ -5083,10 +8458,79 @@ ___CSS_LOADER_EXPORT___.push([module.id, `/*! tailwindcss v4.2.0 | MIT License |
       background-color: color-mix(in oklab, var(--color-black) 85%, transparent);
     }
   }
+  .bg-black\\/\\[0\\.45\\] {
+    background-color: color-mix(in srgb, #000 45%, transparent);
+    @supports (color: color-mix(in lab, red, red)) {
+      background-color: color-mix(in oklab, var(--color-black) 45%, transparent);
+    }
+  }
+  .bg-cyan-400\\/30 {
+    background-color: color-mix(in srgb, oklch(78.9% 0.154 211.53) 30%, transparent);
+    @supports (color: color-mix(in lab, red, red)) {
+      background-color: color-mix(in oklab, var(--color-cyan-400) 30%, transparent);
+    }
+  }
+  .bg-green-500\\/30 {
+    background-color: color-mix(in srgb, oklch(72.3% 0.219 149.579) 30%, transparent);
+    @supports (color: color-mix(in lab, red, red)) {
+      background-color: color-mix(in oklab, var(--color-green-500) 30%, transparent);
+    }
+  }
+  .bg-green-500\\/50 {
+    background-color: color-mix(in srgb, oklch(72.3% 0.219 149.579) 50%, transparent);
+    @supports (color: color-mix(in lab, red, red)) {
+      background-color: color-mix(in oklab, var(--color-green-500) 50%, transparent);
+    }
+  }
+  .bg-pink-500\\/10 {
+    background-color: color-mix(in srgb, oklch(65.6% 0.241 354.308) 10%, transparent);
+    @supports (color: color-mix(in lab, red, red)) {
+      background-color: color-mix(in oklab, var(--color-pink-500) 10%, transparent);
+    }
+  }
   .bg-red-500\\/10 {
     background-color: color-mix(in srgb, oklch(63.7% 0.237 25.331) 10%, transparent);
     @supports (color: color-mix(in lab, red, red)) {
       background-color: color-mix(in oklab, var(--color-red-500) 10%, transparent);
+    }
+  }
+  .bg-red-500\\/30 {
+    background-color: color-mix(in srgb, oklch(63.7% 0.237 25.331) 30%, transparent);
+    @supports (color: color-mix(in lab, red, red)) {
+      background-color: color-mix(in oklab, var(--color-red-500) 30%, transparent);
+    }
+  }
+  .bg-red-500\\/50 {
+    background-color: color-mix(in srgb, oklch(63.7% 0.237 25.331) 50%, transparent);
+    @supports (color: color-mix(in lab, red, red)) {
+      background-color: color-mix(in oklab, var(--color-red-500) 50%, transparent);
+    }
+  }
+  .bg-sky-400 {
+    background-color: var(--color-sky-400);
+  }
+  .bg-sky-500\\/10 {
+    background-color: color-mix(in srgb, oklch(68.5% 0.169 237.323) 10%, transparent);
+    @supports (color: color-mix(in lab, red, red)) {
+      background-color: color-mix(in oklab, var(--color-sky-500) 10%, transparent);
+    }
+  }
+  .bg-slate-600 {
+    background-color: var(--color-slate-600);
+  }
+  .bg-slate-900 {
+    background-color: var(--color-slate-900);
+  }
+  .bg-slate-900\\/60 {
+    background-color: color-mix(in srgb, oklch(20.8% 0.042 265.755) 60%, transparent);
+    @supports (color: color-mix(in lab, red, red)) {
+      background-color: color-mix(in oklab, var(--color-slate-900) 60%, transparent);
+    }
+  }
+  .bg-slate-950\\/40 {
+    background-color: color-mix(in srgb, oklch(12.9% 0.042 264.695) 40%, transparent);
+    @supports (color: color-mix(in lab, red, red)) {
+      background-color: color-mix(in oklab, var(--color-slate-950) 40%, transparent);
     }
   }
   .bg-transparent {
@@ -5094,30 +8538,6 @@ ___CSS_LOADER_EXPORT___.push([module.id, `/*! tailwindcss v4.2.0 | MIT License |
   }
   .bg-vintage-bg {
     background-color: var(--color-vintage-bg);
-  }
-  .bg-vintage-bg\\/80 {
-    background-color: color-mix(in srgb, #1c1815 80%, transparent);
-    @supports (color: color-mix(in lab, red, red)) {
-      background-color: color-mix(in oklab, var(--color-vintage-bg) 80%, transparent);
-    }
-  }
-  .bg-vintage-bg\\/90 {
-    background-color: color-mix(in srgb, #1c1815 90%, transparent);
-    @supports (color: color-mix(in lab, red, red)) {
-      background-color: color-mix(in oklab, var(--color-vintage-bg) 90%, transparent);
-    }
-  }
-  .bg-vintage-border\\/20 {
-    background-color: color-mix(in srgb, #3e342c 20%, transparent);
-    @supports (color: color-mix(in lab, red, red)) {
-      background-color: color-mix(in oklab, var(--color-vintage-border) 20%, transparent);
-    }
-  }
-  .bg-vintage-border\\/30 {
-    background-color: color-mix(in srgb, #3e342c 30%, transparent);
-    @supports (color: color-mix(in lab, red, red)) {
-      background-color: color-mix(in oklab, var(--color-vintage-border) 30%, transparent);
-    }
   }
   .bg-vintage-gold {
     background-color: var(--color-vintage-gold);
@@ -5140,71 +8560,67 @@ ___CSS_LOADER_EXPORT___.push([module.id, `/*! tailwindcss v4.2.0 | MIT License |
       background-color: color-mix(in oklab, var(--color-vintage-gold) 15%, transparent);
     }
   }
-  .bg-vintage-gold\\/20 {
-    background-color: color-mix(in srgb, #c89547 20%, transparent);
+  .bg-white {
+    background-color: var(--color-white);
+  }
+  .bg-white\\/10 {
+    background-color: color-mix(in srgb, #fff 10%, transparent);
     @supports (color: color-mix(in lab, red, red)) {
-      background-color: color-mix(in oklab, var(--color-vintage-gold) 20%, transparent);
+      background-color: color-mix(in oklab, var(--color-white) 10%, transparent);
     }
   }
-  .bg-vintage-gold\\/60 {
-    background-color: color-mix(in srgb, #c89547 60%, transparent);
+  .bg-yellow-500\\/30 {
+    background-color: color-mix(in srgb, oklch(79.5% 0.184 86.047) 30%, transparent);
     @supports (color: color-mix(in lab, red, red)) {
-      background-color: color-mix(in oklab, var(--color-vintage-gold) 60%, transparent);
+      background-color: color-mix(in oklab, var(--color-yellow-500) 30%, transparent);
     }
   }
-  .bg-vintage-muted\\/50 {
-    background-color: color-mix(in srgb, #857467 50%, transparent);
+  .bg-yellow-500\\/50 {
+    background-color: color-mix(in srgb, oklch(79.5% 0.184 86.047) 50%, transparent);
     @supports (color: color-mix(in lab, red, red)) {
-      background-color: color-mix(in oklab, var(--color-vintage-muted) 50%, transparent);
-    }
-  }
-  .bg-vintage-muted\\/60 {
-    background-color: color-mix(in srgb, #857467 60%, transparent);
-    @supports (color: color-mix(in lab, red, red)) {
-      background-color: color-mix(in oklab, var(--color-vintage-muted) 60%, transparent);
-    }
-  }
-  .bg-vintage-rust\\/10 {
-    background-color: color-mix(in srgb, #a84a32 10%, transparent);
-    @supports (color: color-mix(in lab, red, red)) {
-      background-color: color-mix(in oklab, var(--color-vintage-rust) 10%, transparent);
-    }
-  }
-  .bg-vintage-rust\\/60 {
-    background-color: color-mix(in srgb, #a84a32 60%, transparent);
-    @supports (color: color-mix(in lab, red, red)) {
-      background-color: color-mix(in oklab, var(--color-vintage-rust) 60%, transparent);
+      background-color: color-mix(in oklab, var(--color-yellow-500) 50%, transparent);
     }
   }
   .bg-gradient-to-br {
     --tw-gradient-position: to bottom right in oklab;
     background-image: linear-gradient(var(--tw-gradient-stops));
   }
-  .bg-gradient-to-t {
-    --tw-gradient-position: to top in oklab;
+  .bg-gradient-to-r {
+    --tw-gradient-position: to right in oklab;
     background-image: linear-gradient(var(--tw-gradient-stops));
-  }
-  .bg-\\[radial-gradient\\(circle_at_center\\,rgba\\(62\\,52\\,44\\,0\\.15\\)_0\\%\\,rgba\\(28\\,24\\,21\\,1\\)_80\\%\\)\\] {
-    background-image: radial-gradient(circle at center,rgba(62,52,44,0.15) 0%,rgba(28,24,21,1) 80%);
   }
   .from-\\[\\#261f1c\\] {
     --tw-gradient-from: #261f1c;
     --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position));
   }
-  .from-vintage-border {
-    --tw-gradient-from: var(--color-vintage-border);
+  .from-transparent {
+    --tw-gradient-from: transparent;
     --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position));
+  }
+  .via-cyan-400 {
+    --tw-gradient-via: var(--color-cyan-400);
+    --tw-gradient-via-stops: var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-via) var(--tw-gradient-via-position), var(--tw-gradient-to) var(--tw-gradient-to-position);
+    --tw-gradient-stops: var(--tw-gradient-via-stops);
   }
   .to-\\[\\#120d0b\\] {
     --tw-gradient-to: #120d0b;
     --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position));
   }
-  .to-vintage-gold {
-    --tw-gradient-to: var(--color-vintage-gold);
+  .to-pink-500 {
+    --tw-gradient-to: var(--color-pink-500);
     --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position));
   }
   .fill-current {
     fill: currentcolor;
+  }
+  .fill-none {
+    fill: none;
+  }
+  .stroke-sky-400 {
+    stroke: var(--color-sky-400);
+  }
+  .stroke-slate-800 {
+    stroke: var(--color-slate-800);
   }
   .object-cover {
     object-fit: cover;
@@ -5229,6 +8645,9 @@ ___CSS_LOADER_EXPORT___.push([module.id, `/*! tailwindcss v4.2.0 | MIT License |
   }
   .p-4 {
     padding: calc(var(--spacing) * 4);
+  }
+  .p-4\\.5 {
+    padding: calc(var(--spacing) * 4.5);
   }
   .p-5 {
     padding: calc(var(--spacing) * 5);
@@ -5263,6 +8682,9 @@ ___CSS_LOADER_EXPORT___.push([module.id, `/*! tailwindcss v4.2.0 | MIT License |
   .px-5 {
     padding-inline: calc(var(--spacing) * 5);
   }
+  .px-6 {
+    padding-inline: calc(var(--spacing) * 6);
+  }
   .px-12 {
     padding-inline: calc(var(--spacing) * 12);
   }
@@ -5278,14 +8700,17 @@ ___CSS_LOADER_EXPORT___.push([module.id, `/*! tailwindcss v4.2.0 | MIT License |
   .py-2 {
     padding-block: calc(var(--spacing) * 2);
   }
+  .py-2\\.5 {
+    padding-block: calc(var(--spacing) * 2.5);
+  }
   .py-3 {
     padding-block: calc(var(--spacing) * 3);
   }
-  .py-8 {
-    padding-block: calc(var(--spacing) * 8);
-  }
   .pt-1 {
     padding-top: calc(var(--spacing) * 1);
+  }
+  .pt-2 {
+    padding-top: calc(var(--spacing) * 2);
   }
   .pr-2 {
     padding-right: calc(var(--spacing) * 2);
@@ -5296,20 +8721,20 @@ ___CSS_LOADER_EXPORT___.push([module.id, `/*! tailwindcss v4.2.0 | MIT License |
   .pb-2 {
     padding-bottom: calc(var(--spacing) * 2);
   }
+  .pb-3 {
+    padding-bottom: calc(var(--spacing) * 3);
+  }
   .pl-1 {
     padding-left: calc(var(--spacing) * 1);
   }
   .pl-4 {
     padding-left: calc(var(--spacing) * 4);
   }
+  .pl-5 {
+    padding-left: calc(var(--spacing) * 5);
+  }
   .pl-8 {
     padding-left: calc(var(--spacing) * 8);
-  }
-  .pl-12 {
-    padding-left: calc(var(--spacing) * 12);
-  }
-  .pl-16 {
-    padding-left: calc(var(--spacing) * 16);
   }
   .text-center {
     text-align: center;
@@ -5320,6 +8745,9 @@ ___CSS_LOADER_EXPORT___.push([module.id, `/*! tailwindcss v4.2.0 | MIT License |
   .text-right {
     text-align: right;
   }
+  .align-middle {
+    vertical-align: middle;
+  }
   .font-mono {
     font-family: var(--font-mono);
   }
@@ -5329,25 +8757,20 @@ ___CSS_LOADER_EXPORT___.push([module.id, `/*! tailwindcss v4.2.0 | MIT License |
   .font-serif {
     font-family: var(--font-serif);
   }
-  .text-3xl {
-    font-size: var(--text-3xl);
-    line-height: var(--tw-leading, var(--text-3xl--line-height));
-  }
-  .text-5xl {
-    font-size: var(--text-5xl);
-    line-height: var(--tw-leading, var(--text-5xl--line-height));
-  }
-  .text-6xl {
-    font-size: var(--text-6xl);
-    line-height: var(--tw-leading, var(--text-6xl--line-height));
-  }
   .text-sm {
     font-size: var(--text-sm);
     line-height: var(--tw-leading, var(--text-sm--line-height));
   }
+  .text-xl {
+    font-size: var(--text-xl);
+    line-height: var(--tw-leading, var(--text-xl--line-height));
+  }
   .text-xs {
     font-size: var(--text-xs);
     line-height: var(--tw-leading, var(--text-xs--line-height));
+  }
+  .text-\\[5px\\] {
+    font-size: 5px;
   }
   .text-\\[6px\\] {
     font-size: 6px;
@@ -5367,6 +8790,23 @@ ___CSS_LOADER_EXPORT___.push([module.id, `/*! tailwindcss v4.2.0 | MIT License |
   .text-\\[11px\\] {
     font-size: 11px;
   }
+  .text-\\[12px\\] {
+    font-size: 12px;
+  }
+  .text-\\[14px\\] {
+    font-size: 14px;
+  }
+  .text-\\[34px\\] {
+    font-size: 34px;
+  }
+  .leading-\\[0\\.98\\] {
+    --tw-leading: 0.98;
+    line-height: 0.98;
+  }
+  .leading-none {
+    --tw-leading: 1;
+    line-height: 1;
+  }
   .leading-normal {
     --tw-leading: var(--leading-normal);
     line-height: var(--leading-normal);
@@ -5383,9 +8823,17 @@ ___CSS_LOADER_EXPORT___.push([module.id, `/*! tailwindcss v4.2.0 | MIT License |
     --tw-leading: var(--leading-tight);
     line-height: var(--leading-tight);
   }
+  .font-black {
+    --tw-font-weight: var(--font-weight-black);
+    font-weight: var(--font-weight-black);
+  }
   .font-bold {
     --tw-font-weight: var(--font-weight-bold);
     font-weight: var(--font-weight-bold);
+  }
+  .font-extrabold {
+    --tw-font-weight: var(--font-weight-extrabold);
+    font-weight: var(--font-weight-extrabold);
   }
   .font-light {
     --tw-font-weight: var(--font-weight-light);
@@ -5403,9 +8851,25 @@ ___CSS_LOADER_EXPORT___.push([module.id, `/*! tailwindcss v4.2.0 | MIT License |
     --tw-tracking: 0.3em;
     letter-spacing: 0.3em;
   }
+  .tracking-\\[0\\.4em\\] {
+    --tw-tracking: 0.4em;
+    letter-spacing: 0.4em;
+  }
   .tracking-\\[0\\.25em\\] {
     --tw-tracking: 0.25em;
     letter-spacing: 0.25em;
+  }
+  .tracking-\\[0\\.35em\\] {
+    --tw-tracking: 0.35em;
+    letter-spacing: 0.35em;
+  }
+  .tracking-tight {
+    --tw-tracking: var(--tracking-tight);
+    letter-spacing: var(--tracking-tight);
+  }
+  .tracking-tighter {
+    --tw-tracking: var(--tracking-tighter);
+    letter-spacing: var(--tracking-tighter);
   }
   .tracking-wide {
     --tw-tracking: var(--tracking-wide);
@@ -5425,11 +8889,17 @@ ___CSS_LOADER_EXPORT___.push([module.id, `/*! tailwindcss v4.2.0 | MIT License |
   .whitespace-pre {
     white-space: pre;
   }
+  .whitespace-pre-wrap {
+    white-space: pre-wrap;
+  }
   .text-\\[\\#6b5d53\\] {
     color: #6b5d53;
   }
   .text-\\[\\#8f8278\\] {
     color: #8f8278;
+  }
+  .text-\\[\\#94a3b8\\] {
+    color: #94a3b8;
   }
   .text-\\[\\#14110f\\] {
     color: #14110f;
@@ -5437,11 +8907,74 @@ ___CSS_LOADER_EXPORT___.push([module.id, `/*! tailwindcss v4.2.0 | MIT License |
   .text-\\[\\#a3978f\\] {
     color: #a3978f;
   }
+  .text-\\[\\#a88653\\] {
+    color: #a88653;
+  }
+  .text-\\[\\#bef264\\] {
+    color: #bef264;
+  }
+  .text-\\[\\#c5c8c6\\] {
+    color: #c5c8c6;
+  }
   .text-\\[\\#ded9d5\\] {
     color: #ded9d5;
   }
+  .text-\\[\\#e2d5c3\\] {
+    color: #e2d5c3;
+  }
+  .text-\\[\\#f5ebd7\\] {
+    color: #f5ebd7;
+  }
+  .text-\\[\\#f472b6\\] {
+    color: #f472b6;
+  }
+  .text-amber-400 {
+    color: var(--color-amber-400);
+  }
+  .text-amber-400\\/80 {
+    color: color-mix(in srgb, oklch(82.8% 0.189 84.429) 80%, transparent);
+    @supports (color: color-mix(in lab, red, red)) {
+      color: color-mix(in oklab, var(--color-amber-400) 80%, transparent);
+    }
+  }
   .text-black {
     color: var(--color-black);
+  }
+  .text-cyan-300 {
+    color: var(--color-cyan-300);
+  }
+  .text-cyan-400 {
+    color: var(--color-cyan-400);
+  }
+  .text-cyan-400\\/30 {
+    color: color-mix(in srgb, oklch(78.9% 0.154 211.53) 30%, transparent);
+    @supports (color: color-mix(in lab, red, red)) {
+      color: color-mix(in oklab, var(--color-cyan-400) 30%, transparent);
+    }
+  }
+  .text-emerald-400 {
+    color: var(--color-emerald-400);
+  }
+  .text-green-400 {
+    color: var(--color-green-400);
+  }
+  .text-green-400\\/60 {
+    color: color-mix(in srgb, oklch(79.2% 0.209 151.711) 60%, transparent);
+    @supports (color: color-mix(in lab, red, red)) {
+      color: color-mix(in oklab, var(--color-green-400) 60%, transparent);
+    }
+  }
+  .text-pink-400 {
+    color: var(--color-pink-400);
+  }
+  .text-purple-400 {
+    color: var(--color-purple-400);
+  }
+  .text-purple-400\\/60 {
+    color: color-mix(in srgb, oklch(71.4% 0.203 305.504) 60%, transparent);
+    @supports (color: color-mix(in lab, red, red)) {
+      color: color-mix(in oklab, var(--color-purple-400) 60%, transparent);
+    }
   }
   .text-red-300 {
     color: var(--color-red-300);
@@ -5449,35 +8982,89 @@ ___CSS_LOADER_EXPORT___.push([module.id, `/*! tailwindcss v4.2.0 | MIT License |
   .text-red-400 {
     color: var(--color-red-400);
   }
+  .text-sky-400 {
+    color: var(--color-sky-400);
+  }
+  .text-sky-400\\/60 {
+    color: color-mix(in srgb, oklch(74.6% 0.16 232.661) 60%, transparent);
+    @supports (color: color-mix(in lab, red, red)) {
+      color: color-mix(in oklab, var(--color-sky-400) 60%, transparent);
+    }
+  }
+  .text-sky-400\\/80 {
+    color: color-mix(in srgb, oklch(74.6% 0.16 232.661) 80%, transparent);
+    @supports (color: color-mix(in lab, red, red)) {
+      color: color-mix(in oklab, var(--color-sky-400) 80%, transparent);
+    }
+  }
+  .text-sky-400\\/85 {
+    color: color-mix(in srgb, oklch(74.6% 0.16 232.661) 85%, transparent);
+    @supports (color: color-mix(in lab, red, red)) {
+      color: color-mix(in oklab, var(--color-sky-400) 85%, transparent);
+    }
+  }
+  .text-slate-300 {
+    color: var(--color-slate-300);
+  }
+  .text-slate-400 {
+    color: var(--color-slate-400);
+  }
+  .text-slate-500 {
+    color: var(--color-slate-500);
+  }
+  .text-slate-600 {
+    color: var(--color-slate-600);
+  }
+  .text-stone-200 {
+    color: var(--color-stone-200);
+  }
+  .text-stone-300 {
+    color: var(--color-stone-300);
+  }
   .text-stone-400 {
     color: var(--color-stone-400);
+  }
+  .text-stone-500 {
+    color: var(--color-stone-500);
   }
   .text-vintage-gold {
     color: var(--color-vintage-gold);
   }
+  .text-vintage-gold\\/80 {
+    color: color-mix(in srgb, #c89547 80%, transparent);
+    @supports (color: color-mix(in lab, red, red)) {
+      color: color-mix(in oklab, var(--color-vintage-gold) 80%, transparent);
+    }
+  }
   .text-vintage-muted {
     color: var(--color-vintage-muted);
   }
-  .text-vintage-muted\\/90 {
-    color: color-mix(in srgb, #857467 90%, transparent);
-    @supports (color: color-mix(in lab, red, red)) {
-      color: color-mix(in oklab, var(--color-vintage-muted) 90%, transparent);
-    }
-  }
   .text-vintage-paper {
     color: var(--color-vintage-paper);
-  }
-  .text-vintage-paper\\/90 {
-    color: color-mix(in srgb, #faf8f5 90%, transparent);
-    @supports (color: color-mix(in lab, red, red)) {
-      color: color-mix(in oklab, var(--color-vintage-paper) 90%, transparent);
-    }
   }
   .text-vintage-rust {
     color: var(--color-vintage-rust);
   }
   .text-white {
     color: var(--color-white);
+  }
+  .text-white\\/58 {
+    color: color-mix(in srgb, #fff 58%, transparent);
+    @supports (color: color-mix(in lab, red, red)) {
+      color: color-mix(in oklab, var(--color-white) 58%, transparent);
+    }
+  }
+  .text-white\\/60 {
+    color: color-mix(in srgb, #fff 60%, transparent);
+    @supports (color: color-mix(in lab, red, red)) {
+      color: color-mix(in oklab, var(--color-white) 60%, transparent);
+    }
+  }
+  .text-white\\/70 {
+    color: color-mix(in srgb, #fff 70%, transparent);
+    @supports (color: color-mix(in lab, red, red)) {
+      color: color-mix(in oklab, var(--color-white) 70%, transparent);
+    }
   }
   .capitalize {
     text-transform: capitalize;
@@ -5487,6 +9074,10 @@ ___CSS_LOADER_EXPORT___.push([module.id, `/*! tailwindcss v4.2.0 | MIT License |
   }
   .italic {
     font-style: italic;
+  }
+  .tabular-nums {
+    --tw-numeric-spacing: tabular-nums;
+    font-variant-numeric: var(--tw-ordinal,) var(--tw-slashed-zero,) var(--tw-numeric-figure,) var(--tw-numeric-spacing,) var(--tw-numeric-fraction,);
   }
   .placeholder-\\[\\#6b5d53\\] {
     &::placeholder {
@@ -5508,14 +9099,20 @@ ___CSS_LOADER_EXPORT___.push([module.id, `/*! tailwindcss v4.2.0 | MIT License |
   .opacity-20 {
     opacity: 20%;
   }
-  .opacity-90 {
-    opacity: 90%;
+  .opacity-25 {
+    opacity: 25%;
+  }
+  .opacity-30 {
+    opacity: 30%;
+  }
+  .opacity-80 {
+    opacity: 80%;
   }
   .opacity-100 {
     opacity: 100%;
   }
-  .opacity-\\[0\\.06\\] {
-    opacity: 0.06;
+  .opacity-\\[0\\.045\\] {
+    opacity: 0.045;
   }
   .mix-blend-overlay {
     mix-blend-mode: overlay;
@@ -5528,25 +9125,29 @@ ___CSS_LOADER_EXPORT___.push([module.id, `/*! tailwindcss v4.2.0 | MIT License |
     --tw-shadow: 0 25px 50px -12px var(--tw-shadow-color, rgb(0 0 0 / 0.25));
     box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
   }
-  .shadow-inner {
-    --tw-shadow: inset 0 2px 4px 0 var(--tw-shadow-color, rgb(0 0 0 / 0.05));
+  .shadow-\\[0_0_8px_rgba\\(56\\,189\\,248\\,0\\.8\\)\\] {
+    --tw-shadow: 0 0 8px var(--tw-shadow-color, rgba(56,189,248,0.8));
     box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
   }
-  .shadow-lg {
-    --tw-shadow: 0 10px 15px -3px var(--tw-shadow-color, rgb(0 0 0 / 0.1)), 0 4px 6px -4px var(--tw-shadow-color, rgb(0 0 0 / 0.1));
+  .shadow-\\[0_0_10px_\\#22d3ee\\] {
+    --tw-shadow: 0 0 10px var(--tw-shadow-color, #22d3ee);
+    box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+  }
+  .shadow-inner {
+    --tw-shadow: inset 0 2px 4px 0 var(--tw-shadow-color, rgb(0 0 0 / 0.05));
     box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
   }
   .shadow-md {
     --tw-shadow: 0 4px 6px -1px var(--tw-shadow-color, rgb(0 0 0 / 0.1)), 0 2px 4px -2px var(--tw-shadow-color, rgb(0 0 0 / 0.1));
     box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
   }
-  .shadow-xl {
-    --tw-shadow: 0 20px 25px -5px var(--tw-shadow-color, rgb(0 0 0 / 0.1)), 0 8px 10px -6px var(--tw-shadow-color, rgb(0 0 0 / 0.1));
-    box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
-  }
   .outline {
     outline-style: var(--tw-outline-style);
     outline-width: 1px;
+  }
+  .blur {
+    --tw-blur: blur(8px);
+    filter: var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,);
   }
   .blur-2xl {
     --tw-blur: blur(var(--blur-2xl));
@@ -5556,14 +9157,31 @@ ___CSS_LOADER_EXPORT___.push([module.id, `/*! tailwindcss v4.2.0 | MIT License |
     --tw-blur: blur(var(--blur-xl));
     filter: var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,);
   }
+  .drop-shadow-\\[0_0_8px_rgba\\(56\\,189\\,248\\,0\\.4\\)\\] {
+    --tw-drop-shadow-size: drop-shadow(0 0 8px var(--tw-drop-shadow-color, rgba(56,189,248,0.4)));
+    --tw-drop-shadow: var(--tw-drop-shadow-size);
+    filter: var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,);
+  }
   .drop-shadow-\\[0_0_12px_rgba\\(200\\,149\\,71\\,0\\.3\\)\\] {
     --tw-drop-shadow-size: drop-shadow(0 0 12px var(--tw-drop-shadow-color, rgba(200,149,71,0.3)));
     --tw-drop-shadow: var(--tw-drop-shadow-size);
     filter: var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,);
   }
-  .drop-shadow-\\[0_0_12px_rgba\\(200\\,149\\,71\\,0\\.4\\)\\] {
-    --tw-drop-shadow-size: drop-shadow(0 0 12px var(--tw-drop-shadow-color, rgba(200,149,71,0.4)));
+  .drop-shadow-\\[0_0_12px_rgba\\(200\\,149\\,71\\,0\\.5\\)\\] {
+    --tw-drop-shadow-size: drop-shadow(0 0 12px var(--tw-drop-shadow-color, rgba(200,149,71,0.5)));
     --tw-drop-shadow: var(--tw-drop-shadow-size);
+    filter: var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,);
+  }
+  .grayscale-\\[40\\%\\] {
+    --tw-grayscale: grayscale(40%);
+    filter: var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,);
+  }
+  .hue-rotate-60 {
+    --tw-hue-rotate: hue-rotate(60deg);
+    filter: var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,);
+  }
+  .sepia-\\[25\\%\\] {
+    --tw-sepia: sepia(25%);
     filter: var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,);
   }
   .filter {
@@ -5588,10 +9206,6 @@ ___CSS_LOADER_EXPORT___.push([module.id, `/*! tailwindcss v4.2.0 | MIT License |
     transition-property: transform, translate, scale, rotate;
     transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));
     transition-duration: var(--tw-duration, var(--default-transition-duration));
-  }
-  .duration-75 {
-    --tw-duration: 75ms;
-    transition-duration: 75ms;
   }
   .select-none {
     -webkit-user-select: none;
@@ -5680,6 +9294,13 @@ ___CSS_LOADER_EXPORT___.push([module.id, `/*! tailwindcss v4.2.0 | MIT License |
       }
     }
   }
+  .hover\\:bg-\\[\\#261f1c\\] {
+    &:hover {
+      @media (hover: hover) {
+        background-color: #261f1c;
+      }
+    }
+  }
   .hover\\:bg-\\[\\#b08138\\] {
     &:hover {
       @media (hover: hover) {
@@ -5694,6 +9315,13 @@ ___CSS_LOADER_EXPORT___.push([module.id, `/*! tailwindcss v4.2.0 | MIT License |
         @supports (color: color-mix(in lab, red, red)) {
           background-color: color-mix(in oklab, var(--color-black) 10%, transparent);
         }
+      }
+    }
+  }
+  .hover\\:bg-vintage-gold {
+    &:hover {
+      @media (hover: hover) {
+        background-color: var(--color-vintage-gold);
       }
     }
   }
@@ -5727,10 +9355,24 @@ ___CSS_LOADER_EXPORT___.push([module.id, `/*! tailwindcss v4.2.0 | MIT License |
       }
     }
   }
+  .hover\\:text-black {
+    &:hover {
+      @media (hover: hover) {
+        color: var(--color-black);
+      }
+    }
+  }
   .hover\\:text-white {
     &:hover {
       @media (hover: hover) {
         color: var(--color-white);
+      }
+    }
+  }
+  .hover\\:underline {
+    &:hover {
+      @media (hover: hover) {
+        text-decoration-line: underline;
       }
     }
   }
@@ -5772,6 +9414,14 @@ ___CSS_LOADER_EXPORT___.push([module.id, `/*! tailwindcss v4.2.0 | MIT License |
       outline-style: none;
     }
   }
+  .active\\:scale-95 {
+    &:active {
+      --tw-scale-x: 95%;
+      --tw-scale-y: 95%;
+      --tw-scale-z: 95%;
+      scale: var(--tw-scale-x) var(--tw-scale-y);
+    }
+  }
   .active\\:scale-\\[0\\.99\\] {
     &:active {
       scale: 0.99;
@@ -5798,28 +9448,41 @@ ___CSS_LOADER_EXPORT___.push([module.id, `/*! tailwindcss v4.2.0 | MIT License |
       opacity: 50%;
     }
   }
-  .md\\:text-4xl {
+  .md\\:w-24 {
     @media (width >= 48rem) {
-      font-size: var(--text-4xl);
-      line-height: var(--tw-leading, var(--text-4xl--line-height));
+      width: calc(var(--spacing) * 24);
     }
   }
-  .md\\:text-6xl {
+  .md\\:max-w-\\[650px\\] {
     @media (width >= 48rem) {
-      font-size: var(--text-6xl);
-      line-height: var(--tw-leading, var(--text-6xl--line-height));
+      max-width: 650px;
     }
   }
-  .md\\:text-7xl {
+  .md\\:p-6 {
     @media (width >= 48rem) {
-      font-size: var(--text-7xl);
-      line-height: var(--tw-leading, var(--text-7xl--line-height));
+      padding: calc(var(--spacing) * 6);
+    }
+  }
+  .md\\:p-12 {
+    @media (width >= 48rem) {
+      padding: calc(var(--spacing) * 12);
+    }
+  }
+  .md\\:text-2xl {
+    @media (width >= 48rem) {
+      font-size: var(--text-2xl);
+      line-height: var(--tw-leading, var(--text-2xl--line-height));
     }
   }
   .md\\:text-sm {
     @media (width >= 48rem) {
       font-size: var(--text-sm);
       line-height: var(--tw-leading, var(--text-sm--line-height));
+    }
+  }
+  .md\\:text-\\[10px\\] {
+    @media (width >= 48rem) {
+      font-size: 10px;
     }
   }
   .lg\\:flex {
@@ -5911,6 +9574,24 @@ ___CSS_LOADER_EXPORT___.push([module.id, `/*! tailwindcss v4.2.0 | MIT License |
 .animate-fade-in {
   animation: fadeIn 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
+.neon-text-cyan {
+  color: #22d3ee;
+  text-shadow: 0 0 4px rgba(34, 211, 238, 0.6), 0 0 12px rgba(34, 211, 238, 0.3);
+}
+.neon-text-pink {
+  color: #f472b6;
+  text-shadow: 0 0 4px rgba(244, 114, 182, 0.6), 0 0 12px rgba(244, 114, 182, 0.3);
+}
+.neon-border-pink {
+  border: 2px solid #f472b6;
+  box-shadow: 0 0 8px rgba(244, 114, 182, 0.4), inset 0 0 4px rgba(244, 114, 182, 0.2);
+}
+.pop-shadow {
+  box-shadow: 6px 6px 0px 0px #000000;
+}
+.pop-border {
+  border: 3px solid #000000;
+}
 @property --tw-rotate-x {
   syntax: "*";
   inherits: false;
@@ -5992,6 +9673,26 @@ ___CSS_LOADER_EXPORT___.push([module.id, `/*! tailwindcss v4.2.0 | MIT License |
   inherits: false;
 }
 @property --tw-tracking {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-ordinal {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-slashed-zero {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-numeric-figure {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-numeric-spacing {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-numeric-fraction {
   syntax: "*";
   inherits: false;
 }
@@ -6118,10 +9819,6 @@ ___CSS_LOADER_EXPORT___.push([module.id, `/*! tailwindcss v4.2.0 | MIT License |
   syntax: "*";
   inherits: false;
 }
-@property --tw-duration {
-  syntax: "*";
-  inherits: false;
-}
 @property --tw-scale-x {
   syntax: "*";
   inherits: false;
@@ -6140,27 +9837,6 @@ ___CSS_LOADER_EXPORT___.push([module.id, `/*! tailwindcss v4.2.0 | MIT License |
 @keyframes spin {
   to {
     transform: rotate(360deg);
-  }
-}
-@keyframes ping {
-  75%, 100% {
-    transform: scale(2);
-    opacity: 0;
-  }
-}
-@keyframes pulse {
-  50% {
-    opacity: 0.5;
-  }
-}
-@keyframes bounce {
-  0%, 100% {
-    transform: translateY(-25%);
-    animation-timing-function: cubic-bezier(0.8, 0, 1, 1);
-  }
-  50% {
-    transform: none;
-    animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
   }
 }
 @layer properties {
@@ -6185,6 +9861,11 @@ ___CSS_LOADER_EXPORT___.push([module.id, `/*! tailwindcss v4.2.0 | MIT License |
       --tw-leading: initial;
       --tw-font-weight: initial;
       --tw-tracking: initial;
+      --tw-ordinal: initial;
+      --tw-slashed-zero: initial;
+      --tw-numeric-figure: initial;
+      --tw-numeric-spacing: initial;
+      --tw-numeric-fraction: initial;
       --tw-shadow: 0 0 #0000;
       --tw-shadow-color: initial;
       --tw-shadow-alpha: 100%;
@@ -6213,14 +9894,651 @@ ___CSS_LOADER_EXPORT___.push([module.id, `/*! tailwindcss v4.2.0 | MIT License |
       --tw-drop-shadow-color: initial;
       --tw-drop-shadow-alpha: 100%;
       --tw-drop-shadow-size: initial;
-      --tw-duration: initial;
       --tw-scale-x: 1;
       --tw-scale-y: 1;
       --tw-scale-z: 1;
     }
   }
 }
-`, "",{"version":3,"sources":["webpack://./src/index.css"],"names":[],"mappings":"AAAA,gEAAgE;AAChE,iBAAiB;AACjB,yCAAyC;AACzC;EACE;IACE,mDAAmD;IACnD,gDAAgD;IAChD;8BAC0B;IAC1B,0CAA0C;IAC1C,0CAA0C;IAC1C,0CAA0C;IAC1C,4CAA4C;IAC5C,2CAA2C;IAC3C,mBAAmB;IACnB,mBAAmB;IACnB,kBAAkB;IAClB,qBAAqB;IACrB,kBAAkB;IAClB,sCAAsC;IACtC,mBAAmB;IACnB,0CAA0C;IAC1C,oBAAoB;IACpB,2CAA2C;IAC3C,mBAAmB;IACnB,yCAAyC;IACzC,gBAAgB;IAChB,0BAA0B;IAC1B,mBAAmB;IACnB,0BAA0B;IAC1B,kBAAkB;IAClB,0BAA0B;IAC1B,wBAAwB;IACxB,yBAAyB;IACzB,2BAA2B;IAC3B,uBAAuB;IACvB,wBAAwB;IACxB,wBAAwB;IACxB,wBAAwB;IACxB,qBAAqB;IACrB,qBAAqB;IACrB,qBAAqB;IACrB,wBAAwB;IACxB,oBAAoB;IACpB,mBAAmB;IACnB,oBAAoB;IACpB,uCAAuC;IACvC,2DAA2D;IAC3D,+DAA+D;IAC/D,oCAAoC;IACpC,eAAe;IACf,gBAAgB;IAChB,oCAAoC;IACpC,kEAAkE;IAClE,uCAAuC;IACvC,4CAA4C;IAC5C,2BAA2B;IAC3B,8BAA8B;IAC9B,6BAA6B;IAC7B,6BAA6B;IAC7B,+BAA+B;IAC/B,8BAA8B;EAChC;AACF;AACA;EACE;IACE,sBAAsB;IACtB,SAAS;IACT,UAAU;IACV,eAAe;EACjB;EACA;IACE,gBAAgB;IAChB,8BAA8B;IAC9B,WAAW;IACX,2JAA2J;IAC3J,mEAAmE;IACnE,uEAAuE;IACvE,wCAAwC;EAC1C;EACA;IACE,SAAS;IACT,cAAc;IACd,qBAAqB;EACvB;EACA;IACE,yCAAyC;IACzC,iCAAiC;EACnC;EACA;IACE,kBAAkB;IAClB,oBAAoB;EACtB;EACA;IACE,cAAc;IACd,gCAAgC;IAChC,wBAAwB;EAC1B;EACA;IACE,mBAAmB;EACrB;EACA;IACE,gJAAgJ;IAChJ,wEAAwE;IACxE,4EAA4E;IAC5E,cAAc;EAChB;EACA;IACE,cAAc;EAChB;EACA;IACE,cAAc;IACd,cAAc;IACd,kBAAkB;IAClB,wBAAwB;EAC1B;EACA;IACE,eAAe;EACjB;EACA;IACE,WAAW;EACb;EACA;IACE,cAAc;IACd,qBAAqB;IACrB,yBAAyB;EAC3B;EACA;IACE,aAAa;EACf;EACA;IACE,wBAAwB;EAC1B;EACA;IACE,kBAAkB;EACpB;EACA;IACE,gBAAgB;EAClB;EACA;IACE,cAAc;IACd,sBAAsB;EACxB;EACA;IACE,eAAe;IACf,YAAY;EACd;EACA;IACE,aAAa;IACb,8BAA8B;IAC9B,gCAAgC;IAChC,uBAAuB;IACvB,cAAc;IACd,gBAAgB;IAChB,6BAA6B;IAC7B,UAAU;EACZ;EACA;IACE,mBAAmB;EACrB;EACA;IACE,0BAA0B;EAC5B;EACA;IACE,sBAAsB;EACxB;EACA;IACE,UAAU;EACZ;EACA;IACE;MACE,mBAAmB;MACnB;QACE,yDAAyD;MAC3D;IACF;EACF;EACA;IACE,gBAAgB;EAClB;EACA;IACE,wBAAwB;EAC1B;EACA;IACE,eAAe;IACf,mBAAmB;EACrB;EACA;IACE,oBAAoB;EACtB;EACA;IACE,UAAU;EACZ;EACA;IACE,gBAAgB;EAClB;EACA;IACE,cAAc;EAChB;EACA;IACE,gBAAgB;EAClB;EACA;IACE,kBAAkB;EACpB;EACA;IACE,YAAY;EACd;EACA;IACE,wBAAwB;EAC1B;AACF;AACA;EACE;IACE,oBAAoB;EACtB;EACA;IACE,kBAAkB;EACpB;EACA;IACE,eAAe;EACjB;EACA;IACE,kBAAkB;EACpB;EACA;IACE,gBAAgB;EAClB;EACA;IACE,qBAAqB;EACvB;EACA;IACE,+BAA+B;EACjC;EACA;IACE,+BAA+B;EACjC;EACA;IACE,kCAAkC;EACpC;EACA;IACE,gCAAgC;EAClC;EACA;IACE,6BAA6B;EAC/B;EACA;IACE,+BAA+B;EACjC;EACA;IACE,6BAA6B;EAC/B;EACA;IACE,+BAA+B;EACjC;EACA;IACE,SAAS;EACX;EACA;IACE,+BAA+B;EACjC;EACA;IACE,+BAA+B;EACjC;EACA;IACE,+BAA+B;EACjC;EACA;IACE,WAAW;EACb;EACA;IACE,gCAAgC;EAClC;EACA;IACE,gCAAgC;EAClC;EACA;IACE,iCAAiC;EACnC;EACA;IACE,+BAA+B;EACjC;EACA;IACE,8BAA8B;EAChC;EACA;IACE,8BAA8B;EAChC;EACA;IACE,gCAAgC;EAClC;EACA;IACE,+BAA+B;EACjC;EACA;IACE,UAAU;EACZ;EACA;IACE,sBAAsB;EACxB;EACA;IACE,WAAW;EACb;EACA;IACE,WAAW;EACb;EACA;IACE,WAAW;EACb;EACA;IACE,WAAW;EACb;EACA;IACE,WAAW;EACb;EACA;IACE,YAAY;EACd;EACA;IACE,WAAW;IACX;MACE,gBAAgB;IAClB;IACA;MACE,gBAAgB;IAClB;IACA;MACE,gBAAgB;IAClB;IACA;MACE,gBAAgB;IAClB;IACA;MACE,gBAAgB;IAClB;EACF;EACA;IACE,sCAAsC;EACxC;EACA;IACE,sCAAsC;EACxC;EACA;IACE,sCAAsC;EACxC;EACA;IACE,oCAAoC;EACtC;EACA;IACE,oCAAoC;EACtC;EACA;IACE,oCAAoC;EACtC;EACA;IACE,oCAAoC;EACtC;EACA;IACE,uCAAuC;EACzC;EACA;IACE,uCAAuC;EACzC;EACA;IACE,uCAAuC;EACzC;EACA;IACE,uCAAuC;EACzC;EACA;IACE,uCAAuC;EACzC;EACA;IACE,aAAa;EACf;EACA;IACE,aAAa;EACf;EACA;IACE,aAAa;EACf;EACA;IACE,gCAAgC;EAClC;EACA;IACE,kCAAkC;EACpC;EACA;IACE,gCAAgC;EAClC;EACA;IACE,kCAAkC;EACpC;EACA;IACE,gCAAgC;EAClC;EACA;IACE,kCAAkC;EACpC;EACA;IACE,gCAAgC;EAClC;EACA;IACE,gCAAgC;EAClC;EACA;IACE,gCAAgC;EAClC;EACA;IACE,gCAAgC;EAClC;EACA;IACE,gCAAgC;EAClC;EACA;IACE,gCAAgC;EAClC;EACA;IACE,iCAAiC;EACnC;EACA;IACE,iCAAiC;EACnC;EACA;IACE,iCAAiC;EACnC;EACA;IACE,iCAAiC;EACnC;EACA;IACE,iCAAiC;EACnC;EACA;IACE,iCAAiC;EACnC;EACA;IACE,iCAAiC;EACnC;EACA;IACE,WAAW;EACb;EACA;IACE,YAAY;EACd;EACA;IACE,aAAa;EACf;EACA;IACE,aAAa;EACf;EACA;IACE,YAAY;EACd;EACA;IACE,aAAa;EACf;EACA;IACE,oCAAoC;EACtC;EACA;IACE,iBAAiB;EACnB;EACA;IACE,iBAAiB;EACnB;EACA;IACE,gBAAgB;EAClB;EACA;IACE,iCAAiC;EACnC;EACA;IACE,+BAA+B;EACjC;EACA;IACE,iCAAiC;EACnC;EACA;IACE,+BAA+B;EACjC;EACA;IACE,iCAAiC;EACnC;EACA;IACE,+BAA+B;EACjC;EACA;IACE,+BAA+B;EACjC;EACA;IACE,+BAA+B;EACjC;EACA;IACE,+BAA+B;EACjC;EACA;IACE,+BAA+B;EACjC;EACA;IACE,gCAAgC;EAClC;EACA;IACE,gCAAgC;EAClC;EACA;IACE,gCAAgC;EAClC;EACA;IACE,gCAAgC;EAClC;EACA;IACE,gCAAgC;EAClC;EACA;IACE,gCAAgC;EAClC;EACA;IACE,gCAAgC;EAClC;EACA;IACE,gCAAgC;EAClC;EACA;IACE,UAAU;EACZ;EACA;IACE,UAAU;EACZ;EACA;IACE,UAAU;EACZ;EACA;IACE,UAAU;EACZ;EACA;IACE,UAAU;EACZ;EACA;IACE,UAAU;EACZ;EACA;IACE,WAAW;EACb;EACA;IACE,WAAW;EACb;EACA;IACE,YAAY;EACd;EACA;IACE,gBAAgB;EAClB;EACA;IACE,gBAAgB;EAClB;EACA;IACE,gBAAgB;EAClB;EACA;IACE,gBAAgB;EAClB;EACA;IACE,gBAAgB;EAClB;EACA;IACE,iBAAiB;EACnB;EACA;IACE,8BAA8B;EAChC;EACA;IACE,mCAAmC;EACrC;EACA;IACE,eAAe;EACjB;EACA;IACE,OAAO;EACT;EACA;IACE,cAAc;EAChB;EACA;IACE,WAAW;EACb;EACA;IACE,0GAA0G;EAC5G;EACA;IACE,gCAAgC;EAClC;EACA;IACE,8BAA8B;EAChC;EACA;IACE,+BAA+B;EACjC;EACA;IACE,8BAA8B;EAChC;EACA;IACE,iBAAiB;EACnB;EACA;IACE,mBAAmB;EACrB;EACA;IACE,iBAAiB;EACnB;EACA;IACE,eAAe;EACjB;EACA;IACE,YAAY;EACd;EACA;IACE,gBAAgB;EAClB;EACA;IACE,gDAAgD;EAClD;EACA;IACE,gCAAgC;EAClC;EACA;IACE,sBAAsB;EACxB;EACA;IACE,mBAAmB;EACrB;EACA;IACE,2BAA2B;EAC7B;EACA;IACE,mBAAmB;EACrB;EACA;IACE,qBAAqB;EACvB;EACA;IACE,8BAA8B;EAChC;EACA;IACE,uBAAuB;EACzB;EACA;IACE,6BAA6B;EAC/B;EACA;IACE,+BAA+B;EACjC;EACA;IACE,6BAA6B;EAC/B;EACA;IACE,+BAA+B;EACjC;EACA;IACE,6BAA6B;EAC/B;EACA;IACE,6BAA6B;EAC/B;EACA;IACE,+BAA+B;EACjC;EACA;IACE,6BAA6B;EAC/B;EACA;IACE,8BAA8B;EAChC;EACA;IACE,QAAQ;EACV;EACA;IACE;MACE,wBAAwB;MACxB,2CAA2C;MAC3C,wCAAwC;MACxC,wDAAwD;MACxD,qEAAqE;IACvE;EACF;EACA;IACE;MACE,2DAA2D;IAC7D;EACF;EACA;IACE,gBAAgB;IAChB,uBAAuB;IACvB,mBAAmB;EACrB;EACA;IACE,cAAc;EAChB;EACA;IACE,gBAAgB;EAClB;EACA;IACE,gBAAgB;EAClB;EACA;IACE,gBAAgB;EAClB;EACA;IACE,kBAAkB;EACpB;EACA;IACE,sBAAsB;EACxB;EACA;IACE,mCAAmC;EACrC;EACA;IACE,+BAA+B;EACjC;EACA;IACE,+BAA+B;EACjC;EACA;IACE,+BAA+B;EACjC;EACA;IACE,+BAA+B;IAC/B,gCAAgC;EAClC;EACA;IACE,oCAAoC;IACpC,iBAAiB;EACnB;EACA;IACE,oCAAoC;IACpC,iBAAiB;EACnB;EACA;IACE,wCAAwC;IACxC,qBAAqB;EACvB;EACA;IACE,0CAA0C;IAC1C,uBAAuB;EACzB;EACA;IACE,2CAA2C;IAC3C,wBAAwB;EAC1B;EACA;IACE,yCAAyC;IACzC,sBAAsB;EACxB;EACA;IACE,uBAAuB;IACvB,kBAAkB;EACpB;EACA;IACE,qBAAqB;EACvB;EACA;IACE,2DAA2D;EAC7D;EACA;IACE,2DAA2D;EAC7D;EACA;IACE,2DAA2D;EAC7D;EACA;IACE,qBAAqB;EACvB;EACA;IACE,2DAA2D;EAC7D;EACA;IACE,2DAA2D;EAC7D;EACA;IACE,2DAA2D;EAC7D;EACA;IACE,2DAA2D;EAC7D;EACA;IACE,gCAAgC;EAClC;EACA;IACE,4EAA4E;IAC5E;MACE,wEAAwE;IAC1E;EACF;EACA;IACE,yBAAyB;EAC3B;EACA;IACE,0DAA0D;IAC1D;MACE,+EAA+E;IACjF;EACF;EACA;IACE,0DAA0D;IAC1D;MACE,+EAA+E;IACjF;EACF;EACA;IACE,0DAA0D;IAC1D;MACE,+EAA+E;IACjF;EACF;EACA;IACE,0DAA0D;IAC1D;MACE,+EAA+E;IACjF;EACF;EACA;IACE,uCAAuC;EACzC;EACA;IACE,0DAA0D;IAC1D;MACE,6EAA6E;IAC/E;EACF;EACA;IACE,0DAA0D;IAC1D;MACE,6EAA6E;IAC/E;EACF;EACA;IACE,0DAA0D;IAC1D;MACE,6EAA6E;IAC/E;EACF;EACA;IACE,0DAA0D;IAC1D;MACE,6EAA6E;IAC/E;EACF;EACA;IACE,6BAA6B;EAC/B;EACA;IACE,yBAAyB;EAC3B;EACA;IACE,yBAAyB;EAC3B;EACA;IACE,yBAAyB;EAC3B;EACA;IACE,+DAA+D;EACjE;EACA;IACE,+DAA+D;EACjE;EACA;IACE,+DAA+D;EACjE;EACA;IACE,yBAAyB;EAC3B;EACA;IACE,yBAAyB;EAC3B;EACA;IACE,+DAA+D;EACjE;EACA;IACE,yBAAyB;EAC3B;EACA;IACE,yBAAyB;EAC3B;EACA;IACE,yBAAyB;EAC3B;EACA;IACE,yBAAyB;EAC3B;EACA;IACE,yBAAyB;EAC3B;EACA;IACE,yBAAyB;EAC3B;EACA;IACE,yBAAyB;EAC3B;EACA;IACE,gFAAgF;IAChF;MACE,8EAA8E;IAChF;EACF;EACA;IACE,oCAAoC;EACtC;EACA;IACE,2DAA2D;IAC3D;MACE,0EAA0E;IAC5E;EACF;EACA;IACE,2DAA2D;IAC3D;MACE,0EAA0E;IAC5E;EACF;EACA;IACE,2DAA2D;IAC3D;MACE,0EAA0E;IAC5E;EACF;EACA;IACE,2DAA2D;IAC3D;MACE,0EAA0E;IAC5E;EACF;EACA;IACE,2DAA2D;IAC3D;MACE,0EAA0E;IAC5E;EACF;EACA;IACE,2DAA2D;IAC3D;MACE,0EAA0E;IAC5E;EACF;EACA;IACE,2DAA2D;IAC3D;MACE,0EAA0E;IAC5E;EACF;EACA;IACE,2DAA2D;IAC3D;MACE,0EAA0E;IAC5E;EACF;EACA;IACE,gFAAgF;IAChF;MACE,4EAA4E;IAC9E;EACF;EACA;IACE,6BAA6B;EAC/B;EACA;IACE,yCAAyC;EAC3C;EACA;IACE,8DAA8D;IAC9D;MACE,+EAA+E;IACjF;EACF;EACA;IACE,8DAA8D;IAC9D;MACE,+EAA+E;IACjF;EACF;EACA;IACE,8DAA8D;IAC9D;MACE,mFAAmF;IACrF;EACF;EACA;IACE,8DAA8D;IAC9D;MACE,mFAAmF;IACrF;EACF;EACA;IACE,2CAA2C;EAC7C;EACA;IACE,6DAA6D;IAC7D;MACE,gFAAgF;IAClF;EACF;EACA;IACE,8DAA8D;IAC9D;MACE,iFAAiF;IACnF;EACF;EACA;IACE,8DAA8D;IAC9D;MACE,iFAAiF;IACnF;EACF;EACA;IACE,8DAA8D;IAC9D;MACE,iFAAiF;IACnF;EACF;EACA;IACE,8DAA8D;IAC9D;MACE,iFAAiF;IACnF;EACF;EACA;IACE,8DAA8D;IAC9D;MACE,kFAAkF;IACpF;EACF;EACA;IACE,8DAA8D;IAC9D;MACE,kFAAkF;IACpF;EACF;EACA;IACE,8DAA8D;IAC9D;MACE,iFAAiF;IACnF;EACF;EACA;IACE,8DAA8D;IAC9D;MACE,iFAAiF;IACnF;EACF;EACA;IACE,gDAAgD;IAChD,2DAA2D;EAC7D;EACA;IACE,uCAAuC;IACvC,2DAA2D;EAC7D;EACA;IACE,+FAA+F;EACjG;EACA;IACE,2BAA2B;IAC3B,8LAA8L;EAChM;EACA;IACE,+CAA+C;IAC/C,8LAA8L;EAChM;EACA;IACE,yBAAyB;IACzB,8LAA8L;EAChM;EACA;IACE,2CAA2C;IAC3C,8LAA8L;EAChM;EACA;IACE,kBAAkB;EACpB;EACA;IACE,iBAAiB;EACnB;EACA;IACE,iCAAiC;EACnC;EACA;IACE,iCAAiC;EACnC;EACA;IACE,iCAAiC;EACnC;EACA;IACE,mCAAmC;EACrC;EACA;IACE,iCAAiC;EACnC;EACA;IACE,mCAAmC;EACrC;EACA;IACE,iCAAiC;EACnC;EACA;IACE,iCAAiC;EACnC;EACA;IACE,iCAAiC;EACnC;EACA;IACE,iCAAiC;EACnC;EACA;IACE,wCAAwC;EAC1C;EACA;IACE,0CAA0C;EAC5C;EACA;IACE,wCAAwC;EAC1C;EACA;IACE,0CAA0C;EAC5C;EACA;IACE,wCAAwC;EAC1C;EACA;IACE,0CAA0C;EAC5C;EACA;IACE,wCAAwC;EAC1C;EACA;IACE,wCAAwC;EAC1C;EACA;IACE,yCAAyC;EAC3C;EACA;IACE,yCAAyC;EAC3C;EACA;IACE,uCAAuC;EACzC;EACA;IACE,yCAAyC;EAC3C;EACA;IACE,uCAAuC;EACzC;EACA;IACE,uCAAuC;EACzC;EACA;IACE,uCAAuC;EACzC;EACA;IACE,qCAAqC;EACvC;EACA;IACE,uCAAuC;EACzC;EACA;IACE,0CAA0C;EAC5C;EACA;IACE,wCAAwC;EAC1C;EACA;IACE,sCAAsC;EACxC;EACA;IACE,sCAAsC;EACxC;EACA;IACE,sCAAsC;EACxC;EACA;IACE,uCAAuC;EACzC;EACA;IACE,uCAAuC;EACzC;EACA;IACE,kBAAkB;EACpB;EACA;IACE,gBAAgB;EAClB;EACA;IACE,iBAAiB;EACnB;EACA;IACE,6BAA6B;EAC/B;EACA;IACE,6BAA6B;EAC/B;EACA;IACE,8BAA8B;EAChC;EACA;IACE,0BAA0B;IAC1B,4DAA4D;EAC9D;EACA;IACE,0BAA0B;IAC1B,4DAA4D;EAC9D;EACA;IACE,0BAA0B;IAC1B,4DAA4D;EAC9D;EACA;IACE,yBAAyB;IACzB,2DAA2D;EAC7D;EACA;IACE,yBAAyB;IACzB,2DAA2D;EAC7D;EACA;IACE,cAAc;EAChB;EACA;IACE,cAAc;EAChB;EACA;IACE,cAAc;EAChB;EACA;IACE,cAAc;EAChB;EACA;IACE,eAAe;EACjB;EACA;IACE,eAAe;EACjB;EACA;IACE,mCAAmC;IACnC,kCAAkC;EACpC;EACA;IACE,oCAAoC;IACpC,mCAAmC;EACrC;EACA;IACE,iCAAiC;IACjC,gCAAgC;EAClC;EACA;IACE,kCAAkC;IAClC,iCAAiC;EACnC;EACA;IACE,yCAAyC;IACzC,oCAAoC;EACtC;EACA;IACE,0CAA0C;IAC1C,qCAAqC;EACvC;EACA;IACE,2CAA2C;IAC3C,sCAAsC;EACxC;EACA;IACE,6CAA6C;IAC7C,wCAAwC;EAC1C;EACA;IACE,oBAAoB;IACpB,qBAAqB;EACvB;EACA;IACE,qBAAqB;IACrB,sBAAsB;EACxB;EACA;IACE,mCAAmC;IACnC,oCAAoC;EACtC;EACA;IACE,oCAAoC;IACpC,qCAAqC;EACvC;EACA;IACE,qCAAqC;IACrC,sCAAsC;EACxC;EACA;IACE,qBAAqB;EACvB;EACA;IACE,gBAAgB;EAClB;EACA;IACE,cAAc;EAChB;EACA;IACE,cAAc;EAChB;EACA;IACE,cAAc;EAChB;EACA;IACE,cAAc;EAChB;EACA;IACE,cAAc;EAChB;EACA;IACE,yBAAyB;EAC3B;EACA;IACE,2BAA2B;EAC7B;EACA;IACE,2BAA2B;EAC7B;EACA;IACE,6BAA6B;EAC/B;EACA;IACE,gCAAgC;EAClC;EACA;IACE,iCAAiC;EACnC;EACA;IACE,mDAAmD;IACnD;MACE,uEAAuE;IACzE;EACF;EACA;IACE,iCAAiC;EACnC;EACA;IACE,mDAAmD;IACnD;MACE,uEAAuE;IACzE;EACF;EACA;IACE,gCAAgC;EAClC;EACA;IACE,yBAAyB;EAC3B;EACA;IACE,0BAA0B;EAC5B;EACA;IACE,yBAAyB;EAC3B;EACA;IACE,kBAAkB;EACpB;EACA;IACE;MACE,cAAc;IAChB;EACF;EACA;IACE,uCAAuC;EACzC;EACA;IACE,WAAW;EACb;EACA;IACE,YAAY;EACd;EACA;IACE,YAAY;EACd;EACA;IACE,YAAY;EACd;EACA;IACE,YAAY;EACd;EACA;IACE,aAAa;EACf;EACA;IACE,aAAa;EACf;EACA;IACE,uBAAuB;EACzB;EACA;IACE,0HAA0H;IAC1H,sIAAsI;EACxI;EACA;IACE,wEAAwE;IACxE,sIAAsI;EACxI;EACA;IACE,wEAAwE;IACxE,sIAAsI;EACxI;EACA;IACE,+HAA+H;IAC/H,sIAAsI;EACxI;EACA;IACE,6HAA6H;IAC7H,sIAAsI;EACxI;EACA;IACE,gIAAgI;IAChI,sIAAsI;EACxI;EACA;IACE,sCAAsC;IACtC,kBAAkB;EACpB;EACA;IACE,gCAAgC;IAChC,0LAA0L;EAC5L;EACA;IACE,+BAA+B;IAC/B,0LAA0L;EAC5L;EACA;IACE,8FAA8F;IAC9F,4CAA4C;IAC5C,0LAA0L;EAC5L;EACA;IACE,8FAA8F;IAC9F,4CAA4C;IAC5C,0LAA0L;EAC5L;EACA;IACE,0LAA0L;EAC5L;EACA;IACE,yUAAyU;IACzU,qFAAqF;IACrF,2EAA2E;EAC7E;EACA;IACE,wBAAwB;IACxB,qFAAqF;IACrF,2EAA2E;EAC7E;EACA;IACE,uKAAuK;IACvK,qFAAqF;IACrF,2EAA2E;EAC7E;EACA;IACE,wDAAwD;IACxD,qFAAqF;IACrF,2EAA2E;EAC7E;EACA;IACE,mBAAmB;IACnB,yBAAyB;EAC3B;EACA;IACE,yBAAyB;IACzB,iBAAiB;EACnB;EACA;IACE;MACE;QACE,kBAAkB;QAClB,kBAAkB;QAClB,kBAAkB;QAClB,0CAA0C;MAC5C;IACF;EACF;EACA;IACE;MACE;QACE,gCAAgC;MAClC;IACF;EACF;EACA;IACE;MACE;QACE,kBAAkB;QAClB,kBAAkB;QAClB,kBAAkB;QAClB,0CAA0C;MAC5C;IACF;EACF;EACA;IACE;MACE;QACE,WAAW;MACb;IACF;EACF;EACA;IACE;MACE;QACE,WAAW;MACb;IACF;EACF;EACA;IACE;MACE;QACE,YAAY;MACd;IACF;EACF;EACA;IACE;MACE;QACE,qBAAqB;MACvB;IACF;EACF;EACA;IACE;MACE;QACE,yBAAyB;MAC3B;IACF;EACF;EACA;IACE;MACE;QACE,+DAA+D;MACjE;IACF;EACF;EACA;IACE;MACE;QACE,yBAAyB;MAC3B;IACF;EACF;EACA;IACE;MACE;QACE,yBAAyB;MAC3B;IACF;EACF;EACA;IACE;MACE;QACE,yBAAyB;MAC3B;IACF;EACF;EACA;IACE;MACE;QACE,2DAA2D;QAC3D;UACE,0EAA0E;QAC5E;MACF;IACF;EACF;EACA;IACE;MACE;QACE,8DAA8D;QAC9D;UACE,iFAAiF;QACnF;MACF;IACF;EACF;EACA;IACE;MACE;QACE,8DAA8D;QAC9D;UACE,iFAAiF;QACnF;MACF;IACF;EACF;EACA;IACE;MACE;QACE,2DAA2D;QAC3D;UACE,0EAA0E;QAC5E;MACF;IACF;EACF;EACA;IACE;MACE;QACE,yBAAyB;MAC3B;IACF;EACF;EACA;IACE;MACE;QACE,+HAA+H;QAC/H,sIAAsI;MACxI;IACF;EACF;EACA;IACE;MACE;QACE,iCAAiC;QACjC,0LAA0L;MAC5L;IACF;EACF;EACA;IACE;MACE,0DAA0D;MAC1D;QACE,6EAA6E;MAC/E;IACF;EACF;EACA;IACE;MACE,0DAA0D;MAC1D;QACE,6EAA6E;MAC/E;IACF;EACF;EACA;IACE;MACE,wBAAwB;MACxB,mBAAmB;IACrB;EACF;EACA;IACE;MACE,WAAW;IACb;EACF;EACA;IACE;MACE,gCAAgC;MAChC,0LAA0L;IAC5L;EACF;EACA;IACE;MACE,mBAAmB;IACrB;EACF;EACA;IACE;MACE,YAAY;IACd;EACF;EACA;IACE;MACE,YAAY;IACd;EACF;EACA;IACE;MACE,0BAA0B;MAC1B,4DAA4D;IAC9D;EACF;EACA;IACE;MACE,0BAA0B;MAC1B,4DAA4D;IAC9D;EACF;EACA;IACE;MACE,0BAA0B;MAC1B,4DAA4D;IAC9D;EACF;EACA;IACE;MACE,yBAAyB;MACzB,2DAA2D;IAC7D;EACF;EACA;IACE;MACE,aAAa;IACf;EACF;AACF;AACA;EACE;IACE,0BAA0B;EAC5B;EACA;IACE,8BAA8B;EAChC;EACA;IACE,6BAA6B;EAC/B;EACA;IACE,6BAA6B;EAC/B;EACA;IACE,6BAA6B;EAC/B;EACA;IACE,6BAA6B;EAC/B;EACA;IACE,4BAA4B;EAC9B;EACA;IACE,4BAA4B;EAC9B;EACA;IACE,4BAA4B;EAC9B;EACA;IACE,6BAA6B;EAC/B;AACF;AACA;EACE;IACE,uDAAuD;EACzD;EACA;IACE,0DAA0D;EAC5D;EACA;IACE,uDAAuD;EACzD;AACF;AACA;EACE,4CAA4C;AAC9C;AACA;EACE,gDAAgD;AAClD;AACA;EACE,gFAAgF;EAChF,oBAAoB;AACtB;AACA;EACE,0BAA0B;EAC1B,yCAAyC;EACzC,oBAAoB;AACtB;AACA;EACE,UAAU;EACV,WAAW;AACb;AACA;EACE,mBAAmB;AACrB;AACA;EACE,mBAAmB;EACnB,kBAAkB;AACpB;AACA;EACE,mBAAmB;AACrB;AACA;EACE;IACE,UAAU;EACZ;EACA;IACE,UAAU;EACZ;AACF;AACA;EACE,8DAA8D;AAChE;AACA;EACE,WAAW;EACX,eAAe;AACjB;AACA;EACE,WAAW;EACX,eAAe;AACjB;AACA;EACE,WAAW;EACX,eAAe;AACjB;AACA;EACE,WAAW;EACX,eAAe;AACjB;AACA;EACE,WAAW;EACX,eAAe;AACjB;AACA;EACE,WAAW;EACX,eAAe;EACf,gBAAgB;AAClB;AACA;EACE,WAAW;EACX,eAAe;EACf,oBAAoB;AACtB;AACA;EACE,WAAW;EACX,eAAe;AACjB;AACA;EACE,iBAAiB;EACjB,eAAe;EACf,oBAAoB;AACtB;AACA;EACE,iBAAiB;EACjB,eAAe;EACf,oBAAoB;AACtB;AACA;EACE,iBAAiB;EACjB,eAAe;EACf,oBAAoB;AACtB;AACA;EACE,WAAW;EACX,eAAe;AACjB;AACA;EACE,WAAW;EACX,eAAe;AACjB;AACA;EACE,6BAA6B;EAC7B,eAAe;EACf,iBAAiB;AACnB;AACA;EACE,6BAA6B;EAC7B,eAAe;EACf,kBAAkB;AACpB;AACA;EACE,6BAA6B;EAC7B,eAAe;EACf,mBAAmB;AACrB;AACA;EACE,WAAW;EACX,eAAe;AACjB;AACA;EACE,WAAW;EACX,eAAe;AACjB;AACA;EACE,WAAW;EACX,eAAe;AACjB;AACA;EACE,WAAW;EACX,eAAe;EACf,wBAAwB;AAC1B;AACA;EACE,WAAW;EACX,eAAe;AACjB;AACA;EACE,sBAAsB;EACtB,eAAe;EACf,mBAAmB;AACrB;AACA;EACE,WAAW;EACX,eAAe;EACf,wBAAwB;AAC1B;AACA;EACE,WAAW;EACX,eAAe;AACjB;AACA;EACE,sBAAsB;EACtB,eAAe;EACf,mBAAmB;AACrB;AACA;EACE,WAAW;EACX,eAAe;AACjB;AACA;EACE,WAAW;EACX,eAAe;EACf,wBAAwB;AAC1B;AACA;EACE,WAAW;EACX,eAAe;AACjB;AACA;EACE,WAAW;EACX,eAAe;EACf,wBAAwB;AAC1B;AACA;EACE,WAAW;EACX,eAAe;AACjB;AACA;EACE,kBAAkB;EAClB,eAAe;EACf,kBAAkB;AACpB;AACA;EACE,WAAW;EACX,eAAe;EACf,mBAAmB;AACrB;AACA;EACE,WAAW;EACX,eAAe;EACf,wBAAwB;AAC1B;AACA;EACE,WAAW;EACX,eAAe;EACf,oBAAoB;AACtB;AACA;EACE,WAAW;EACX,eAAe;AACjB;AACA;EACE,WAAW;EACX,eAAe;AACjB;AACA;EACE,WAAW;EACX,eAAe;AACjB;AACA;EACE,WAAW;EACX,eAAe;AACjB;AACA;EACE,WAAW;EACX,eAAe;AACjB;AACA;EACE,WAAW;EACX,eAAe;AACjB;AACA;EACE,WAAW;EACX,eAAe;AACjB;AACA;EACE,WAAW;EACX,eAAe;AACjB;AACA;EACE,WAAW;EACX,eAAe;AACjB;AACA;EACE,WAAW;EACX,eAAe;AACjB;AACA;EACE,WAAW;EACX,eAAe;AACjB;AACA;EACE,sBAAsB;EACtB,eAAe;EACf,mBAAmB;AACrB;AACA;EACE,WAAW;EACX,eAAe;AACjB;AACA;EACE,WAAW;EACX,eAAe;AACjB;AACA;EACE,WAAW;EACX,eAAe;EACf,gBAAgB;AAClB;AACA;EACE,WAAW;EACX,eAAe;EACf,gBAAgB;AAClB;AACA;EACE,WAAW;EACX,eAAe;EACf,gBAAgB;AAClB;AACA;EACE;IACE,yBAAyB;EAC3B;AACF;AACA;EACE;IACE,mBAAmB;IACnB,UAAU;EACZ;AACF;AACA;EACE;IACE,YAAY;EACd;AACF;AACA;EACE;IACE,2BAA2B;IAC3B,qDAAqD;EACvD;EACA;IACE,eAAe;IACf,qDAAqD;EACvD;AACF;AACA;EACE;IACE;MACE,sBAAsB;MACtB,sBAAsB;MACtB,sBAAsB;MACtB,oBAAoB;MACpB,oBAAoB;MACpB,wBAAwB;MACxB,wBAAwB;MACxB,+BAA+B;MAC/B,yBAAyB;MACzB,wBAAwB;MACxB,uBAAuB;MACvB,4BAA4B;MAC5B,gCAAgC;MAChC,+BAA+B;MAC/B,+BAA+B;MAC/B,+BAA+B;MAC/B,qBAAqB;MACrB,yBAAyB;MACzB,sBAAsB;MACtB,sBAAsB;MACtB,0BAA0B;MAC1B,uBAAuB;MACvB,4BAA4B;MAC5B,gCAAgC;MAChC,6BAA6B;MAC7B,wBAAwB;MACxB,2BAA2B;MAC3B,8BAA8B;MAC9B,iCAAiC;MACjC,wBAAwB;MACxB,2BAA2B;MAC3B,4BAA4B;MAC5B,kCAAkC;MAClC,yBAAyB;MACzB,kBAAkB;MAClB,wBAAwB;MACxB,sBAAsB;MACtB,uBAAuB;MACvB,wBAAwB;MACxB,oBAAoB;MACpB,qBAAqB;MACrB,sBAAsB;MACtB,mBAAmB;MACnB,yBAAyB;MACzB,+BAA+B;MAC/B,4BAA4B;MAC5B,8BAA8B;MAC9B,sBAAsB;MACtB,eAAe;MACf,eAAe;MACf,eAAe;IACjB;EACF;AACF","sourcesContent":["/*! tailwindcss v4.2.0 | MIT License | https://tailwindcss.com */\n@layer properties;\n@layer theme, base, components, utilities;\n@layer theme {\n  :root, :host {\n    --font-sans: \"Space Grotesk\", system-ui, sans-serif;\n    --font-serif: \"DM Serif Display\", Georgia, serif;\n    --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, \"Liberation Mono\",\n      \"Courier New\", monospace;\n    --color-red-300: oklch(80.8% 0.114 19.571);\n    --color-red-400: oklch(70.4% 0.191 22.216);\n    --color-red-500: oklch(63.7% 0.237 25.331);\n    --color-amber-900: oklch(41.4% 0.112 45.904);\n    --color-stone-400: oklch(70.9% 0.01 56.259);\n    --color-black: #000;\n    --color-white: #fff;\n    --spacing: 0.25rem;\n    --container-xs: 20rem;\n    --text-xs: 0.75rem;\n    --text-xs--line-height: calc(1 / 0.75);\n    --text-sm: 0.875rem;\n    --text-sm--line-height: calc(1.25 / 0.875);\n    --text-3xl: 1.875rem;\n    --text-3xl--line-height: calc(2.25 / 1.875);\n    --text-4xl: 2.25rem;\n    --text-4xl--line-height: calc(2.5 / 2.25);\n    --text-5xl: 3rem;\n    --text-5xl--line-height: 1;\n    --text-6xl: 3.75rem;\n    --text-6xl--line-height: 1;\n    --text-7xl: 4.5rem;\n    --text-7xl--line-height: 1;\n    --font-weight-light: 300;\n    --font-weight-medium: 500;\n    --font-weight-semibold: 600;\n    --font-weight-bold: 700;\n    --tracking-wide: 0.025em;\n    --tracking-wider: 0.05em;\n    --tracking-widest: 0.1em;\n    --leading-tight: 1.25;\n    --leading-snug: 1.375;\n    --leading-normal: 1.5;\n    --leading-relaxed: 1.625;\n    --radius-sm: 0.25rem;\n    --radius-lg: 0.5rem;\n    --radius-xl: 0.75rem;\n    --animate-spin: spin 1s linear infinite;\n    --animate-ping: ping 1s cubic-bezier(0, 0, 0.2, 1) infinite;\n    --animate-pulse: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;\n    --animate-bounce: bounce 1s infinite;\n    --blur-xl: 24px;\n    --blur-2xl: 40px;\n    --default-transition-duration: 150ms;\n    --default-transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);\n    --default-font-family: var(--font-sans);\n    --default-mono-font-family: var(--font-mono);\n    --color-vintage-bg: #1c1815;\n    --color-vintage-paper: #faf8f5;\n    --color-vintage-gold: #c89547;\n    --color-vintage-rust: #a84a32;\n    --color-vintage-border: #3e342c;\n    --color-vintage-muted: #857467;\n  }\n}\n@layer base {\n  *, ::after, ::before, ::backdrop, ::file-selector-button {\n    box-sizing: border-box;\n    margin: 0;\n    padding: 0;\n    border: 0 solid;\n  }\n  html, :host {\n    line-height: 1.5;\n    -webkit-text-size-adjust: 100%;\n    tab-size: 4;\n    font-family: var(--default-font-family, ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\");\n    font-feature-settings: var(--default-font-feature-settings, normal);\n    font-variation-settings: var(--default-font-variation-settings, normal);\n    -webkit-tap-highlight-color: transparent;\n  }\n  hr {\n    height: 0;\n    color: inherit;\n    border-top-width: 1px;\n  }\n  abbr:where([title]) {\n    -webkit-text-decoration: underline dotted;\n    text-decoration: underline dotted;\n  }\n  h1, h2, h3, h4, h5, h6 {\n    font-size: inherit;\n    font-weight: inherit;\n  }\n  a {\n    color: inherit;\n    -webkit-text-decoration: inherit;\n    text-decoration: inherit;\n  }\n  b, strong {\n    font-weight: bolder;\n  }\n  code, kbd, samp, pre {\n    font-family: var(--default-mono-font-family, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, \"Liberation Mono\", \"Courier New\", monospace);\n    font-feature-settings: var(--default-mono-font-feature-settings, normal);\n    font-variation-settings: var(--default-mono-font-variation-settings, normal);\n    font-size: 1em;\n  }\n  small {\n    font-size: 80%;\n  }\n  sub, sup {\n    font-size: 75%;\n    line-height: 0;\n    position: relative;\n    vertical-align: baseline;\n  }\n  sub {\n    bottom: -0.25em;\n  }\n  sup {\n    top: -0.5em;\n  }\n  table {\n    text-indent: 0;\n    border-color: inherit;\n    border-collapse: collapse;\n  }\n  :-moz-focusring {\n    outline: auto;\n  }\n  progress {\n    vertical-align: baseline;\n  }\n  summary {\n    display: list-item;\n  }\n  ol, ul, menu {\n    list-style: none;\n  }\n  img, svg, video, canvas, audio, iframe, embed, object {\n    display: block;\n    vertical-align: middle;\n  }\n  img, video {\n    max-width: 100%;\n    height: auto;\n  }\n  button, input, select, optgroup, textarea, ::file-selector-button {\n    font: inherit;\n    font-feature-settings: inherit;\n    font-variation-settings: inherit;\n    letter-spacing: inherit;\n    color: inherit;\n    border-radius: 0;\n    background-color: transparent;\n    opacity: 1;\n  }\n  :where(select:is([multiple], [size])) optgroup {\n    font-weight: bolder;\n  }\n  :where(select:is([multiple], [size])) optgroup option {\n    padding-inline-start: 20px;\n  }\n  ::file-selector-button {\n    margin-inline-end: 4px;\n  }\n  ::placeholder {\n    opacity: 1;\n  }\n  @supports (not (-webkit-appearance: -apple-pay-button))  or (contain-intrinsic-size: 1px) {\n    ::placeholder {\n      color: currentcolor;\n      @supports (color: color-mix(in lab, red, red)) {\n        color: color-mix(in oklab, currentcolor 50%, transparent);\n      }\n    }\n  }\n  textarea {\n    resize: vertical;\n  }\n  ::-webkit-search-decoration {\n    -webkit-appearance: none;\n  }\n  ::-webkit-date-and-time-value {\n    min-height: 1lh;\n    text-align: inherit;\n  }\n  ::-webkit-datetime-edit {\n    display: inline-flex;\n  }\n  ::-webkit-datetime-edit-fields-wrapper {\n    padding: 0;\n  }\n  ::-webkit-datetime-edit, ::-webkit-datetime-edit-year-field, ::-webkit-datetime-edit-month-field, ::-webkit-datetime-edit-day-field, ::-webkit-datetime-edit-hour-field, ::-webkit-datetime-edit-minute-field, ::-webkit-datetime-edit-second-field, ::-webkit-datetime-edit-millisecond-field, ::-webkit-datetime-edit-meridiem-field {\n    padding-block: 0;\n  }\n  ::-webkit-calendar-picker-indicator {\n    line-height: 1;\n  }\n  :-moz-ui-invalid {\n    box-shadow: none;\n  }\n  button, input:where([type=\"button\"], [type=\"reset\"], [type=\"submit\"]), ::file-selector-button {\n    appearance: button;\n  }\n  ::-webkit-inner-spin-button, ::-webkit-outer-spin-button {\n    height: auto;\n  }\n  [hidden]:where(:not([hidden=\"until-found\"])) {\n    display: none !important;\n  }\n}\n@layer utilities {\n  .pointer-events-none {\n    pointer-events: none;\n  }\n  .absolute {\n    position: absolute;\n  }\n  .fixed {\n    position: fixed;\n  }\n  .relative {\n    position: relative;\n  }\n  .static {\n    position: static;\n  }\n  .-inset-\\[50\\%\\] {\n    inset: calc(50% * -1);\n  }\n  .inset-0 {\n    inset: calc(var(--spacing) * 0);\n  }\n  .inset-6 {\n    inset: calc(var(--spacing) * 6);\n  }\n  .start {\n    inset-inline-start: var(--spacing);\n  }\n  .-top-1\\.5 {\n    top: calc(var(--spacing) * -1.5);\n  }\n  .top-0 {\n    top: calc(var(--spacing) * 0);\n  }\n  .top-0\\.5 {\n    top: calc(var(--spacing) * 0.5);\n  }\n  .top-2 {\n    top: calc(var(--spacing) * 2);\n  }\n  .top-2\\.5 {\n    top: calc(var(--spacing) * 2.5);\n  }\n  .top-\\[-3px\\] {\n    top: -3px;\n  }\n  .right-0 {\n    right: calc(var(--spacing) * 0);\n  }\n  .right-1 {\n    right: calc(var(--spacing) * 1);\n  }\n  .right-3 {\n    right: calc(var(--spacing) * 3);\n  }\n  .right-\\[-3px\\] {\n    right: -3px;\n  }\n  .bottom-0 {\n    bottom: calc(var(--spacing) * 0);\n  }\n  .bottom-1 {\n    bottom: calc(var(--spacing) * 1);\n  }\n  .bottom-10 {\n    bottom: calc(var(--spacing) * 10);\n  }\n  .-left-1 {\n    left: calc(var(--spacing) * -1);\n  }\n  .left-0 {\n    left: calc(var(--spacing) * 0);\n  }\n  .left-1 {\n    left: calc(var(--spacing) * 1);\n  }\n  .left-2\\.5 {\n    left: calc(var(--spacing) * 2.5);\n  }\n  .left-10 {\n    left: calc(var(--spacing) * 10);\n  }\n  .left-\\[-3px\\] {\n    left: -3px;\n  }\n  .-z-20 {\n    z-index: calc(20 * -1);\n  }\n  .z-10 {\n    z-index: 10;\n  }\n  .z-20 {\n    z-index: 20;\n  }\n  .z-30 {\n    z-index: 30;\n  }\n  .z-40 {\n    z-index: 40;\n  }\n  .z-50 {\n    z-index: 50;\n  }\n  .z-\\[100\\] {\n    z-index: 100;\n  }\n  .container {\n    width: 100%;\n    @media (width >= 40rem) {\n      max-width: 40rem;\n    }\n    @media (width >= 48rem) {\n      max-width: 48rem;\n    }\n    @media (width >= 64rem) {\n      max-width: 64rem;\n    }\n    @media (width >= 80rem) {\n      max-width: 80rem;\n    }\n    @media (width >= 96rem) {\n      max-width: 96rem;\n    }\n  }\n  .my-3 {\n    margin-block: calc(var(--spacing) * 3);\n  }\n  .my-4 {\n    margin-block: calc(var(--spacing) * 4);\n  }\n  .mt-1\\.5 {\n    margin-top: calc(var(--spacing) * 1.5);\n  }\n  .mt-2 {\n    margin-top: calc(var(--spacing) * 2);\n  }\n  .mt-4 {\n    margin-top: calc(var(--spacing) * 4);\n  }\n  .mt-5 {\n    margin-top: calc(var(--spacing) * 5);\n  }\n  .mt-6 {\n    margin-top: calc(var(--spacing) * 6);\n  }\n  .mb-1 {\n    margin-bottom: calc(var(--spacing) * 1);\n  }\n  .mb-3 {\n    margin-bottom: calc(var(--spacing) * 3);\n  }\n  .mb-4 {\n    margin-bottom: calc(var(--spacing) * 4);\n  }\n  .mb-5 {\n    margin-bottom: calc(var(--spacing) * 5);\n  }\n  .ml-0\\.5 {\n    margin-left: calc(var(--spacing) * 0.5);\n  }\n  .flex {\n    display: flex;\n  }\n  .grid {\n    display: grid;\n  }\n  .hidden {\n    display: none;\n  }\n  .h-1 {\n    height: calc(var(--spacing) * 1);\n  }\n  .h-1\\.5 {\n    height: calc(var(--spacing) * 1.5);\n  }\n  .h-2 {\n    height: calc(var(--spacing) * 2);\n  }\n  .h-2\\.5 {\n    height: calc(var(--spacing) * 2.5);\n  }\n  .h-3 {\n    height: calc(var(--spacing) * 3);\n  }\n  .h-3\\.5 {\n    height: calc(var(--spacing) * 3.5);\n  }\n  .h-4 {\n    height: calc(var(--spacing) * 4);\n  }\n  .h-5 {\n    height: calc(var(--spacing) * 5);\n  }\n  .h-6 {\n    height: calc(var(--spacing) * 6);\n  }\n  .h-7 {\n    height: calc(var(--spacing) * 7);\n  }\n  .h-8 {\n    height: calc(var(--spacing) * 8);\n  }\n  .h-9 {\n    height: calc(var(--spacing) * 9);\n  }\n  .h-10 {\n    height: calc(var(--spacing) * 10);\n  }\n  .h-11 {\n    height: calc(var(--spacing) * 11);\n  }\n  .h-12 {\n    height: calc(var(--spacing) * 12);\n  }\n  .h-14 {\n    height: calc(var(--spacing) * 14);\n  }\n  .h-24 {\n    height: calc(var(--spacing) * 24);\n  }\n  .h-28 {\n    height: calc(var(--spacing) * 28);\n  }\n  .h-32 {\n    height: calc(var(--spacing) * 32);\n  }\n  .h-\\[1px\\] {\n    height: 1px;\n  }\n  .h-\\[200\\%\\] {\n    height: 200%;\n  }\n  .h-\\[280px\\] {\n    height: 280px;\n  }\n  .h-\\[320px\\] {\n    height: 320px;\n  }\n  .h-full {\n    height: 100%;\n  }\n  .h-screen {\n    height: 100vh;\n  }\n  .min-h-0 {\n    min-height: calc(var(--spacing) * 0);\n  }\n  .min-h-\\[300px\\] {\n    min-height: 300px;\n  }\n  .min-h-\\[380px\\] {\n    min-height: 380px;\n  }\n  .min-h-full {\n    min-height: 100%;\n  }\n  .w-1\\.5 {\n    width: calc(var(--spacing) * 1.5);\n  }\n  .w-2 {\n    width: calc(var(--spacing) * 2);\n  }\n  .w-2\\.5 {\n    width: calc(var(--spacing) * 2.5);\n  }\n  .w-3 {\n    width: calc(var(--spacing) * 3);\n  }\n  .w-3\\.5 {\n    width: calc(var(--spacing) * 3.5);\n  }\n  .w-4 {\n    width: calc(var(--spacing) * 4);\n  }\n  .w-5 {\n    width: calc(var(--spacing) * 5);\n  }\n  .w-6 {\n    width: calc(var(--spacing) * 6);\n  }\n  .w-7 {\n    width: calc(var(--spacing) * 7);\n  }\n  .w-8 {\n    width: calc(var(--spacing) * 8);\n  }\n  .w-10 {\n    width: calc(var(--spacing) * 10);\n  }\n  .w-12 {\n    width: calc(var(--spacing) * 12);\n  }\n  .w-14 {\n    width: calc(var(--spacing) * 14);\n  }\n  .w-16 {\n    width: calc(var(--spacing) * 16);\n  }\n  .w-24 {\n    width: calc(var(--spacing) * 24);\n  }\n  .w-28 {\n    width: calc(var(--spacing) * 28);\n  }\n  .w-32 {\n    width: calc(var(--spacing) * 32);\n  }\n  .w-48 {\n    width: calc(var(--spacing) * 48);\n  }\n  .w-\\[1px\\] {\n    width: 1px;\n  }\n  .w-\\[2px\\] {\n    width: 2px;\n  }\n  .w-\\[40\\%\\] {\n    width: 40%;\n  }\n  .w-\\[45\\%\\] {\n    width: 45%;\n  }\n  .w-\\[55\\%\\] {\n    width: 55%;\n  }\n  .w-\\[60\\%\\] {\n    width: 60%;\n  }\n  .w-\\[200\\%\\] {\n    width: 200%;\n  }\n  .w-full {\n    width: 100%;\n  }\n  .w-screen {\n    width: 100vw;\n  }\n  .max-w-\\[280px\\] {\n    max-width: 280px;\n  }\n  .max-w-\\[500px\\] {\n    max-width: 500px;\n  }\n  .max-w-\\[680px\\] {\n    max-width: 680px;\n  }\n  .max-w-\\[760px\\] {\n    max-width: 760px;\n  }\n  .max-w-\\[850px\\] {\n    max-width: 850px;\n  }\n  .max-w-\\[1050px\\] {\n    max-width: 1050px;\n  }\n  .max-w-xs {\n    max-width: var(--container-xs);\n  }\n  .min-w-0 {\n    min-width: calc(var(--spacing) * 0);\n  }\n  .min-w-full {\n    min-width: 100%;\n  }\n  .flex-1 {\n    flex: 1;\n  }\n  .shrink-0 {\n    flex-shrink: 0;\n  }\n  .scale-\\[1\\.08\\] {\n    scale: 1.08;\n  }\n  .transform {\n    transform: var(--tw-rotate-x,) var(--tw-rotate-y,) var(--tw-rotate-z,) var(--tw-skew-x,) var(--tw-skew-y,);\n  }\n  .animate-bounce {\n    animation: var(--animate-bounce);\n  }\n  .animate-ping {\n    animation: var(--animate-ping);\n  }\n  .animate-pulse {\n    animation: var(--animate-pulse);\n  }\n  .animate-spin {\n    animation: var(--animate-spin);\n  }\n  .cursor-ew-resize {\n    cursor: ew-resize;\n  }\n  .cursor-not-allowed {\n    cursor: not-allowed;\n  }\n  .cursor-ns-resize {\n    cursor: ns-resize;\n  }\n  .cursor-pointer {\n    cursor: pointer;\n  }\n  .resize-none {\n    resize: none;\n  }\n  .appearance-none {\n    appearance: none;\n  }\n  .grid-cols-2 {\n    grid-template-columns: repeat(2, minmax(0, 1fr));\n  }\n  .grid-cols-\\[180px_1fr\\] {\n    grid-template-columns: 180px 1fr;\n  }\n  .flex-col {\n    flex-direction: column;\n  }\n  .flex-row {\n    flex-direction: row;\n  }\n  .flex-row-reverse {\n    flex-direction: row-reverse;\n  }\n  .items-center {\n    align-items: center;\n  }\n  .items-end {\n    align-items: flex-end;\n  }\n  .justify-between {\n    justify-content: space-between;\n  }\n  .justify-center {\n    justify-content: center;\n  }\n  .gap-1 {\n    gap: calc(var(--spacing) * 1);\n  }\n  .gap-1\\.5 {\n    gap: calc(var(--spacing) * 1.5);\n  }\n  .gap-2 {\n    gap: calc(var(--spacing) * 2);\n  }\n  .gap-2\\.5 {\n    gap: calc(var(--spacing) * 2.5);\n  }\n  .gap-3 {\n    gap: calc(var(--spacing) * 3);\n  }\n  .gap-4 {\n    gap: calc(var(--spacing) * 4);\n  }\n  .gap-4\\.5 {\n    gap: calc(var(--spacing) * 4.5);\n  }\n  .gap-5 {\n    gap: calc(var(--spacing) * 5);\n  }\n  .gap-12 {\n    gap: calc(var(--spacing) * 12);\n  }\n  .gap-\\[2px\\] {\n    gap: 2px;\n  }\n  .divide-y {\n    :where(& > :not(:last-child)) {\n      --tw-divide-y-reverse: 0;\n      border-bottom-style: var(--tw-border-style);\n      border-top-style: var(--tw-border-style);\n      border-top-width: calc(1px * var(--tw-divide-y-reverse));\n      border-bottom-width: calc(1px * calc(1 - var(--tw-divide-y-reverse)));\n    }\n  }\n  .divide-\\[\\#2b2420\\]\\/60 {\n    :where(& > :not(:last-child)) {\n      border-color: color-mix(in oklab, #2b2420 60%, transparent);\n    }\n  }\n  .truncate {\n    overflow: hidden;\n    text-overflow: ellipsis;\n    white-space: nowrap;\n  }\n  .overflow-auto {\n    overflow: auto;\n  }\n  .overflow-hidden {\n    overflow: hidden;\n  }\n  .overflow-x-auto {\n    overflow-x: auto;\n  }\n  .overflow-y-auto {\n    overflow-y: auto;\n  }\n  .overflow-y-hidden {\n    overflow-y: hidden;\n  }\n  .rounded {\n    border-radius: 0.25rem;\n  }\n  .rounded-full {\n    border-radius: calc(infinity * 1px);\n  }\n  .rounded-lg {\n    border-radius: var(--radius-lg);\n  }\n  .rounded-sm {\n    border-radius: var(--radius-sm);\n  }\n  .rounded-xl {\n    border-radius: var(--radius-xl);\n  }\n  .rounded-t {\n    border-top-left-radius: 0.25rem;\n    border-top-right-radius: 0.25rem;\n  }\n  .border {\n    border-style: var(--tw-border-style);\n    border-width: 1px;\n  }\n  .border-2 {\n    border-style: var(--tw-border-style);\n    border-width: 2px;\n  }\n  .border-t {\n    border-top-style: var(--tw-border-style);\n    border-top-width: 1px;\n  }\n  .border-r {\n    border-right-style: var(--tw-border-style);\n    border-right-width: 1px;\n  }\n  .border-b {\n    border-bottom-style: var(--tw-border-style);\n    border-bottom-width: 1px;\n  }\n  .border-l {\n    border-left-style: var(--tw-border-style);\n    border-left-width: 1px;\n  }\n  .border-none {\n    --tw-border-style: none;\n    border-style: none;\n  }\n  .border-\\[\\#2b2420\\] {\n    border-color: #2b2420;\n  }\n  .border-\\[\\#2b2420\\]\\/40 {\n    border-color: color-mix(in oklab, #2b2420 40%, transparent);\n  }\n  .border-\\[\\#2b2420\\]\\/50 {\n    border-color: color-mix(in oklab, #2b2420 50%, transparent);\n  }\n  .border-\\[\\#2b2420\\]\\/60 {\n    border-color: color-mix(in oklab, #2b2420 60%, transparent);\n  }\n  .border-\\[\\#3e342c\\] {\n    border-color: #3e342c;\n  }\n  .border-\\[\\#3e342c\\]\\/30 {\n    border-color: color-mix(in oklab, #3e342c 30%, transparent);\n  }\n  .border-\\[\\#3e342c\\]\\/40 {\n    border-color: color-mix(in oklab, #3e342c 40%, transparent);\n  }\n  .border-\\[\\#3e342c\\]\\/50 {\n    border-color: color-mix(in oklab, #3e342c 50%, transparent);\n  }\n  .border-\\[\\#3e342c\\]\\/60 {\n    border-color: color-mix(in oklab, #3e342c 60%, transparent);\n  }\n  .border-black {\n    border-color: var(--color-black);\n  }\n  .border-red-500\\/30 {\n    border-color: color-mix(in srgb, oklch(63.7% 0.237 25.331) 30%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      border-color: color-mix(in oklab, var(--color-red-500) 30%, transparent);\n    }\n  }\n  .border-transparent {\n    border-color: transparent;\n  }\n  .border-vintage-border\\/20 {\n    border-color: color-mix(in srgb, #3e342c 20%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      border-color: color-mix(in oklab, var(--color-vintage-border) 20%, transparent);\n    }\n  }\n  .border-vintage-border\\/30 {\n    border-color: color-mix(in srgb, #3e342c 30%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      border-color: color-mix(in oklab, var(--color-vintage-border) 30%, transparent);\n    }\n  }\n  .border-vintage-border\\/40 {\n    border-color: color-mix(in srgb, #3e342c 40%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      border-color: color-mix(in oklab, var(--color-vintage-border) 40%, transparent);\n    }\n  }\n  .border-vintage-border\\/50 {\n    border-color: color-mix(in srgb, #3e342c 50%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      border-color: color-mix(in oklab, var(--color-vintage-border) 50%, transparent);\n    }\n  }\n  .border-vintage-gold {\n    border-color: var(--color-vintage-gold);\n  }\n  .border-vintage-gold\\/20 {\n    border-color: color-mix(in srgb, #c89547 20%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      border-color: color-mix(in oklab, var(--color-vintage-gold) 20%, transparent);\n    }\n  }\n  .border-vintage-gold\\/25 {\n    border-color: color-mix(in srgb, #c89547 25%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      border-color: color-mix(in oklab, var(--color-vintage-gold) 25%, transparent);\n    }\n  }\n  .border-vintage-gold\\/30 {\n    border-color: color-mix(in srgb, #c89547 30%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      border-color: color-mix(in oklab, var(--color-vintage-gold) 30%, transparent);\n    }\n  }\n  .border-vintage-gold\\/50 {\n    border-color: color-mix(in srgb, #c89547 50%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      border-color: color-mix(in oklab, var(--color-vintage-gold) 50%, transparent);\n    }\n  }\n  .border-t-transparent {\n    border-top-color: transparent;\n  }\n  .bg-\\[\\#1a1613\\] {\n    background-color: #1a1613;\n  }\n  .bg-\\[\\#1b1714\\] {\n    background-color: #1b1714;\n  }\n  .bg-\\[\\#1c1815\\] {\n    background-color: #1c1815;\n  }\n  .bg-\\[\\#1e1916\\]\\/40 {\n    background-color: color-mix(in oklab, #1e1916 40%, transparent);\n  }\n  .bg-\\[\\#1f1a17\\]\\/10 {\n    background-color: color-mix(in oklab, #1f1a17 10%, transparent);\n  }\n  .bg-\\[\\#1f1a17\\]\\/50 {\n    background-color: color-mix(in oklab, #1f1a17 50%, transparent);\n  }\n  .bg-\\[\\#2b2420\\] {\n    background-color: #2b2420;\n  }\n  .bg-\\[\\#2d2621\\] {\n    background-color: #2d2621;\n  }\n  .bg-\\[\\#3e342c\\]\\/50 {\n    background-color: color-mix(in oklab, #3e342c 50%, transparent);\n  }\n  .bg-\\[\\#6b5d53\\] {\n    background-color: #6b5d53;\n  }\n  .bg-\\[\\#110d0b\\] {\n    background-color: #110d0b;\n  }\n  .bg-\\[\\#110e0c\\] {\n    background-color: #110e0c;\n  }\n  .bg-\\[\\#14110f\\] {\n    background-color: #14110f;\n  }\n  .bg-\\[\\#28211d\\] {\n    background-color: #28211d;\n  }\n  .bg-\\[\\#161210\\] {\n    background-color: #161210;\n  }\n  .bg-\\[\\#181412\\] {\n    background-color: #181412;\n  }\n  .bg-amber-900\\/10 {\n    background-color: color-mix(in srgb, oklch(41.4% 0.112 45.904) 10%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      background-color: color-mix(in oklab, var(--color-amber-900) 10%, transparent);\n    }\n  }\n  .bg-black {\n    background-color: var(--color-black);\n  }\n  .bg-black\\/10 {\n    background-color: color-mix(in srgb, #000 10%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      background-color: color-mix(in oklab, var(--color-black) 10%, transparent);\n    }\n  }\n  .bg-black\\/20 {\n    background-color: color-mix(in srgb, #000 20%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      background-color: color-mix(in oklab, var(--color-black) 20%, transparent);\n    }\n  }\n  .bg-black\\/25 {\n    background-color: color-mix(in srgb, #000 25%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      background-color: color-mix(in oklab, var(--color-black) 25%, transparent);\n    }\n  }\n  .bg-black\\/30 {\n    background-color: color-mix(in srgb, #000 30%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      background-color: color-mix(in oklab, var(--color-black) 30%, transparent);\n    }\n  }\n  .bg-black\\/40 {\n    background-color: color-mix(in srgb, #000 40%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      background-color: color-mix(in oklab, var(--color-black) 40%, transparent);\n    }\n  }\n  .bg-black\\/70 {\n    background-color: color-mix(in srgb, #000 70%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      background-color: color-mix(in oklab, var(--color-black) 70%, transparent);\n    }\n  }\n  .bg-black\\/80 {\n    background-color: color-mix(in srgb, #000 80%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      background-color: color-mix(in oklab, var(--color-black) 80%, transparent);\n    }\n  }\n  .bg-black\\/85 {\n    background-color: color-mix(in srgb, #000 85%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      background-color: color-mix(in oklab, var(--color-black) 85%, transparent);\n    }\n  }\n  .bg-red-500\\/10 {\n    background-color: color-mix(in srgb, oklch(63.7% 0.237 25.331) 10%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      background-color: color-mix(in oklab, var(--color-red-500) 10%, transparent);\n    }\n  }\n  .bg-transparent {\n    background-color: transparent;\n  }\n  .bg-vintage-bg {\n    background-color: var(--color-vintage-bg);\n  }\n  .bg-vintage-bg\\/80 {\n    background-color: color-mix(in srgb, #1c1815 80%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      background-color: color-mix(in oklab, var(--color-vintage-bg) 80%, transparent);\n    }\n  }\n  .bg-vintage-bg\\/90 {\n    background-color: color-mix(in srgb, #1c1815 90%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      background-color: color-mix(in oklab, var(--color-vintage-bg) 90%, transparent);\n    }\n  }\n  .bg-vintage-border\\/20 {\n    background-color: color-mix(in srgb, #3e342c 20%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      background-color: color-mix(in oklab, var(--color-vintage-border) 20%, transparent);\n    }\n  }\n  .bg-vintage-border\\/30 {\n    background-color: color-mix(in srgb, #3e342c 30%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      background-color: color-mix(in oklab, var(--color-vintage-border) 30%, transparent);\n    }\n  }\n  .bg-vintage-gold {\n    background-color: var(--color-vintage-gold);\n  }\n  .bg-vintage-gold\\/5 {\n    background-color: color-mix(in srgb, #c89547 5%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      background-color: color-mix(in oklab, var(--color-vintage-gold) 5%, transparent);\n    }\n  }\n  .bg-vintage-gold\\/10 {\n    background-color: color-mix(in srgb, #c89547 10%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      background-color: color-mix(in oklab, var(--color-vintage-gold) 10%, transparent);\n    }\n  }\n  .bg-vintage-gold\\/15 {\n    background-color: color-mix(in srgb, #c89547 15%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      background-color: color-mix(in oklab, var(--color-vintage-gold) 15%, transparent);\n    }\n  }\n  .bg-vintage-gold\\/20 {\n    background-color: color-mix(in srgb, #c89547 20%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      background-color: color-mix(in oklab, var(--color-vintage-gold) 20%, transparent);\n    }\n  }\n  .bg-vintage-gold\\/60 {\n    background-color: color-mix(in srgb, #c89547 60%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      background-color: color-mix(in oklab, var(--color-vintage-gold) 60%, transparent);\n    }\n  }\n  .bg-vintage-muted\\/50 {\n    background-color: color-mix(in srgb, #857467 50%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      background-color: color-mix(in oklab, var(--color-vintage-muted) 50%, transparent);\n    }\n  }\n  .bg-vintage-muted\\/60 {\n    background-color: color-mix(in srgb, #857467 60%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      background-color: color-mix(in oklab, var(--color-vintage-muted) 60%, transparent);\n    }\n  }\n  .bg-vintage-rust\\/10 {\n    background-color: color-mix(in srgb, #a84a32 10%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      background-color: color-mix(in oklab, var(--color-vintage-rust) 10%, transparent);\n    }\n  }\n  .bg-vintage-rust\\/60 {\n    background-color: color-mix(in srgb, #a84a32 60%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      background-color: color-mix(in oklab, var(--color-vintage-rust) 60%, transparent);\n    }\n  }\n  .bg-gradient-to-br {\n    --tw-gradient-position: to bottom right in oklab;\n    background-image: linear-gradient(var(--tw-gradient-stops));\n  }\n  .bg-gradient-to-t {\n    --tw-gradient-position: to top in oklab;\n    background-image: linear-gradient(var(--tw-gradient-stops));\n  }\n  .bg-\\[radial-gradient\\(circle_at_center\\,rgba\\(62\\,52\\,44\\,0\\.15\\)_0\\%\\,rgba\\(28\\,24\\,21\\,1\\)_80\\%\\)\\] {\n    background-image: radial-gradient(circle at center,rgba(62,52,44,0.15) 0%,rgba(28,24,21,1) 80%);\n  }\n  .from-\\[\\#261f1c\\] {\n    --tw-gradient-from: #261f1c;\n    --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position));\n  }\n  .from-vintage-border {\n    --tw-gradient-from: var(--color-vintage-border);\n    --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position));\n  }\n  .to-\\[\\#120d0b\\] {\n    --tw-gradient-to: #120d0b;\n    --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position));\n  }\n  .to-vintage-gold {\n    --tw-gradient-to: var(--color-vintage-gold);\n    --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position));\n  }\n  .fill-current {\n    fill: currentcolor;\n  }\n  .object-cover {\n    object-fit: cover;\n  }\n  .p-0 {\n    padding: calc(var(--spacing) * 0);\n  }\n  .p-1 {\n    padding: calc(var(--spacing) * 1);\n  }\n  .p-2 {\n    padding: calc(var(--spacing) * 2);\n  }\n  .p-2\\.5 {\n    padding: calc(var(--spacing) * 2.5);\n  }\n  .p-3 {\n    padding: calc(var(--spacing) * 3);\n  }\n  .p-3\\.5 {\n    padding: calc(var(--spacing) * 3.5);\n  }\n  .p-4 {\n    padding: calc(var(--spacing) * 4);\n  }\n  .p-5 {\n    padding: calc(var(--spacing) * 5);\n  }\n  .p-6 {\n    padding: calc(var(--spacing) * 6);\n  }\n  .p-8 {\n    padding: calc(var(--spacing) * 8);\n  }\n  .px-1 {\n    padding-inline: calc(var(--spacing) * 1);\n  }\n  .px-1\\.5 {\n    padding-inline: calc(var(--spacing) * 1.5);\n  }\n  .px-2 {\n    padding-inline: calc(var(--spacing) * 2);\n  }\n  .px-2\\.5 {\n    padding-inline: calc(var(--spacing) * 2.5);\n  }\n  .px-3 {\n    padding-inline: calc(var(--spacing) * 3);\n  }\n  .px-3\\.5 {\n    padding-inline: calc(var(--spacing) * 3.5);\n  }\n  .px-4 {\n    padding-inline: calc(var(--spacing) * 4);\n  }\n  .px-5 {\n    padding-inline: calc(var(--spacing) * 5);\n  }\n  .px-12 {\n    padding-inline: calc(var(--spacing) * 12);\n  }\n  .py-0\\.5 {\n    padding-block: calc(var(--spacing) * 0.5);\n  }\n  .py-1 {\n    padding-block: calc(var(--spacing) * 1);\n  }\n  .py-1\\.5 {\n    padding-block: calc(var(--spacing) * 1.5);\n  }\n  .py-2 {\n    padding-block: calc(var(--spacing) * 2);\n  }\n  .py-3 {\n    padding-block: calc(var(--spacing) * 3);\n  }\n  .py-8 {\n    padding-block: calc(var(--spacing) * 8);\n  }\n  .pt-1 {\n    padding-top: calc(var(--spacing) * 1);\n  }\n  .pr-2 {\n    padding-right: calc(var(--spacing) * 2);\n  }\n  .pb-1\\.5 {\n    padding-bottom: calc(var(--spacing) * 1.5);\n  }\n  .pb-2 {\n    padding-bottom: calc(var(--spacing) * 2);\n  }\n  .pl-1 {\n    padding-left: calc(var(--spacing) * 1);\n  }\n  .pl-4 {\n    padding-left: calc(var(--spacing) * 4);\n  }\n  .pl-8 {\n    padding-left: calc(var(--spacing) * 8);\n  }\n  .pl-12 {\n    padding-left: calc(var(--spacing) * 12);\n  }\n  .pl-16 {\n    padding-left: calc(var(--spacing) * 16);\n  }\n  .text-center {\n    text-align: center;\n  }\n  .text-left {\n    text-align: left;\n  }\n  .text-right {\n    text-align: right;\n  }\n  .font-mono {\n    font-family: var(--font-mono);\n  }\n  .font-sans {\n    font-family: var(--font-sans);\n  }\n  .font-serif {\n    font-family: var(--font-serif);\n  }\n  .text-3xl {\n    font-size: var(--text-3xl);\n    line-height: var(--tw-leading, var(--text-3xl--line-height));\n  }\n  .text-5xl {\n    font-size: var(--text-5xl);\n    line-height: var(--tw-leading, var(--text-5xl--line-height));\n  }\n  .text-6xl {\n    font-size: var(--text-6xl);\n    line-height: var(--tw-leading, var(--text-6xl--line-height));\n  }\n  .text-sm {\n    font-size: var(--text-sm);\n    line-height: var(--tw-leading, var(--text-sm--line-height));\n  }\n  .text-xs {\n    font-size: var(--text-xs);\n    line-height: var(--tw-leading, var(--text-xs--line-height));\n  }\n  .text-\\[6px\\] {\n    font-size: 6px;\n  }\n  .text-\\[7px\\] {\n    font-size: 7px;\n  }\n  .text-\\[8px\\] {\n    font-size: 8px;\n  }\n  .text-\\[9px\\] {\n    font-size: 9px;\n  }\n  .text-\\[10px\\] {\n    font-size: 10px;\n  }\n  .text-\\[11px\\] {\n    font-size: 11px;\n  }\n  .leading-normal {\n    --tw-leading: var(--leading-normal);\n    line-height: var(--leading-normal);\n  }\n  .leading-relaxed {\n    --tw-leading: var(--leading-relaxed);\n    line-height: var(--leading-relaxed);\n  }\n  .leading-snug {\n    --tw-leading: var(--leading-snug);\n    line-height: var(--leading-snug);\n  }\n  .leading-tight {\n    --tw-leading: var(--leading-tight);\n    line-height: var(--leading-tight);\n  }\n  .font-bold {\n    --tw-font-weight: var(--font-weight-bold);\n    font-weight: var(--font-weight-bold);\n  }\n  .font-light {\n    --tw-font-weight: var(--font-weight-light);\n    font-weight: var(--font-weight-light);\n  }\n  .font-medium {\n    --tw-font-weight: var(--font-weight-medium);\n    font-weight: var(--font-weight-medium);\n  }\n  .font-semibold {\n    --tw-font-weight: var(--font-weight-semibold);\n    font-weight: var(--font-weight-semibold);\n  }\n  .tracking-\\[0\\.3em\\] {\n    --tw-tracking: 0.3em;\n    letter-spacing: 0.3em;\n  }\n  .tracking-\\[0\\.25em\\] {\n    --tw-tracking: 0.25em;\n    letter-spacing: 0.25em;\n  }\n  .tracking-wide {\n    --tw-tracking: var(--tracking-wide);\n    letter-spacing: var(--tracking-wide);\n  }\n  .tracking-wider {\n    --tw-tracking: var(--tracking-wider);\n    letter-spacing: var(--tracking-wider);\n  }\n  .tracking-widest {\n    --tw-tracking: var(--tracking-widest);\n    letter-spacing: var(--tracking-widest);\n  }\n  .break-all {\n    word-break: break-all;\n  }\n  .whitespace-pre {\n    white-space: pre;\n  }\n  .text-\\[\\#6b5d53\\] {\n    color: #6b5d53;\n  }\n  .text-\\[\\#8f8278\\] {\n    color: #8f8278;\n  }\n  .text-\\[\\#14110f\\] {\n    color: #14110f;\n  }\n  .text-\\[\\#a3978f\\] {\n    color: #a3978f;\n  }\n  .text-\\[\\#ded9d5\\] {\n    color: #ded9d5;\n  }\n  .text-black {\n    color: var(--color-black);\n  }\n  .text-red-300 {\n    color: var(--color-red-300);\n  }\n  .text-red-400 {\n    color: var(--color-red-400);\n  }\n  .text-stone-400 {\n    color: var(--color-stone-400);\n  }\n  .text-vintage-gold {\n    color: var(--color-vintage-gold);\n  }\n  .text-vintage-muted {\n    color: var(--color-vintage-muted);\n  }\n  .text-vintage-muted\\/90 {\n    color: color-mix(in srgb, #857467 90%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      color: color-mix(in oklab, var(--color-vintage-muted) 90%, transparent);\n    }\n  }\n  .text-vintage-paper {\n    color: var(--color-vintage-paper);\n  }\n  .text-vintage-paper\\/90 {\n    color: color-mix(in srgb, #faf8f5 90%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      color: color-mix(in oklab, var(--color-vintage-paper) 90%, transparent);\n    }\n  }\n  .text-vintage-rust {\n    color: var(--color-vintage-rust);\n  }\n  .text-white {\n    color: var(--color-white);\n  }\n  .capitalize {\n    text-transform: capitalize;\n  }\n  .uppercase {\n    text-transform: uppercase;\n  }\n  .italic {\n    font-style: italic;\n  }\n  .placeholder-\\[\\#6b5d53\\] {\n    &::placeholder {\n      color: #6b5d53;\n    }\n  }\n  .accent-vintage-gold {\n    accent-color: var(--color-vintage-gold);\n  }\n  .opacity-0 {\n    opacity: 0%;\n  }\n  .opacity-10 {\n    opacity: 10%;\n  }\n  .opacity-15 {\n    opacity: 15%;\n  }\n  .opacity-20 {\n    opacity: 20%;\n  }\n  .opacity-90 {\n    opacity: 90%;\n  }\n  .opacity-100 {\n    opacity: 100%;\n  }\n  .opacity-\\[0\\.06\\] {\n    opacity: 0.06;\n  }\n  .mix-blend-overlay {\n    mix-blend-mode: overlay;\n  }\n  .shadow {\n    --tw-shadow: 0 1px 3px 0 var(--tw-shadow-color, rgb(0 0 0 / 0.1)), 0 1px 2px -1px var(--tw-shadow-color, rgb(0 0 0 / 0.1));\n    box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n  }\n  .shadow-2xl {\n    --tw-shadow: 0 25px 50px -12px var(--tw-shadow-color, rgb(0 0 0 / 0.25));\n    box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n  }\n  .shadow-inner {\n    --tw-shadow: inset 0 2px 4px 0 var(--tw-shadow-color, rgb(0 0 0 / 0.05));\n    box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n  }\n  .shadow-lg {\n    --tw-shadow: 0 10px 15px -3px var(--tw-shadow-color, rgb(0 0 0 / 0.1)), 0 4px 6px -4px var(--tw-shadow-color, rgb(0 0 0 / 0.1));\n    box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n  }\n  .shadow-md {\n    --tw-shadow: 0 4px 6px -1px var(--tw-shadow-color, rgb(0 0 0 / 0.1)), 0 2px 4px -2px var(--tw-shadow-color, rgb(0 0 0 / 0.1));\n    box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n  }\n  .shadow-xl {\n    --tw-shadow: 0 20px 25px -5px var(--tw-shadow-color, rgb(0 0 0 / 0.1)), 0 8px 10px -6px var(--tw-shadow-color, rgb(0 0 0 / 0.1));\n    box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n  }\n  .outline {\n    outline-style: var(--tw-outline-style);\n    outline-width: 1px;\n  }\n  .blur-2xl {\n    --tw-blur: blur(var(--blur-2xl));\n    filter: var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,);\n  }\n  .blur-xl {\n    --tw-blur: blur(var(--blur-xl));\n    filter: var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,);\n  }\n  .drop-shadow-\\[0_0_12px_rgba\\(200\\,149\\,71\\,0\\.3\\)\\] {\n    --tw-drop-shadow-size: drop-shadow(0 0 12px var(--tw-drop-shadow-color, rgba(200,149,71,0.3)));\n    --tw-drop-shadow: var(--tw-drop-shadow-size);\n    filter: var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,);\n  }\n  .drop-shadow-\\[0_0_12px_rgba\\(200\\,149\\,71\\,0\\.4\\)\\] {\n    --tw-drop-shadow-size: drop-shadow(0 0 12px var(--tw-drop-shadow-color, rgba(200,149,71,0.4)));\n    --tw-drop-shadow: var(--tw-drop-shadow-size);\n    filter: var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,);\n  }\n  .filter {\n    filter: var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,);\n  }\n  .transition {\n    transition-property: color, background-color, border-color, outline-color, text-decoration-color, fill, stroke, --tw-gradient-from, --tw-gradient-via, --tw-gradient-to, opacity, box-shadow, transform, translate, scale, rotate, filter, -webkit-backdrop-filter, backdrop-filter, display, content-visibility, overlay, pointer-events;\n    transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));\n    transition-duration: var(--tw-duration, var(--default-transition-duration));\n  }\n  .transition-all {\n    transition-property: all;\n    transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));\n    transition-duration: var(--tw-duration, var(--default-transition-duration));\n  }\n  .transition-colors {\n    transition-property: color, background-color, border-color, outline-color, text-decoration-color, fill, stroke, --tw-gradient-from, --tw-gradient-via, --tw-gradient-to;\n    transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));\n    transition-duration: var(--tw-duration, var(--default-transition-duration));\n  }\n  .transition-transform {\n    transition-property: transform, translate, scale, rotate;\n    transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));\n    transition-duration: var(--tw-duration, var(--default-transition-duration));\n  }\n  .duration-75 {\n    --tw-duration: 75ms;\n    transition-duration: 75ms;\n  }\n  .select-none {\n    -webkit-user-select: none;\n    user-select: none;\n  }\n  .group-hover\\:scale-105 {\n    &:is(:where(.group):hover *) {\n      @media (hover: hover) {\n        --tw-scale-x: 105%;\n        --tw-scale-y: 105%;\n        --tw-scale-z: 105%;\n        scale: var(--tw-scale-x) var(--tw-scale-y);\n      }\n    }\n  }\n  .group-hover\\:text-vintage-gold {\n    &:is(:where(.group):hover *) {\n      @media (hover: hover) {\n        color: var(--color-vintage-gold);\n      }\n    }\n  }\n  .hover\\:scale-105 {\n    &:hover {\n      @media (hover: hover) {\n        --tw-scale-x: 105%;\n        --tw-scale-y: 105%;\n        --tw-scale-z: 105%;\n        scale: var(--tw-scale-x) var(--tw-scale-y);\n      }\n    }\n  }\n  .hover\\:scale-\\[1\\.01\\] {\n    &:hover {\n      @media (hover: hover) {\n        scale: 1.01;\n      }\n    }\n  }\n  .hover\\:scale-\\[1\\.02\\] {\n    &:hover {\n      @media (hover: hover) {\n        scale: 1.02;\n      }\n    }\n  }\n  .hover\\:scale-\\[1\\.005\\] {\n    &:hover {\n      @media (hover: hover) {\n        scale: 1.005;\n      }\n    }\n  }\n  .hover\\:border-\\[\\#52443a\\] {\n    &:hover {\n      @media (hover: hover) {\n        border-color: #52443a;\n      }\n    }\n  }\n  .hover\\:bg-\\[\\#1f1a17\\] {\n    &:hover {\n      @media (hover: hover) {\n        background-color: #1f1a17;\n      }\n    }\n  }\n  .hover\\:bg-\\[\\#1f1a17\\]\\/25 {\n    &:hover {\n      @media (hover: hover) {\n        background-color: color-mix(in oklab, #1f1a17 25%, transparent);\n      }\n    }\n  }\n  .hover\\:bg-\\[\\#2d2621\\] {\n    &:hover {\n      @media (hover: hover) {\n        background-color: #2d2621;\n      }\n    }\n  }\n  .hover\\:bg-\\[\\#3e342c\\] {\n    &:hover {\n      @media (hover: hover) {\n        background-color: #3e342c;\n      }\n    }\n  }\n  .hover\\:bg-\\[\\#b08138\\] {\n    &:hover {\n      @media (hover: hover) {\n        background-color: #b08138;\n      }\n    }\n  }\n  .hover\\:bg-black\\/10 {\n    &:hover {\n      @media (hover: hover) {\n        background-color: color-mix(in srgb, #000 10%, transparent);\n        @supports (color: color-mix(in lab, red, red)) {\n          background-color: color-mix(in oklab, var(--color-black) 10%, transparent);\n        }\n      }\n    }\n  }\n  .hover\\:bg-vintage-gold\\/70 {\n    &:hover {\n      @media (hover: hover) {\n        background-color: color-mix(in srgb, #c89547 70%, transparent);\n        @supports (color: color-mix(in lab, red, red)) {\n          background-color: color-mix(in oklab, var(--color-vintage-gold) 70%, transparent);\n        }\n      }\n    }\n  }\n  .hover\\:bg-vintage-gold\\/90 {\n    &:hover {\n      @media (hover: hover) {\n        background-color: color-mix(in srgb, #c89547 90%, transparent);\n        @supports (color: color-mix(in lab, red, red)) {\n          background-color: color-mix(in oklab, var(--color-vintage-gold) 90%, transparent);\n        }\n      }\n    }\n  }\n  .hover\\:bg-white\\/10 {\n    &:hover {\n      @media (hover: hover) {\n        background-color: color-mix(in srgb, #fff 10%, transparent);\n        @supports (color: color-mix(in lab, red, red)) {\n          background-color: color-mix(in oklab, var(--color-white) 10%, transparent);\n        }\n      }\n    }\n  }\n  .hover\\:text-white {\n    &:hover {\n      @media (hover: hover) {\n        color: var(--color-white);\n      }\n    }\n  }\n  .hover\\:shadow-lg {\n    &:hover {\n      @media (hover: hover) {\n        --tw-shadow: 0 10px 15px -3px var(--tw-shadow-color, rgb(0 0 0 / 0.1)), 0 4px 6px -4px var(--tw-shadow-color, rgb(0 0 0 / 0.1));\n        box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n      }\n    }\n  }\n  .hover\\:brightness-110 {\n    &:hover {\n      @media (hover: hover) {\n        --tw-brightness: brightness(110%);\n        filter: var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,);\n      }\n    }\n  }\n  .focus\\:border-vintage-gold\\/50 {\n    &:focus {\n      border-color: color-mix(in srgb, #c89547 50%, transparent);\n      @supports (color: color-mix(in lab, red, red)) {\n        border-color: color-mix(in oklab, var(--color-vintage-gold) 50%, transparent);\n      }\n    }\n  }\n  .focus\\:border-vintage-gold\\/60 {\n    &:focus {\n      border-color: color-mix(in srgb, #c89547 60%, transparent);\n      @supports (color: color-mix(in lab, red, red)) {\n        border-color: color-mix(in oklab, var(--color-vintage-gold) 60%, transparent);\n      }\n    }\n  }\n  .focus\\:outline-none {\n    &:focus {\n      --tw-outline-style: none;\n      outline-style: none;\n    }\n  }\n  .active\\:scale-\\[0\\.99\\] {\n    &:active {\n      scale: 0.99;\n    }\n  }\n  .active\\:brightness-95 {\n    &:active {\n      --tw-brightness: brightness(95%);\n      filter: var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,);\n    }\n  }\n  .disabled\\:cursor-not-allowed {\n    &:disabled {\n      cursor: not-allowed;\n    }\n  }\n  .disabled\\:opacity-40 {\n    &:disabled {\n      opacity: 40%;\n    }\n  }\n  .disabled\\:opacity-50 {\n    &:disabled {\n      opacity: 50%;\n    }\n  }\n  .md\\:text-4xl {\n    @media (width >= 48rem) {\n      font-size: var(--text-4xl);\n      line-height: var(--tw-leading, var(--text-4xl--line-height));\n    }\n  }\n  .md\\:text-6xl {\n    @media (width >= 48rem) {\n      font-size: var(--text-6xl);\n      line-height: var(--tw-leading, var(--text-6xl--line-height));\n    }\n  }\n  .md\\:text-7xl {\n    @media (width >= 48rem) {\n      font-size: var(--text-7xl);\n      line-height: var(--tw-leading, var(--text-7xl--line-height));\n    }\n  }\n  .md\\:text-sm {\n    @media (width >= 48rem) {\n      font-size: var(--text-sm);\n      line-height: var(--tw-leading, var(--text-sm--line-height));\n    }\n  }\n  .lg\\:flex {\n    @media (width >= 64rem) {\n      display: flex;\n    }\n  }\n}\n@keyframes film-grain {\n  0%, 100% {\n    transform: translate(0, 0);\n  }\n  10% {\n    transform: translate(-1%, -1%);\n  }\n  20% {\n    transform: translate(-2%, 1%);\n  }\n  30% {\n    transform: translate(1%, -2%);\n  }\n  40% {\n    transform: translate(-1%, 3%);\n  }\n  50% {\n    transform: translate(-2%, 1%);\n  }\n  60% {\n    transform: translate(3%, 0%);\n  }\n  70% {\n    transform: translate(0%, 2%);\n  }\n  80% {\n    transform: translate(2%, 3%);\n  }\n  90% {\n    transform: translate(-1%, 1%);\n  }\n}\n@keyframes subtle-drift {\n  0% {\n    transform: scale(1.05) translate(0px, 0px) rotate(0deg);\n  }\n  50% {\n    transform: scale(1.08) translate(3px, -5px) rotate(0.2deg);\n  }\n  100% {\n    transform: scale(1.05) translate(0px, 0px) rotate(0deg);\n  }\n}\n.animate-grain {\n  animation: film-grain 0.6s steps(6) infinite;\n}\n.animate-subtle-drift {\n  animation: subtle-drift 12s ease-in-out infinite;\n}\n.vignette-overlay {\n  background: radial-gradient(circle, transparent 40%, rgba(12, 10, 9, 0.75) 100%);\n  pointer-events: none;\n}\n.cinematic-tint {\n  mix-blend-mode: color-burn;\n  background-color: rgba(217, 119, 6, 0.04);\n  pointer-events: none;\n}\n.custom-scrollbar::-webkit-scrollbar {\n  width: 6px;\n  height: 6px;\n}\n.custom-scrollbar::-webkit-scrollbar-track {\n  background: #110d0b;\n}\n.custom-scrollbar::-webkit-scrollbar-thumb {\n  background: #3e342c;\n  border-radius: 3px;\n}\n.custom-scrollbar::-webkit-scrollbar-thumb:hover {\n  background: #c89547;\n}\n@keyframes fadeIn {\n  from {\n    opacity: 0;\n  }\n  to {\n    opacity: 1;\n  }\n}\n.animate-fade-in {\n  animation: fadeIn 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;\n}\n@property --tw-rotate-x {\n  syntax: \"*\";\n  inherits: false;\n}\n@property --tw-rotate-y {\n  syntax: \"*\";\n  inherits: false;\n}\n@property --tw-rotate-z {\n  syntax: \"*\";\n  inherits: false;\n}\n@property --tw-skew-x {\n  syntax: \"*\";\n  inherits: false;\n}\n@property --tw-skew-y {\n  syntax: \"*\";\n  inherits: false;\n}\n@property --tw-divide-y-reverse {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0;\n}\n@property --tw-border-style {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: solid;\n}\n@property --tw-gradient-position {\n  syntax: \"*\";\n  inherits: false;\n}\n@property --tw-gradient-from {\n  syntax: \"<color>\";\n  inherits: false;\n  initial-value: #0000;\n}\n@property --tw-gradient-via {\n  syntax: \"<color>\";\n  inherits: false;\n  initial-value: #0000;\n}\n@property --tw-gradient-to {\n  syntax: \"<color>\";\n  inherits: false;\n  initial-value: #0000;\n}\n@property --tw-gradient-stops {\n  syntax: \"*\";\n  inherits: false;\n}\n@property --tw-gradient-via-stops {\n  syntax: \"*\";\n  inherits: false;\n}\n@property --tw-gradient-from-position {\n  syntax: \"<length-percentage>\";\n  inherits: false;\n  initial-value: 0%;\n}\n@property --tw-gradient-via-position {\n  syntax: \"<length-percentage>\";\n  inherits: false;\n  initial-value: 50%;\n}\n@property --tw-gradient-to-position {\n  syntax: \"<length-percentage>\";\n  inherits: false;\n  initial-value: 100%;\n}\n@property --tw-leading {\n  syntax: \"*\";\n  inherits: false;\n}\n@property --tw-font-weight {\n  syntax: \"*\";\n  inherits: false;\n}\n@property --tw-tracking {\n  syntax: \"*\";\n  inherits: false;\n}\n@property --tw-shadow {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0 0 #0000;\n}\n@property --tw-shadow-color {\n  syntax: \"*\";\n  inherits: false;\n}\n@property --tw-shadow-alpha {\n  syntax: \"<percentage>\";\n  inherits: false;\n  initial-value: 100%;\n}\n@property --tw-inset-shadow {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0 0 #0000;\n}\n@property --tw-inset-shadow-color {\n  syntax: \"*\";\n  inherits: false;\n}\n@property --tw-inset-shadow-alpha {\n  syntax: \"<percentage>\";\n  inherits: false;\n  initial-value: 100%;\n}\n@property --tw-ring-color {\n  syntax: \"*\";\n  inherits: false;\n}\n@property --tw-ring-shadow {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0 0 #0000;\n}\n@property --tw-inset-ring-color {\n  syntax: \"*\";\n  inherits: false;\n}\n@property --tw-inset-ring-shadow {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0 0 #0000;\n}\n@property --tw-ring-inset {\n  syntax: \"*\";\n  inherits: false;\n}\n@property --tw-ring-offset-width {\n  syntax: \"<length>\";\n  inherits: false;\n  initial-value: 0px;\n}\n@property --tw-ring-offset-color {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: #fff;\n}\n@property --tw-ring-offset-shadow {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0 0 #0000;\n}\n@property --tw-outline-style {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: solid;\n}\n@property --tw-blur {\n  syntax: \"*\";\n  inherits: false;\n}\n@property --tw-brightness {\n  syntax: \"*\";\n  inherits: false;\n}\n@property --tw-contrast {\n  syntax: \"*\";\n  inherits: false;\n}\n@property --tw-grayscale {\n  syntax: \"*\";\n  inherits: false;\n}\n@property --tw-hue-rotate {\n  syntax: \"*\";\n  inherits: false;\n}\n@property --tw-invert {\n  syntax: \"*\";\n  inherits: false;\n}\n@property --tw-opacity {\n  syntax: \"*\";\n  inherits: false;\n}\n@property --tw-saturate {\n  syntax: \"*\";\n  inherits: false;\n}\n@property --tw-sepia {\n  syntax: \"*\";\n  inherits: false;\n}\n@property --tw-drop-shadow {\n  syntax: \"*\";\n  inherits: false;\n}\n@property --tw-drop-shadow-color {\n  syntax: \"*\";\n  inherits: false;\n}\n@property --tw-drop-shadow-alpha {\n  syntax: \"<percentage>\";\n  inherits: false;\n  initial-value: 100%;\n}\n@property --tw-drop-shadow-size {\n  syntax: \"*\";\n  inherits: false;\n}\n@property --tw-duration {\n  syntax: \"*\";\n  inherits: false;\n}\n@property --tw-scale-x {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 1;\n}\n@property --tw-scale-y {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 1;\n}\n@property --tw-scale-z {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 1;\n}\n@keyframes spin {\n  to {\n    transform: rotate(360deg);\n  }\n}\n@keyframes ping {\n  75%, 100% {\n    transform: scale(2);\n    opacity: 0;\n  }\n}\n@keyframes pulse {\n  50% {\n    opacity: 0.5;\n  }\n}\n@keyframes bounce {\n  0%, 100% {\n    transform: translateY(-25%);\n    animation-timing-function: cubic-bezier(0.8, 0, 1, 1);\n  }\n  50% {\n    transform: none;\n    animation-timing-function: cubic-bezier(0, 0, 0.2, 1);\n  }\n}\n@layer properties {\n  @supports ((-webkit-hyphens: none) and (not (margin-trim: inline))) or ((-moz-orient: inline) and (not (color:rgb(from red r g b)))) {\n    *, ::before, ::after, ::backdrop {\n      --tw-rotate-x: initial;\n      --tw-rotate-y: initial;\n      --tw-rotate-z: initial;\n      --tw-skew-x: initial;\n      --tw-skew-y: initial;\n      --tw-divide-y-reverse: 0;\n      --tw-border-style: solid;\n      --tw-gradient-position: initial;\n      --tw-gradient-from: #0000;\n      --tw-gradient-via: #0000;\n      --tw-gradient-to: #0000;\n      --tw-gradient-stops: initial;\n      --tw-gradient-via-stops: initial;\n      --tw-gradient-from-position: 0%;\n      --tw-gradient-via-position: 50%;\n      --tw-gradient-to-position: 100%;\n      --tw-leading: initial;\n      --tw-font-weight: initial;\n      --tw-tracking: initial;\n      --tw-shadow: 0 0 #0000;\n      --tw-shadow-color: initial;\n      --tw-shadow-alpha: 100%;\n      --tw-inset-shadow: 0 0 #0000;\n      --tw-inset-shadow-color: initial;\n      --tw-inset-shadow-alpha: 100%;\n      --tw-ring-color: initial;\n      --tw-ring-shadow: 0 0 #0000;\n      --tw-inset-ring-color: initial;\n      --tw-inset-ring-shadow: 0 0 #0000;\n      --tw-ring-inset: initial;\n      --tw-ring-offset-width: 0px;\n      --tw-ring-offset-color: #fff;\n      --tw-ring-offset-shadow: 0 0 #0000;\n      --tw-outline-style: solid;\n      --tw-blur: initial;\n      --tw-brightness: initial;\n      --tw-contrast: initial;\n      --tw-grayscale: initial;\n      --tw-hue-rotate: initial;\n      --tw-invert: initial;\n      --tw-opacity: initial;\n      --tw-saturate: initial;\n      --tw-sepia: initial;\n      --tw-drop-shadow: initial;\n      --tw-drop-shadow-color: initial;\n      --tw-drop-shadow-alpha: 100%;\n      --tw-drop-shadow-size: initial;\n      --tw-duration: initial;\n      --tw-scale-x: 1;\n      --tw-scale-y: 1;\n      --tw-scale-z: 1;\n    }\n  }\n}\n"],"sourceRoot":""}]);
+`, "",{"version":3,"sources":["webpack://./src/index.css"],"names":[],"mappings":"AAAA,gEAAgE;AAChE,iBAAiB;AACjB,yCAAyC;AACzC;EACE;IACE,mDAAmD;IACnD,gDAAgD;IAChD;8BAC0B;IAC1B,0CAA0C;IAC1C,0CAA0C;IAC1C,0CAA0C;IAC1C,4CAA4C;IAC5C,4CAA4C;IAC5C,6CAA6C;IAC7C,2CAA2C;IAC3C,6CAA6C;IAC7C,6CAA6C;IAC7C,+CAA+C;IAC/C,4CAA4C;IAC5C,2CAA2C;IAC3C,4CAA4C;IAC5C,0CAA0C;IAC1C,2CAA2C;IAC3C,8CAA8C;IAC9C,4CAA4C;IAC5C,4CAA4C;IAC5C,4CAA4C;IAC5C,6CAA6C;IAC7C,4CAA4C;IAC5C,6CAA6C;IAC7C,6CAA6C;IAC7C,6CAA6C;IAC7C,6CAA6C;IAC7C,6CAA6C;IAC7C,4CAA4C;IAC5C,4CAA4C;IAC5C,2CAA2C;IAC3C,4CAA4C;IAC5C,mBAAmB;IACnB,mBAAmB;IACnB,kBAAkB;IAClB,qBAAqB;IACrB,kBAAkB;IAClB,sCAAsC;IACtC,mBAAmB;IACnB,0CAA0C;IAC1C,kBAAkB;IAClB,yCAAyC;IACzC,kBAAkB;IAClB,sCAAsC;IACtC,wBAAwB;IACxB,yBAAyB;IACzB,2BAA2B;IAC3B,uBAAuB;IACvB,4BAA4B;IAC5B,wBAAwB;IACxB,2BAA2B;IAC3B,0BAA0B;IAC1B,wBAAwB;IACxB,wBAAwB;IACxB,wBAAwB;IACxB,qBAAqB;IACrB,qBAAqB;IACrB,qBAAqB;IACrB,wBAAwB;IACxB,oBAAoB;IACpB,qBAAqB;IACrB,mBAAmB;IACnB,oBAAoB;IACpB,uCAAuC;IACvC,eAAe;IACf,gBAAgB;IAChB,oCAAoC;IACpC,kEAAkE;IAClE,uCAAuC;IACvC,4CAA4C;IAC5C,2BAA2B;IAC3B,8BAA8B;IAC9B,6BAA6B;IAC7B,6BAA6B;IAC7B,+BAA+B;IAC/B,8BAA8B;EAChC;AACF;AACA;EACE;IACE,sBAAsB;IACtB,SAAS;IACT,UAAU;IACV,eAAe;EACjB;EACA;IACE,gBAAgB;IAChB,8BAA8B;IAC9B,WAAW;IACX,2JAA2J;IAC3J,mEAAmE;IACnE,uEAAuE;IACvE,wCAAwC;EAC1C;EACA;IACE,SAAS;IACT,cAAc;IACd,qBAAqB;EACvB;EACA;IACE,yCAAyC;IACzC,iCAAiC;EACnC;EACA;IACE,kBAAkB;IAClB,oBAAoB;EACtB;EACA;IACE,cAAc;IACd,gCAAgC;IAChC,wBAAwB;EAC1B;EACA;IACE,mBAAmB;EACrB;EACA;IACE,gJAAgJ;IAChJ,wEAAwE;IACxE,4EAA4E;IAC5E,cAAc;EAChB;EACA;IACE,cAAc;EAChB;EACA;IACE,cAAc;IACd,cAAc;IACd,kBAAkB;IAClB,wBAAwB;EAC1B;EACA;IACE,eAAe;EACjB;EACA;IACE,WAAW;EACb;EACA;IACE,cAAc;IACd,qBAAqB;IACrB,yBAAyB;EAC3B;EACA;IACE,aAAa;EACf;EACA;IACE,wBAAwB;EAC1B;EACA;IACE,kBAAkB;EACpB;EACA;IACE,gBAAgB;EAClB;EACA;IACE,cAAc;IACd,sBAAsB;EACxB;EACA;IACE,eAAe;IACf,YAAY;EACd;EACA;IACE,aAAa;IACb,8BAA8B;IAC9B,gCAAgC;IAChC,uBAAuB;IACvB,cAAc;IACd,gBAAgB;IAChB,6BAA6B;IAC7B,UAAU;EACZ;EACA;IACE,mBAAmB;EACrB;EACA;IACE,0BAA0B;EAC5B;EACA;IACE,sBAAsB;EACxB;EACA;IACE,UAAU;EACZ;EACA;IACE;MACE,mBAAmB;MACnB;QACE,yDAAyD;MAC3D;IACF;EACF;EACA;IACE,gBAAgB;EAClB;EACA;IACE,wBAAwB;EAC1B;EACA;IACE,eAAe;IACf,mBAAmB;EACrB;EACA;IACE,oBAAoB;EACtB;EACA;IACE,UAAU;EACZ;EACA;IACE,gBAAgB;EAClB;EACA;IACE,cAAc;EAChB;EACA;IACE,gBAAgB;EAClB;EACA;IACE,kBAAkB;EACpB;EACA;IACE,YAAY;EACd;EACA;IACE,wBAAwB;EAC1B;AACF;AACA;EACE;IACE,oBAAoB;EACtB;EACA;IACE,kBAAkB;EACpB;EACA;IACE,eAAe;EACjB;EACA;IACE,kBAAkB;EACpB;EACA;IACE,gBAAgB;EAClB;EACA;IACE,qBAAqB;EACvB;EACA;IACE,+BAA+B;EACjC;EACA;IACE,+BAA+B;EACjC;EACA;IACE,+BAA+B;EACjC;EACA;IACE,+BAA+B;EACjC;EACA;IACE,sCAAsC;EACxC;EACA;IACE,qCAAqC;EACvC;EACA;IACE,kCAAkC;EACpC;EACA;IACE,gCAAgC;EAClC;EACA;IACE,6BAA6B;EAC/B;EACA;IACE,6BAA6B;EAC/B;EACA;IACE,+BAA+B;EACjC;EACA;IACE,6BAA6B;EAC/B;EACA;IACE,6BAA6B;EAC/B;EACA;IACE,8BAA8B;EAChC;EACA;IACE,8BAA8B;EAChC;EACA;IACE,SAAS;EACX;EACA;IACE,+BAA+B;EACjC;EACA;IACE,+BAA+B;EACjC;EACA;IACE,+BAA+B;EACjC;EACA;IACE,+BAA+B;EACjC;EACA;IACE,+BAA+B;EACjC;EACA;IACE,gCAAgC;EAClC;EACA;IACE,gCAAgC;EAClC;EACA;IACE,WAAW;EACb;EACA;IACE,gCAAgC;EAClC;EACA;IACE,gCAAgC;EAClC;EACA;IACE,gCAAgC;EAClC;EACA;IACE,gCAAgC;EAClC;EACA;IACE,gCAAgC;EAClC;EACA;IACE,iCAAiC;EACnC;EACA;IACE,iCAAiC;EACnC;EACA;IACE,iCAAiC;EACnC;EACA;IACE,+BAA+B;EACjC;EACA;IACE,8BAA8B;EAChC;EACA;IACE,8BAA8B;EAChC;EACA;IACE,gCAAgC;EAClC;EACA;IACE,8BAA8B;EAChC;EACA;IACE,8BAA8B;EAChC;EACA;IACE,8BAA8B;EAChC;EACA;IACE,+BAA+B;EACjC;EACA;IACE,+BAA+B;EACjC;EACA;IACE,UAAU;EACZ;EACA;IACE,sBAAsB;EACxB;EACA;IACE,sBAAsB;EACxB;EACA;IACE,WAAW;EACb;EACA;IACE,WAAW;EACb;EACA;IACE,WAAW;EACb;EACA;IACE,WAAW;EACb;EACA;IACE,WAAW;EACb;EACA;IACE,YAAY;EACd;EACA;IACE,WAAW;IACX;MACE,gBAAgB;IAClB;IACA;MACE,gBAAgB;IAClB;IACA;MACE,gBAAgB;IAClB;IACA;MACE,gBAAgB;IAClB;IACA;MACE,gBAAgB;IAClB;EACF;EACA;IACE,sCAAsC;EACxC;EACA;IACE,sCAAsC;EACxC;EACA;IACE,sCAAsC;EACxC;EACA;IACE,sCAAsC;EACxC;EACA;IACE,oCAAoC;EACtC;EACA;IACE,sCAAsC;EACxC;EACA;IACE,oCAAoC;EACtC;EACA;IACE,oCAAoC;EACtC;EACA;IACE,oCAAoC;EACtC;EACA;IACE,oCAAoC;EACtC;EACA;IACE,oCAAoC;EACtC;EACA;IACE,yCAAyC;EAC3C;EACA;IACE,uCAAuC;EACzC;EACA;IACE,yCAAyC;EAC3C;EACA;IACE,uCAAuC;EACzC;EACA;IACE,uCAAuC;EACzC;EACA;IACE,uCAAuC;EACzC;EACA;IACE,uCAAuC;EACzC;EACA;IACE,uCAAuC;EACzC;EACA;IACE,gBAAgB;IAChB,oBAAoB;IACpB,4BAA4B;IAC5B,qBAAqB;EACvB;EACA;IACE,cAAc;EAChB;EACA;IACE,aAAa;EACf;EACA;IACE,aAAa;EACf;EACA;IACE,aAAa;EACf;EACA;IACE,qBAAqB;EACvB;EACA;IACE,gCAAgC;EAClC;EACA;IACE,kCAAkC;EACpC;EACA;IACE,gCAAgC;EAClC;EACA;IACE,kCAAkC;EACpC;EACA;IACE,gCAAgC;EAClC;EACA;IACE,kCAAkC;EACpC;EACA;IACE,gCAAgC;EAClC;EACA;IACE,kCAAkC;EACpC;EACA;IACE,gCAAgC;EAClC;EACA;IACE,kCAAkC;EACpC;EACA;IACE,gCAAgC;EAClC;EACA;IACE,gCAAgC;EAClC;EACA;IACE,gCAAgC;EAClC;EACA;IACE,gCAAgC;EAClC;EACA;IACE,iCAAiC;EACnC;EACA;IACE,iCAAiC;EACnC;EACA;IACE,iCAAiC;EACnC;EACA;IACE,iCAAiC;EACnC;EACA;IACE,iCAAiC;EACnC;EACA;IACE,iCAAiC;EACnC;EACA;IACE,iCAAiC;EACnC;EACA;IACE,iCAAiC;EACnC;EACA;IACE,iCAAiC;EACnC;EACA;IACE,iCAAiC;EACnC;EACA;IACE,WAAW;EACb;EACA;IACE,WAAW;EACb;EACA;IACE,YAAY;EACd;EACA;IACE,aAAa;EACf;EACA;IACE,aAAa;EACf;EACA;IACE,aAAa;EACf;EACA;IACE,aAAa;EACf;EACA;IACE,aAAa;EACf;EACA;IACE,aAAa;EACf;EACA;IACE,YAAY;EACd;EACA;IACE,aAAa;EACf;EACA;IACE,qCAAqC;EACvC;EACA;IACE,gBAAgB;EAClB;EACA;IACE,iBAAiB;EACnB;EACA;IACE,oCAAoC;EACtC;EACA;IACE,gBAAgB;EAClB;EACA;IACE,gBAAgB;EAClB;EACA;IACE,iBAAiB;EACnB;EACA;IACE,gBAAgB;EAClB;EACA;IACE,iCAAiC;EACnC;EACA;IACE,+BAA+B;EACjC;EACA;IACE,iCAAiC;EACnC;EACA;IACE,+BAA+B;EACjC;EACA;IACE,iCAAiC;EACnC;EACA;IACE,+BAA+B;EACjC;EACA;IACE,iCAAiC;EACnC;EACA;IACE,+BAA+B;EACjC;EACA;IACE,iCAAiC;EACnC;EACA;IACE,+BAA+B;EACjC;EACA;IACE,+BAA+B;EACjC;EACA;IACE,+BAA+B;EACjC;EACA;IACE,gCAAgC;EAClC;EACA;IACE,gCAAgC;EAClC;EACA;IACE,gCAAgC;EAClC;EACA;IACE,gCAAgC;EAClC;EACA;IACE,gCAAgC;EAClC;EACA;IACE,gCAAgC;EAClC;EACA;IACE,gCAAgC;EAClC;EACA;IACE,gCAAgC;EAClC;EACA;IACE,gCAAgC;EAClC;EACA;IACE,gCAAgC;EAClC;EACA;IACE,gCAAgC;EAClC;EACA;IACE,YAAY;EACd;EACA;IACE,UAAU;EACZ;EACA;IACE,UAAU;EACZ;EACA;IACE,UAAU;EACZ;EACA;IACE,UAAU;EACZ;EACA;IACE,UAAU;EACZ;EACA;IACE,UAAU;EACZ;EACA;IACE,UAAU;EACZ;EACA;IACE,UAAU;EACZ;EACA;IACE,WAAW;EACb;EACA;IACE,WAAW;EACb;EACA;IACE,YAAY;EACd;EACA;IACE,cAAc;EAChB;EACA;IACE,cAAc;EAChB;EACA;IACE,eAAe;EACjB;EACA;IACE,cAAc;EAChB;EACA;IACE,gBAAgB;EAClB;EACA;IACE,gBAAgB;EAClB;EACA;IACE,gBAAgB;EAClB;EACA;IACE,gBAAgB;EAClB;EACA;IACE,gBAAgB;EAClB;EACA;IACE,gBAAgB;EAClB;EACA;IACE,gBAAgB;EAClB;EACA;IACE,gBAAgB;EAClB;EACA;IACE,8BAA8B;EAChC;EACA;IACE,mCAAmC;EACrC;EACA;IACE,eAAe;EACjB;EACA;IACE,OAAO;EACT;EACA;IACE,cAAc;EAChB;EACA;IACE,YAAY;EACd;EACA;IACE,WAAW;EACb;EACA;IACE,cAAc;EAChB;EACA;IACE,YAAY;EACd;EACA;IACE,0GAA0G;EAC5G;EACA;IACE,8BAA8B;EAChC;EACA;IACE,iBAAiB;EACnB;EACA;IACE,mBAAmB;EACrB;EACA;IACE,iBAAiB;EACnB;EACA;IACE,eAAe;EACjB;EACA;IACE,YAAY;EACd;EACA;IACE,gBAAgB;EAClB;EACA;IACE,gDAAgD;EAClD;EACA;IACE,gDAAgD;EAClD;EACA;IACE,gCAAgC;EAClC;EACA;IACE,sBAAsB;EACxB;EACA;IACE,mBAAmB;EACrB;EACA;IACE,2BAA2B;EAC7B;EACA;IACE,eAAe;EACjB;EACA;IACE,mBAAmB;EACrB;EACA;IACE,qBAAqB;EACvB;EACA;IACE,uBAAuB;EACzB;EACA;IACE,8BAA8B;EAChC;EACA;IACE,uBAAuB;EACzB;EACA;IACE,6BAA6B;EAC/B;EACA;IACE,+BAA+B;EACjC;EACA;IACE,6BAA6B;EAC/B;EACA;IACE,+BAA+B;EACjC;EACA;IACE,6BAA6B;EAC/B;EACA;IACE,6BAA6B;EAC/B;EACA;IACE,6BAA6B;EAC/B;EACA;IACE,6BAA6B;EAC/B;EACA;IACE,8BAA8B;EAChC;EACA;IACE,QAAQ;EACV;EACA;IACE;MACE,wBAAwB;MACxB,2CAA2C;MAC3C,wCAAwC;MACxC,wDAAwD;MACxD,qEAAqE;IACvE;EACF;EACA;IACE;MACE,2DAA2D;IAC7D;EACF;EACA;IACE,gBAAgB;IAChB,uBAAuB;IACvB,mBAAmB;EACrB;EACA;IACE,cAAc;EAChB;EACA;IACE,gBAAgB;EAClB;EACA;IACE,gBAAgB;EAClB;EACA;IACE,gBAAgB;EAClB;EACA;IACE,kBAAkB;EACpB;EACA;IACE,sBAAsB;EACxB;EACA;IACE,mCAAmC;EACrC;EACA;IACE,+BAA+B;EACjC;EACA;IACE,+BAA+B;EACjC;EACA;IACE,+BAA+B;EACjC;EACA;IACE,+BAA+B;EACjC;EACA;IACE,+BAA+B;IAC/B,gCAAgC;EAClC;EACA;IACE,oCAAoC;IACpC,iBAAiB;EACnB;EACA;IACE,oCAAoC;IACpC,iBAAiB;EACnB;EACA;IACE,oCAAoC;IACpC,iBAAiB;EACnB;EACA;IACE,oCAAoC;IACpC,iBAAiB;EACnB;EACA;IACE,wCAAwC;IACxC,qBAAqB;EACvB;EACA;IACE,0CAA0C;IAC1C,uBAAuB;EACzB;EACA;IACE,2CAA2C;IAC3C,wBAAwB;EAC1B;EACA;IACE,yCAAyC;IACzC,sBAAsB;EACxB;EACA;IACE,yBAAyB;IACzB,oBAAoB;EACtB;EACA;IACE,uBAAuB;IACvB,kBAAkB;EACpB;EACA;IACE,qBAAqB;EACvB;EACA;IACE,2DAA2D;EAC7D;EACA;IACE,2DAA2D;EAC7D;EACA;IACE,2DAA2D;EAC7D;EACA;IACE,qBAAqB;EACvB;EACA;IACE,2DAA2D;EAC7D;EACA;IACE,2DAA2D;EAC7D;EACA;IACE,2DAA2D;EAC7D;EACA;IACE,2DAA2D;EAC7D;EACA;IACE,2DAA2D;EAC7D;EACA;IACE,oCAAoC;EACtC;EACA;IACE,gCAAgC;EAClC;EACA;IACE,mCAAmC;EACrC;EACA;IACE,6EAA6E;IAC7E;MACE,yEAAyE;IAC3E;EACF;EACA;IACE,6EAA6E;IAC7E;MACE,0EAA0E;IAC5E;EACF;EACA;IACE,4EAA4E;IAC5E;MACE,yEAAyE;IAC3E;EACF;EACA;IACE,2EAA2E;IAC3E;MACE,2EAA2E;IAC7E;EACF;EACA;IACE,4EAA4E;IAC5E;MACE,wEAAwE;IAC1E;EACF;EACA;IACE,4EAA4E;IAC5E;MACE,wEAAwE;IAC1E;EACF;EACA;IACE,6EAA6E;IAC7E;MACE,wEAAwE;IAC1E;EACF;EACA;IACE,6EAA6E;IAC7E;MACE,wEAAwE;IAC1E;EACF;EACA;IACE,yBAAyB;EAC3B;EACA;IACE,0DAA0D;IAC1D;MACE,+EAA+E;IACjF;EACF;EACA;IACE,0DAA0D;IAC1D;MACE,+EAA+E;IACjF;EACF;EACA;IACE,0DAA0D;IAC1D;MACE,6EAA6E;IAC/E;EACF;EACA;IACE,0DAA0D;IAC1D;MACE,6EAA6E;IAC/E;EACF;EACA;IACE,0DAA0D;IAC1D;MACE,6EAA6E;IAC/E;EACF;EACA;IACE,0DAA0D;IAC1D;MACE,6EAA6E;IAC/E;EACF;EACA;IACE,sDAAsD;IACtD;MACE,qEAAqE;IACvE;EACF;EACA;IACE,uDAAuD;IACvD;MACE,sEAAsE;IACxE;EACF;EACA;IACE,uDAAuD;IACvD;MACE,sEAAsE;IACxE;EACF;EACA;IACE,6BAA6B;EAC/B;EACA;IACE,yBAAyB;EAC3B;EACA;IACE,yBAAyB;EAC3B;EACA;IACE,yBAAyB;EAC3B;EACA;IACE,yBAAyB;EAC3B;EACA;IACE,+DAA+D;EACjE;EACA;IACE,+DAA+D;EACjE;EACA;IACE,+DAA+D;EACjE;EACA;IACE,+DAA+D;EACjE;EACA;IACE,yBAAyB;EAC3B;EACA;IACE,yBAAyB;EAC3B;EACA;IACE,+DAA+D;EACjE;EACA;IACE,yBAAyB;EAC3B;EACA;IACE,yBAAyB;EAC3B;EACA;IACE,yBAAyB;EAC3B;EACA;IACE,yBAAyB;EAC3B;EACA;IACE,yBAAyB;EAC3B;EACA;IACE,yBAAyB;EAC3B;EACA;IACE,yBAAyB;EAC3B;EACA;IACE,yBAAyB;EAC3B;EACA;IACE,yBAAyB;EAC3B;EACA;IACE,yBAAyB;EAC3B;EACA;IACE,yBAAyB;EAC3B;EACA;IACE,yBAAyB;EAC3B;EACA;IACE,gFAAgF;IAChF;MACE,8EAA8E;IAChF;EACF;EACA;IACE,oCAAoC;EACtC;EACA;IACE,2DAA2D;IAC3D;MACE,0EAA0E;IAC5E;EACF;EACA;IACE,2DAA2D;IAC3D;MACE,0EAA0E;IAC5E;EACF;EACA;IACE,2DAA2D;IAC3D;MACE,0EAA0E;IAC5E;EACF;EACA;IACE,2DAA2D;IAC3D;MACE,0EAA0E;IAC5E;EACF;EACA;IACE,2DAA2D;IAC3D;MACE,0EAA0E;IAC5E;EACF;EACA;IACE,2DAA2D;IAC3D;MACE,0EAA0E;IAC5E;EACF;EACA;IACE,2DAA2D;IAC3D;MACE,0EAA0E;IAC5E;EACF;EACA;IACE,2DAA2D;IAC3D;MACE,0EAA0E;IAC5E;EACF;EACA;IACE,2DAA2D;IAC3D;MACE,0EAA0E;IAC5E;EACF;EACA;IACE,2DAA2D;IAC3D;MACE,0EAA0E;IAC5E;EACF;EACA;IACE,gFAAgF;IAChF;MACE,6EAA6E;IAC/E;EACF;EACA;IACE,iFAAiF;IACjF;MACE,8EAA8E;IAChF;EACF;EACA;IACE,iFAAiF;IACjF;MACE,8EAA8E;IAChF;EACF;EACA;IACE,iFAAiF;IACjF;MACE,6EAA6E;IAC/E;EACF;EACA;IACE,gFAAgF;IAChF;MACE,4EAA4E;IAC9E;EACF;EACA;IACE,gFAAgF;IAChF;MACE,4EAA4E;IAC9E;EACF;EACA;IACE,gFAAgF;IAChF;MACE,4EAA4E;IAC9E;EACF;EACA;IACE,sCAAsC;EACxC;EACA;IACE,iFAAiF;IACjF;MACE,4EAA4E;IAC9E;EACF;EACA;IACE,wCAAwC;EAC1C;EACA;IACE,wCAAwC;EAC1C;EACA;IACE,iFAAiF;IACjF;MACE,8EAA8E;IAChF;EACF;EACA;IACE,iFAAiF;IACjF;MACE,8EAA8E;IAChF;EACF;EACA;IACE,6BAA6B;EAC/B;EACA;IACE,yCAAyC;EAC3C;EACA;IACE,2CAA2C;EAC7C;EACA;IACE,6DAA6D;IAC7D;MACE,gFAAgF;IAClF;EACF;EACA;IACE,8DAA8D;IAC9D;MACE,iFAAiF;IACnF;EACF;EACA;IACE,8DAA8D;IAC9D;MACE,iFAAiF;IACnF;EACF;EACA;IACE,oCAAoC;EACtC;EACA;IACE,2DAA2D;IAC3D;MACE,0EAA0E;IAC5E;EACF;EACA;IACE,gFAAgF;IAChF;MACE,+EAA+E;IACjF;EACF;EACA;IACE,gFAAgF;IAChF;MACE,+EAA+E;IACjF;EACF;EACA;IACE,gDAAgD;IAChD,2DAA2D;EAC7D;EACA;IACE,yCAAyC;IACzC,2DAA2D;EAC7D;EACA;IACE,2BAA2B;IAC3B,8LAA8L;EAChM;EACA;IACE,+BAA+B;IAC/B,8LAA8L;EAChM;EACA;IACE,wCAAwC;IACxC,4NAA4N;IAC5N,iDAAiD;EACnD;EACA;IACE,yBAAyB;IACzB,8LAA8L;EAChM;EACA;IACE,uCAAuC;IACvC,8LAA8L;EAChM;EACA;IACE,kBAAkB;EACpB;EACA;IACE,UAAU;EACZ;EACA;IACE,4BAA4B;EAC9B;EACA;IACE,8BAA8B;EAChC;EACA;IACE,iBAAiB;EACnB;EACA;IACE,iCAAiC;EACnC;EACA;IACE,iCAAiC;EACnC;EACA;IACE,iCAAiC;EACnC;EACA;IACE,mCAAmC;EACrC;EACA;IACE,iCAAiC;EACnC;EACA;IACE,mCAAmC;EACrC;EACA;IACE,iCAAiC;EACnC;EACA;IACE,mCAAmC;EACrC;EACA;IACE,iCAAiC;EACnC;EACA;IACE,iCAAiC;EACnC;EACA;IACE,iCAAiC;EACnC;EACA;IACE,wCAAwC;EAC1C;EACA;IACE,0CAA0C;EAC5C;EACA;IACE,wCAAwC;EAC1C;EACA;IACE,0CAA0C;EAC5C;EACA;IACE,wCAAwC;EAC1C;EACA;IACE,0CAA0C;EAC5C;EACA;IACE,wCAAwC;EAC1C;EACA;IACE,wCAAwC;EAC1C;EACA;IACE,wCAAwC;EAC1C;EACA;IACE,yCAAyC;EAC3C;EACA;IACE,yCAAyC;EAC3C;EACA;IACE,uCAAuC;EACzC;EACA;IACE,yCAAyC;EAC3C;EACA;IACE,uCAAuC;EACzC;EACA;IACE,yCAAyC;EAC3C;EACA;IACE,uCAAuC;EACzC;EACA;IACE,qCAAqC;EACvC;EACA;IACE,qCAAqC;EACvC;EACA;IACE,uCAAuC;EACzC;EACA;IACE,0CAA0C;EAC5C;EACA;IACE,wCAAwC;EAC1C;EACA;IACE,wCAAwC;EAC1C;EACA;IACE,sCAAsC;EACxC;EACA;IACE,sCAAsC;EACxC;EACA;IACE,sCAAsC;EACxC;EACA;IACE,sCAAsC;EACxC;EACA;IACE,kBAAkB;EACpB;EACA;IACE,gBAAgB;EAClB;EACA;IACE,iBAAiB;EACnB;EACA;IACE,sBAAsB;EACxB;EACA;IACE,6BAA6B;EAC/B;EACA;IACE,6BAA6B;EAC/B;EACA;IACE,8BAA8B;EAChC;EACA;IACE,yBAAyB;IACzB,2DAA2D;EAC7D;EACA;IACE,yBAAyB;IACzB,2DAA2D;EAC7D;EACA;IACE,yBAAyB;IACzB,2DAA2D;EAC7D;EACA;IACE,cAAc;EAChB;EACA;IACE,cAAc;EAChB;EACA;IACE,cAAc;EAChB;EACA;IACE,cAAc;EAChB;EACA;IACE,cAAc;EAChB;EACA;IACE,eAAe;EACjB;EACA;IACE,eAAe;EACjB;EACA;IACE,eAAe;EACjB;EACA;IACE,eAAe;EACjB;EACA;IACE,eAAe;EACjB;EACA;IACE,kBAAkB;IAClB,iBAAiB;EACnB;EACA;IACE,eAAe;IACf,cAAc;EAChB;EACA;IACE,mCAAmC;IACnC,kCAAkC;EACpC;EACA;IACE,oCAAoC;IACpC,mCAAmC;EACrC;EACA;IACE,iCAAiC;IACjC,gCAAgC;EAClC;EACA;IACE,kCAAkC;IAClC,iCAAiC;EACnC;EACA;IACE,0CAA0C;IAC1C,qCAAqC;EACvC;EACA;IACE,yCAAyC;IACzC,oCAAoC;EACtC;EACA;IACE,8CAA8C;IAC9C,yCAAyC;EAC3C;EACA;IACE,0CAA0C;IAC1C,qCAAqC;EACvC;EACA;IACE,2CAA2C;IAC3C,sCAAsC;EACxC;EACA;IACE,6CAA6C;IAC7C,wCAAwC;EAC1C;EACA;IACE,oBAAoB;IACpB,qBAAqB;EACvB;EACA;IACE,oBAAoB;IACpB,qBAAqB;EACvB;EACA;IACE,qBAAqB;IACrB,sBAAsB;EACxB;EACA;IACE,qBAAqB;IACrB,sBAAsB;EACxB;EACA;IACE,oCAAoC;IACpC,qCAAqC;EACvC;EACA;IACE,sCAAsC;IACtC,uCAAuC;EACzC;EACA;IACE,mCAAmC;IACnC,oCAAoC;EACtC;EACA;IACE,oCAAoC;IACpC,qCAAqC;EACvC;EACA;IACE,qCAAqC;IACrC,sCAAsC;EACxC;EACA;IACE,qBAAqB;EACvB;EACA;IACE,gBAAgB;EAClB;EACA;IACE,qBAAqB;EACvB;EACA;IACE,cAAc;EAChB;EACA;IACE,cAAc;EAChB;EACA;IACE,cAAc;EAChB;EACA;IACE,cAAc;EAChB;EACA;IACE,cAAc;EAChB;EACA;IACE,cAAc;EAChB;EACA;IACE,cAAc;EAChB;EACA;IACE,cAAc;EAChB;EACA;IACE,cAAc;EAChB;EACA;IACE,cAAc;EAChB;EACA;IACE,cAAc;EAChB;EACA;IACE,cAAc;EAChB;EACA;IACE,6BAA6B;EAC/B;EACA;IACE,qEAAqE;IACrE;MACE,mEAAmE;IACrE;EACF;EACA;IACE,yBAAyB;EAC3B;EACA;IACE,4BAA4B;EAC9B;EACA;IACE,4BAA4B;EAC9B;EACA;IACE,qEAAqE;IACrE;MACE,kEAAkE;IACpE;EACF;EACA;IACE,+BAA+B;EACjC;EACA;IACE,6BAA6B;EAC/B;EACA;IACE,sEAAsE;IACtE;MACE,mEAAmE;IACrE;EACF;EACA;IACE,4BAA4B;EAC9B;EACA;IACE,8BAA8B;EAChC;EACA;IACE,sEAAsE;IACtE;MACE,oEAAoE;IACtE;EACF;EACA;IACE,2BAA2B;EAC7B;EACA;IACE,2BAA2B;EAC7B;EACA;IACE,2BAA2B;EAC7B;EACA;IACE,qEAAqE;IACrE;MACE,iEAAiE;IACnE;EACF;EACA;IACE,qEAAqE;IACrE;MACE,iEAAiE;IACnE;EACF;EACA;IACE,qEAAqE;IACrE;MACE,iEAAiE;IACnE;EACF;EACA;IACE,6BAA6B;EAC/B;EACA;IACE,6BAA6B;EAC/B;EACA;IACE,6BAA6B;EAC/B;EACA;IACE,6BAA6B;EAC/B;EACA;IACE,6BAA6B;EAC/B;EACA;IACE,6BAA6B;EAC/B;EACA;IACE,6BAA6B;EAC/B;EACA;IACE,6BAA6B;EAC/B;EACA;IACE,gCAAgC;EAClC;EACA;IACE,mDAAmD;IACnD;MACE,sEAAsE;IACxE;EACF;EACA;IACE,iCAAiC;EACnC;EACA;IACE,iCAAiC;EACnC;EACA;IACE,gCAAgC;EAClC;EACA;IACE,yBAAyB;EAC3B;EACA;IACE,gDAAgD;IAChD;MACE,+DAA+D;IACjE;EACF;EACA;IACE,gDAAgD;IAChD;MACE,+DAA+D;IACjE;EACF;EACA;IACE,gDAAgD;IAChD;MACE,+DAA+D;IACjE;EACF;EACA;IACE,0BAA0B;EAC5B;EACA;IACE,yBAAyB;EAC3B;EACA;IACE,kBAAkB;EACpB;EACA;IACE,kCAAkC;IAClC,iJAAiJ;EACnJ;EACA;IACE;MACE,cAAc;IAChB;EACF;EACA;IACE,uCAAuC;EACzC;EACA;IACE,WAAW;EACb;EACA;IACE,YAAY;EACd;EACA;IACE,YAAY;EACd;EACA;IACE,YAAY;EACd;EACA;IACE,YAAY;EACd;EACA;IACE,YAAY;EACd;EACA;IACE,YAAY;EACd;EACA;IACE,aAAa;EACf;EACA;IACE,cAAc;EAChB;EACA;IACE,uBAAuB;EACzB;EACA;IACE,0HAA0H;IAC1H,sIAAsI;EACxI;EACA;IACE,wEAAwE;IACxE,sIAAsI;EACxI;EACA;IACE,iEAAiE;IACjE,sIAAsI;EACxI;EACA;IACE,qDAAqD;IACrD,sIAAsI;EACxI;EACA;IACE,wEAAwE;IACxE,sIAAsI;EACxI;EACA;IACE,6HAA6H;IAC7H,sIAAsI;EACxI;EACA;IACE,sCAAsC;IACtC,kBAAkB;EACpB;EACA;IACE,oBAAoB;IACpB,0LAA0L;EAC5L;EACA;IACE,gCAAgC;IAChC,0LAA0L;EAC5L;EACA;IACE,+BAA+B;IAC/B,0LAA0L;EAC5L;EACA;IACE,6FAA6F;IAC7F,4CAA4C;IAC5C,0LAA0L;EAC5L;EACA;IACE,8FAA8F;IAC9F,4CAA4C;IAC5C,0LAA0L;EAC5L;EACA;IACE,8FAA8F;IAC9F,4CAA4C;IAC5C,0LAA0L;EAC5L;EACA;IACE,8BAA8B;IAC9B,0LAA0L;EAC5L;EACA;IACE,kCAAkC;IAClC,0LAA0L;EAC5L;EACA;IACE,sBAAsB;IACtB,0LAA0L;EAC5L;EACA;IACE,0LAA0L;EAC5L;EACA;IACE,yUAAyU;IACzU,qFAAqF;IACrF,2EAA2E;EAC7E;EACA;IACE,wBAAwB;IACxB,qFAAqF;IACrF,2EAA2E;EAC7E;EACA;IACE,uKAAuK;IACvK,qFAAqF;IACrF,2EAA2E;EAC7E;EACA;IACE,wDAAwD;IACxD,qFAAqF;IACrF,2EAA2E;EAC7E;EACA;IACE,yBAAyB;IACzB,iBAAiB;EACnB;EACA;IACE;MACE;QACE,kBAAkB;QAClB,kBAAkB;QAClB,kBAAkB;QAClB,0CAA0C;MAC5C;IACF;EACF;EACA;IACE;MACE;QACE,gCAAgC;MAClC;IACF;EACF;EACA;IACE;MACE;QACE,kBAAkB;QAClB,kBAAkB;QAClB,kBAAkB;QAClB,0CAA0C;MAC5C;IACF;EACF;EACA;IACE;MACE;QACE,WAAW;MACb;IACF;EACF;EACA;IACE;MACE;QACE,WAAW;MACb;IACF;EACF;EACA;IACE;MACE;QACE,YAAY;MACd;IACF;EACF;EACA;IACE;MACE;QACE,qBAAqB;MACvB;IACF;EACF;EACA;IACE;MACE;QACE,yBAAyB;MAC3B;IACF;EACF;EACA;IACE;MACE;QACE,+DAA+D;MACjE;IACF;EACF;EACA;IACE;MACE;QACE,yBAAyB;MAC3B;IACF;EACF;EACA;IACE;MACE;QACE,yBAAyB;MAC3B;IACF;EACF;EACA;IACE;MACE;QACE,yBAAyB;MAC3B;IACF;EACF;EACA;IACE;MACE;QACE,yBAAyB;MAC3B;IACF;EACF;EACA;IACE;MACE;QACE,2DAA2D;QAC3D;UACE,0EAA0E;QAC5E;MACF;IACF;EACF;EACA;IACE;MACE;QACE,2CAA2C;MAC7C;IACF;EACF;EACA;IACE;MACE;QACE,8DAA8D;QAC9D;UACE,iFAAiF;QACnF;MACF;IACF;EACF;EACA;IACE;MACE;QACE,8DAA8D;QAC9D;UACE,iFAAiF;QACnF;MACF;IACF;EACF;EACA;IACE;MACE;QACE,2DAA2D;QAC3D;UACE,0EAA0E;QAC5E;MACF;IACF;EACF;EACA;IACE;MACE;QACE,yBAAyB;MAC3B;IACF;EACF;EACA;IACE;MACE;QACE,yBAAyB;MAC3B;IACF;EACF;EACA;IACE;MACE;QACE,+BAA+B;MACjC;IACF;EACF;EACA;IACE;MACE;QACE,+HAA+H;QAC/H,sIAAsI;MACxI;IACF;EACF;EACA;IACE;MACE;QACE,iCAAiC;QACjC,0LAA0L;MAC5L;IACF;EACF;EACA;IACE;MACE,0DAA0D;MAC1D;QACE,6EAA6E;MAC/E;IACF;EACF;EACA;IACE;MACE,0DAA0D;MAC1D;QACE,6EAA6E;MAC/E;IACF;EACF;EACA;IACE;MACE,wBAAwB;MACxB,mBAAmB;IACrB;EACF;EACA;IACE;MACE,iBAAiB;MACjB,iBAAiB;MACjB,iBAAiB;MACjB,0CAA0C;IAC5C;EACF;EACA;IACE;MACE,WAAW;IACb;EACF;EACA;IACE;MACE,gCAAgC;MAChC,0LAA0L;IAC5L;EACF;EACA;IACE;MACE,mBAAmB;IACrB;EACF;EACA;IACE;MACE,YAAY;IACd;EACF;EACA;IACE;MACE,YAAY;IACd;EACF;EACA;IACE;MACE,gCAAgC;IAClC;EACF;EACA;IACE;MACE,gBAAgB;IAClB;EACF;EACA;IACE;MACE,iCAAiC;IACnC;EACF;EACA;IACE;MACE,kCAAkC;IACpC;EACF;EACA;IACE;MACE,0BAA0B;MAC1B,4DAA4D;IAC9D;EACF;EACA;IACE;MACE,yBAAyB;MACzB,2DAA2D;IAC7D;EACF;EACA;IACE;MACE,eAAe;IACjB;EACF;EACA;IACE;MACE,aAAa;IACf;EACF;AACF;AACA;EACE;IACE,0BAA0B;EAC5B;EACA;IACE,8BAA8B;EAChC;EACA;IACE,6BAA6B;EAC/B;EACA;IACE,6BAA6B;EAC/B;EACA;IACE,6BAA6B;EAC/B;EACA;IACE,6BAA6B;EAC/B;EACA;IACE,4BAA4B;EAC9B;EACA;IACE,4BAA4B;EAC9B;EACA;IACE,4BAA4B;EAC9B;EACA;IACE,6BAA6B;EAC/B;AACF;AACA;EACE;IACE,uDAAuD;EACzD;EACA;IACE,0DAA0D;EAC5D;EACA;IACE,uDAAuD;EACzD;AACF;AACA;EACE,4CAA4C;AAC9C;AACA;EACE,gDAAgD;AAClD;AACA;EACE,gFAAgF;EAChF,oBAAoB;AACtB;AACA;EACE,0BAA0B;EAC1B,yCAAyC;EACzC,oBAAoB;AACtB;AACA;EACE,UAAU;EACV,WAAW;AACb;AACA;EACE,mBAAmB;AACrB;AACA;EACE,mBAAmB;EACnB,kBAAkB;AACpB;AACA;EACE,mBAAmB;AACrB;AACA;EACE;IACE,UAAU;EACZ;EACA;IACE,UAAU;EACZ;AACF;AACA;EACE,8DAA8D;AAChE;AACA;EACE,cAAc;EACd,8EAA8E;AAChF;AACA;EACE,cAAc;EACd,gFAAgF;AAClF;AACA;EACE,yBAAyB;EACzB,oFAAoF;AACtF;AACA;EACE,mCAAmC;AACrC;AACA;EACE,yBAAyB;AAC3B;AACA;EACE,WAAW;EACX,eAAe;AACjB;AACA;EACE,WAAW;EACX,eAAe;AACjB;AACA;EACE,WAAW;EACX,eAAe;AACjB;AACA;EACE,WAAW;EACX,eAAe;AACjB;AACA;EACE,WAAW;EACX,eAAe;AACjB;AACA;EACE,WAAW;EACX,eAAe;EACf,gBAAgB;AAClB;AACA;EACE,WAAW;EACX,eAAe;EACf,oBAAoB;AACtB;AACA;EACE,WAAW;EACX,eAAe;AACjB;AACA;EACE,iBAAiB;EACjB,eAAe;EACf,oBAAoB;AACtB;AACA;EACE,iBAAiB;EACjB,eAAe;EACf,oBAAoB;AACtB;AACA;EACE,iBAAiB;EACjB,eAAe;EACf,oBAAoB;AACtB;AACA;EACE,WAAW;EACX,eAAe;AACjB;AACA;EACE,WAAW;EACX,eAAe;AACjB;AACA;EACE,6BAA6B;EAC7B,eAAe;EACf,iBAAiB;AACnB;AACA;EACE,6BAA6B;EAC7B,eAAe;EACf,kBAAkB;AACpB;AACA;EACE,6BAA6B;EAC7B,eAAe;EACf,mBAAmB;AACrB;AACA;EACE,WAAW;EACX,eAAe;AACjB;AACA;EACE,WAAW;EACX,eAAe;AACjB;AACA;EACE,WAAW;EACX,eAAe;AACjB;AACA;EACE,WAAW;EACX,eAAe;AACjB;AACA;EACE,WAAW;EACX,eAAe;AACjB;AACA;EACE,WAAW;EACX,eAAe;AACjB;AACA;EACE,WAAW;EACX,eAAe;AACjB;AACA;EACE,WAAW;EACX,eAAe;AACjB;AACA;EACE,WAAW;EACX,eAAe;EACf,wBAAwB;AAC1B;AACA;EACE,WAAW;EACX,eAAe;AACjB;AACA;EACE,sBAAsB;EACtB,eAAe;EACf,mBAAmB;AACrB;AACA;EACE,WAAW;EACX,eAAe;EACf,wBAAwB;AAC1B;AACA;EACE,WAAW;EACX,eAAe;AACjB;AACA;EACE,sBAAsB;EACtB,eAAe;EACf,mBAAmB;AACrB;AACA;EACE,WAAW;EACX,eAAe;AACjB;AACA;EACE,WAAW;EACX,eAAe;EACf,wBAAwB;AAC1B;AACA;EACE,WAAW;EACX,eAAe;AACjB;AACA;EACE,WAAW;EACX,eAAe;EACf,wBAAwB;AAC1B;AACA;EACE,WAAW;EACX,eAAe;AACjB;AACA;EACE,kBAAkB;EAClB,eAAe;EACf,kBAAkB;AACpB;AACA;EACE,WAAW;EACX,eAAe;EACf,mBAAmB;AACrB;AACA;EACE,WAAW;EACX,eAAe;EACf,wBAAwB;AAC1B;AACA;EACE,WAAW;EACX,eAAe;EACf,oBAAoB;AACtB;AACA;EACE,WAAW;EACX,eAAe;AACjB;AACA;EACE,WAAW;EACX,eAAe;AACjB;AACA;EACE,WAAW;EACX,eAAe;AACjB;AACA;EACE,WAAW;EACX,eAAe;AACjB;AACA;EACE,WAAW;EACX,eAAe;AACjB;AACA;EACE,WAAW;EACX,eAAe;AACjB;AACA;EACE,WAAW;EACX,eAAe;AACjB;AACA;EACE,WAAW;EACX,eAAe;AACjB;AACA;EACE,WAAW;EACX,eAAe;AACjB;AACA;EACE,WAAW;EACX,eAAe;AACjB;AACA;EACE,WAAW;EACX,eAAe;AACjB;AACA;EACE,sBAAsB;EACtB,eAAe;EACf,mBAAmB;AACrB;AACA;EACE,WAAW;EACX,eAAe;AACjB;AACA;EACE,WAAW;EACX,eAAe;EACf,gBAAgB;AAClB;AACA;EACE,WAAW;EACX,eAAe;EACf,gBAAgB;AAClB;AACA;EACE,WAAW;EACX,eAAe;EACf,gBAAgB;AAClB;AACA;EACE;IACE,yBAAyB;EAC3B;AACF;AACA;EACE;IACE;MACE,sBAAsB;MACtB,sBAAsB;MACtB,sBAAsB;MACtB,oBAAoB;MACpB,oBAAoB;MACpB,wBAAwB;MACxB,wBAAwB;MACxB,+BAA+B;MAC/B,yBAAyB;MACzB,wBAAwB;MACxB,uBAAuB;MACvB,4BAA4B;MAC5B,gCAAgC;MAChC,+BAA+B;MAC/B,+BAA+B;MAC/B,+BAA+B;MAC/B,qBAAqB;MACrB,yBAAyB;MACzB,sBAAsB;MACtB,qBAAqB;MACrB,0BAA0B;MAC1B,4BAA4B;MAC5B,6BAA6B;MAC7B,8BAA8B;MAC9B,sBAAsB;MACtB,0BAA0B;MAC1B,uBAAuB;MACvB,4BAA4B;MAC5B,gCAAgC;MAChC,6BAA6B;MAC7B,wBAAwB;MACxB,2BAA2B;MAC3B,8BAA8B;MAC9B,iCAAiC;MACjC,wBAAwB;MACxB,2BAA2B;MAC3B,4BAA4B;MAC5B,kCAAkC;MAClC,yBAAyB;MACzB,kBAAkB;MAClB,wBAAwB;MACxB,sBAAsB;MACtB,uBAAuB;MACvB,wBAAwB;MACxB,oBAAoB;MACpB,qBAAqB;MACrB,sBAAsB;MACtB,mBAAmB;MACnB,yBAAyB;MACzB,+BAA+B;MAC/B,4BAA4B;MAC5B,8BAA8B;MAC9B,eAAe;MACf,eAAe;MACf,eAAe;IACjB;EACF;AACF","sourcesContent":["/*! tailwindcss v4.2.0 | MIT License | https://tailwindcss.com */\n@layer properties;\n@layer theme, base, components, utilities;\n@layer theme {\n  :root, :host {\n    --font-sans: \"Space Grotesk\", system-ui, sans-serif;\n    --font-serif: \"DM Serif Display\", Georgia, serif;\n    --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, \"Liberation Mono\",\n      \"Courier New\", monospace;\n    --color-red-300: oklch(80.8% 0.114 19.571);\n    --color-red-400: oklch(70.4% 0.191 22.216);\n    --color-red-500: oklch(63.7% 0.237 25.331);\n    --color-amber-400: oklch(82.8% 0.189 84.429);\n    --color-amber-900: oklch(41.4% 0.112 45.904);\n    --color-yellow-500: oklch(79.5% 0.184 86.047);\n    --color-lime-500: oklch(76.8% 0.233 130.85);\n    --color-green-400: oklch(79.2% 0.209 151.711);\n    --color-green-500: oklch(72.3% 0.219 149.579);\n    --color-emerald-400: oklch(76.5% 0.177 163.223);\n    --color-cyan-300: oklch(86.5% 0.127 207.078);\n    --color-cyan-400: oklch(78.9% 0.154 211.53);\n    --color-cyan-500: oklch(71.5% 0.143 215.221);\n    --color-sky-400: oklch(74.6% 0.16 232.661);\n    --color-sky-500: oklch(68.5% 0.169 237.323);\n    --color-purple-400: oklch(71.4% 0.203 305.504);\n    --color-purple-500: oklch(62.7% 0.265 303.9);\n    --color-pink-400: oklch(71.8% 0.202 349.761);\n    --color-pink-500: oklch(65.6% 0.241 354.308);\n    --color-slate-300: oklch(86.9% 0.022 252.894);\n    --color-slate-400: oklch(70.4% 0.04 256.788);\n    --color-slate-500: oklch(55.4% 0.046 257.417);\n    --color-slate-600: oklch(44.6% 0.043 257.281);\n    --color-slate-800: oklch(27.9% 0.041 260.031);\n    --color-slate-900: oklch(20.8% 0.042 265.755);\n    --color-slate-950: oklch(12.9% 0.042 264.695);\n    --color-stone-200: oklch(92.3% 0.003 48.717);\n    --color-stone-300: oklch(86.9% 0.005 56.366);\n    --color-stone-400: oklch(70.9% 0.01 56.259);\n    --color-stone-500: oklch(55.3% 0.013 58.071);\n    --color-black: #000;\n    --color-white: #fff;\n    --spacing: 0.25rem;\n    --container-xs: 20rem;\n    --text-xs: 0.75rem;\n    --text-xs--line-height: calc(1 / 0.75);\n    --text-sm: 0.875rem;\n    --text-sm--line-height: calc(1.25 / 0.875);\n    --text-xl: 1.25rem;\n    --text-xl--line-height: calc(1.75 / 1.25);\n    --text-2xl: 1.5rem;\n    --text-2xl--line-height: calc(2 / 1.5);\n    --font-weight-light: 300;\n    --font-weight-medium: 500;\n    --font-weight-semibold: 600;\n    --font-weight-bold: 700;\n    --font-weight-extrabold: 800;\n    --font-weight-black: 900;\n    --tracking-tighter: -0.05em;\n    --tracking-tight: -0.025em;\n    --tracking-wide: 0.025em;\n    --tracking-wider: 0.05em;\n    --tracking-widest: 0.1em;\n    --leading-tight: 1.25;\n    --leading-snug: 1.375;\n    --leading-normal: 1.5;\n    --leading-relaxed: 1.625;\n    --radius-sm: 0.25rem;\n    --radius-md: 0.375rem;\n    --radius-lg: 0.5rem;\n    --radius-xl: 0.75rem;\n    --animate-spin: spin 1s linear infinite;\n    --blur-xl: 24px;\n    --blur-2xl: 40px;\n    --default-transition-duration: 150ms;\n    --default-transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);\n    --default-font-family: var(--font-sans);\n    --default-mono-font-family: var(--font-mono);\n    --color-vintage-bg: #1c1815;\n    --color-vintage-paper: #faf8f5;\n    --color-vintage-gold: #c89547;\n    --color-vintage-rust: #a84a32;\n    --color-vintage-border: #3e342c;\n    --color-vintage-muted: #857467;\n  }\n}\n@layer base {\n  *, ::after, ::before, ::backdrop, ::file-selector-button {\n    box-sizing: border-box;\n    margin: 0;\n    padding: 0;\n    border: 0 solid;\n  }\n  html, :host {\n    line-height: 1.5;\n    -webkit-text-size-adjust: 100%;\n    tab-size: 4;\n    font-family: var(--default-font-family, ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\");\n    font-feature-settings: var(--default-font-feature-settings, normal);\n    font-variation-settings: var(--default-font-variation-settings, normal);\n    -webkit-tap-highlight-color: transparent;\n  }\n  hr {\n    height: 0;\n    color: inherit;\n    border-top-width: 1px;\n  }\n  abbr:where([title]) {\n    -webkit-text-decoration: underline dotted;\n    text-decoration: underline dotted;\n  }\n  h1, h2, h3, h4, h5, h6 {\n    font-size: inherit;\n    font-weight: inherit;\n  }\n  a {\n    color: inherit;\n    -webkit-text-decoration: inherit;\n    text-decoration: inherit;\n  }\n  b, strong {\n    font-weight: bolder;\n  }\n  code, kbd, samp, pre {\n    font-family: var(--default-mono-font-family, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, \"Liberation Mono\", \"Courier New\", monospace);\n    font-feature-settings: var(--default-mono-font-feature-settings, normal);\n    font-variation-settings: var(--default-mono-font-variation-settings, normal);\n    font-size: 1em;\n  }\n  small {\n    font-size: 80%;\n  }\n  sub, sup {\n    font-size: 75%;\n    line-height: 0;\n    position: relative;\n    vertical-align: baseline;\n  }\n  sub {\n    bottom: -0.25em;\n  }\n  sup {\n    top: -0.5em;\n  }\n  table {\n    text-indent: 0;\n    border-color: inherit;\n    border-collapse: collapse;\n  }\n  :-moz-focusring {\n    outline: auto;\n  }\n  progress {\n    vertical-align: baseline;\n  }\n  summary {\n    display: list-item;\n  }\n  ol, ul, menu {\n    list-style: none;\n  }\n  img, svg, video, canvas, audio, iframe, embed, object {\n    display: block;\n    vertical-align: middle;\n  }\n  img, video {\n    max-width: 100%;\n    height: auto;\n  }\n  button, input, select, optgroup, textarea, ::file-selector-button {\n    font: inherit;\n    font-feature-settings: inherit;\n    font-variation-settings: inherit;\n    letter-spacing: inherit;\n    color: inherit;\n    border-radius: 0;\n    background-color: transparent;\n    opacity: 1;\n  }\n  :where(select:is([multiple], [size])) optgroup {\n    font-weight: bolder;\n  }\n  :where(select:is([multiple], [size])) optgroup option {\n    padding-inline-start: 20px;\n  }\n  ::file-selector-button {\n    margin-inline-end: 4px;\n  }\n  ::placeholder {\n    opacity: 1;\n  }\n  @supports (not (-webkit-appearance: -apple-pay-button))  or (contain-intrinsic-size: 1px) {\n    ::placeholder {\n      color: currentcolor;\n      @supports (color: color-mix(in lab, red, red)) {\n        color: color-mix(in oklab, currentcolor 50%, transparent);\n      }\n    }\n  }\n  textarea {\n    resize: vertical;\n  }\n  ::-webkit-search-decoration {\n    -webkit-appearance: none;\n  }\n  ::-webkit-date-and-time-value {\n    min-height: 1lh;\n    text-align: inherit;\n  }\n  ::-webkit-datetime-edit {\n    display: inline-flex;\n  }\n  ::-webkit-datetime-edit-fields-wrapper {\n    padding: 0;\n  }\n  ::-webkit-datetime-edit, ::-webkit-datetime-edit-year-field, ::-webkit-datetime-edit-month-field, ::-webkit-datetime-edit-day-field, ::-webkit-datetime-edit-hour-field, ::-webkit-datetime-edit-minute-field, ::-webkit-datetime-edit-second-field, ::-webkit-datetime-edit-millisecond-field, ::-webkit-datetime-edit-meridiem-field {\n    padding-block: 0;\n  }\n  ::-webkit-calendar-picker-indicator {\n    line-height: 1;\n  }\n  :-moz-ui-invalid {\n    box-shadow: none;\n  }\n  button, input:where([type=\"button\"], [type=\"reset\"], [type=\"submit\"]), ::file-selector-button {\n    appearance: button;\n  }\n  ::-webkit-inner-spin-button, ::-webkit-outer-spin-button {\n    height: auto;\n  }\n  [hidden]:where(:not([hidden=\"until-found\"])) {\n    display: none !important;\n  }\n}\n@layer utilities {\n  .pointer-events-none {\n    pointer-events: none;\n  }\n  .absolute {\n    position: absolute;\n  }\n  .fixed {\n    position: fixed;\n  }\n  .relative {\n    position: relative;\n  }\n  .static {\n    position: static;\n  }\n  .-inset-\\[50\\%\\] {\n    inset: calc(50% * -1);\n  }\n  .inset-0 {\n    inset: calc(var(--spacing) * 0);\n  }\n  .inset-2 {\n    inset: calc(var(--spacing) * 2);\n  }\n  .inset-4 {\n    inset: calc(var(--spacing) * 4);\n  }\n  .inset-6 {\n    inset: calc(var(--spacing) * 6);\n  }\n  .inset-x-0 {\n    inset-inline: calc(var(--spacing) * 0);\n  }\n  .inset-y-0 {\n    inset-block: calc(var(--spacing) * 0);\n  }\n  .start {\n    inset-inline-start: var(--spacing);\n  }\n  .-top-1\\.5 {\n    top: calc(var(--spacing) * -1.5);\n  }\n  .top-0 {\n    top: calc(var(--spacing) * 0);\n  }\n  .top-2 {\n    top: calc(var(--spacing) * 2);\n  }\n  .top-2\\.5 {\n    top: calc(var(--spacing) * 2.5);\n  }\n  .top-4 {\n    top: calc(var(--spacing) * 4);\n  }\n  .top-6 {\n    top: calc(var(--spacing) * 6);\n  }\n  .top-12 {\n    top: calc(var(--spacing) * 12);\n  }\n  .top-16 {\n    top: calc(var(--spacing) * 16);\n  }\n  .top-\\[-3px\\] {\n    top: -3px;\n  }\n  .right-0 {\n    right: calc(var(--spacing) * 0);\n  }\n  .right-1 {\n    right: calc(var(--spacing) * 1);\n  }\n  .right-3 {\n    right: calc(var(--spacing) * 3);\n  }\n  .right-4 {\n    right: calc(var(--spacing) * 4);\n  }\n  .right-6 {\n    right: calc(var(--spacing) * 6);\n  }\n  .right-12 {\n    right: calc(var(--spacing) * 12);\n  }\n  .right-16 {\n    right: calc(var(--spacing) * 16);\n  }\n  .right-\\[-3px\\] {\n    right: -3px;\n  }\n  .bottom-0 {\n    bottom: calc(var(--spacing) * 0);\n  }\n  .bottom-1 {\n    bottom: calc(var(--spacing) * 1);\n  }\n  .bottom-3 {\n    bottom: calc(var(--spacing) * 3);\n  }\n  .bottom-4 {\n    bottom: calc(var(--spacing) * 4);\n  }\n  .bottom-6 {\n    bottom: calc(var(--spacing) * 6);\n  }\n  .bottom-10 {\n    bottom: calc(var(--spacing) * 10);\n  }\n  .bottom-12 {\n    bottom: calc(var(--spacing) * 12);\n  }\n  .bottom-16 {\n    bottom: calc(var(--spacing) * 16);\n  }\n  .-left-1 {\n    left: calc(var(--spacing) * -1);\n  }\n  .left-0 {\n    left: calc(var(--spacing) * 0);\n  }\n  .left-2 {\n    left: calc(var(--spacing) * 2);\n  }\n  .left-2\\.5 {\n    left: calc(var(--spacing) * 2.5);\n  }\n  .left-3 {\n    left: calc(var(--spacing) * 3);\n  }\n  .left-4 {\n    left: calc(var(--spacing) * 4);\n  }\n  .left-6 {\n    left: calc(var(--spacing) * 6);\n  }\n  .left-10 {\n    left: calc(var(--spacing) * 10);\n  }\n  .left-16 {\n    left: calc(var(--spacing) * 16);\n  }\n  .left-\\[-3px\\] {\n    left: -3px;\n  }\n  .-z-10 {\n    z-index: calc(10 * -1);\n  }\n  .-z-20 {\n    z-index: calc(20 * -1);\n  }\n  .z-10 {\n    z-index: 10;\n  }\n  .z-20 {\n    z-index: 20;\n  }\n  .z-30 {\n    z-index: 30;\n  }\n  .z-40 {\n    z-index: 40;\n  }\n  .z-50 {\n    z-index: 50;\n  }\n  .z-\\[100\\] {\n    z-index: 100;\n  }\n  .container {\n    width: 100%;\n    @media (width >= 40rem) {\n      max-width: 40rem;\n    }\n    @media (width >= 48rem) {\n      max-width: 48rem;\n    }\n    @media (width >= 64rem) {\n      max-width: 64rem;\n    }\n    @media (width >= 80rem) {\n      max-width: 80rem;\n    }\n    @media (width >= 96rem) {\n      max-width: 96rem;\n    }\n  }\n  .my-2 {\n    margin-block: calc(var(--spacing) * 2);\n  }\n  .my-3 {\n    margin-block: calc(var(--spacing) * 3);\n  }\n  .my-4 {\n    margin-block: calc(var(--spacing) * 4);\n  }\n  .mt-0\\.5 {\n    margin-top: calc(var(--spacing) * 0.5);\n  }\n  .mt-1 {\n    margin-top: calc(var(--spacing) * 1);\n  }\n  .mt-1\\.5 {\n    margin-top: calc(var(--spacing) * 1.5);\n  }\n  .mt-2 {\n    margin-top: calc(var(--spacing) * 2);\n  }\n  .mt-4 {\n    margin-top: calc(var(--spacing) * 4);\n  }\n  .mt-5 {\n    margin-top: calc(var(--spacing) * 5);\n  }\n  .mt-6 {\n    margin-top: calc(var(--spacing) * 6);\n  }\n  .mt-8 {\n    margin-top: calc(var(--spacing) * 8);\n  }\n  .mb-0\\.5 {\n    margin-bottom: calc(var(--spacing) * 0.5);\n  }\n  .mb-1 {\n    margin-bottom: calc(var(--spacing) * 1);\n  }\n  .mb-2\\.5 {\n    margin-bottom: calc(var(--spacing) * 2.5);\n  }\n  .mb-3 {\n    margin-bottom: calc(var(--spacing) * 3);\n  }\n  .mb-4 {\n    margin-bottom: calc(var(--spacing) * 4);\n  }\n  .mb-5 {\n    margin-bottom: calc(var(--spacing) * 5);\n  }\n  .ml-0\\.5 {\n    margin-left: calc(var(--spacing) * 0.5);\n  }\n  .ml-1\\.5 {\n    margin-left: calc(var(--spacing) * 1.5);\n  }\n  .line-clamp-1 {\n    overflow: hidden;\n    display: -webkit-box;\n    -webkit-box-orient: vertical;\n    -webkit-line-clamp: 1;\n  }\n  .block {\n    display: block;\n  }\n  .flex {\n    display: flex;\n  }\n  .grid {\n    display: grid;\n  }\n  .hidden {\n    display: none;\n  }\n  .inline-block {\n    display: inline-block;\n  }\n  .h-1 {\n    height: calc(var(--spacing) * 1);\n  }\n  .h-1\\.5 {\n    height: calc(var(--spacing) * 1.5);\n  }\n  .h-2 {\n    height: calc(var(--spacing) * 2);\n  }\n  .h-2\\.5 {\n    height: calc(var(--spacing) * 2.5);\n  }\n  .h-3 {\n    height: calc(var(--spacing) * 3);\n  }\n  .h-3\\.5 {\n    height: calc(var(--spacing) * 3.5);\n  }\n  .h-4 {\n    height: calc(var(--spacing) * 4);\n  }\n  .h-4\\.5 {\n    height: calc(var(--spacing) * 4.5);\n  }\n  .h-5 {\n    height: calc(var(--spacing) * 5);\n  }\n  .h-5\\.5 {\n    height: calc(var(--spacing) * 5.5);\n  }\n  .h-6 {\n    height: calc(var(--spacing) * 6);\n  }\n  .h-7 {\n    height: calc(var(--spacing) * 7);\n  }\n  .h-8 {\n    height: calc(var(--spacing) * 8);\n  }\n  .h-9 {\n    height: calc(var(--spacing) * 9);\n  }\n  .h-10 {\n    height: calc(var(--spacing) * 10);\n  }\n  .h-11 {\n    height: calc(var(--spacing) * 11);\n  }\n  .h-12 {\n    height: calc(var(--spacing) * 12);\n  }\n  .h-14 {\n    height: calc(var(--spacing) * 14);\n  }\n  .h-16 {\n    height: calc(var(--spacing) * 16);\n  }\n  .h-20 {\n    height: calc(var(--spacing) * 20);\n  }\n  .h-24 {\n    height: calc(var(--spacing) * 24);\n  }\n  .h-28 {\n    height: calc(var(--spacing) * 28);\n  }\n  .h-32 {\n    height: calc(var(--spacing) * 32);\n  }\n  .h-48 {\n    height: calc(var(--spacing) * 48);\n  }\n  .h-\\[1px\\] {\n    height: 1px;\n  }\n  .h-\\[2px\\] {\n    height: 2px;\n  }\n  .h-\\[200\\%\\] {\n    height: 200%;\n  }\n  .h-\\[220px\\] {\n    height: 220px;\n  }\n  .h-\\[280px\\] {\n    height: 280px;\n  }\n  .h-\\[300px\\] {\n    height: 300px;\n  }\n  .h-\\[320px\\] {\n    height: 320px;\n  }\n  .h-\\[340px\\] {\n    height: 340px;\n  }\n  .h-\\[500px\\] {\n    height: 500px;\n  }\n  .h-full {\n    height: 100%;\n  }\n  .h-screen {\n    height: 100vh;\n  }\n  .max-h-56 {\n    max-height: calc(var(--spacing) * 56);\n  }\n  .max-h-\\[85vh\\] {\n    max-height: 85vh;\n  }\n  .max-h-\\[150px\\] {\n    max-height: 150px;\n  }\n  .min-h-0 {\n    min-height: calc(var(--spacing) * 0);\n  }\n  .min-h-\\[75px\\] {\n    min-height: 75px;\n  }\n  .min-h-\\[80px\\] {\n    min-height: 80px;\n  }\n  .min-h-\\[300px\\] {\n    min-height: 300px;\n  }\n  .min-h-full {\n    min-height: 100%;\n  }\n  .w-1\\.5 {\n    width: calc(var(--spacing) * 1.5);\n  }\n  .w-2 {\n    width: calc(var(--spacing) * 2);\n  }\n  .w-2\\.5 {\n    width: calc(var(--spacing) * 2.5);\n  }\n  .w-3 {\n    width: calc(var(--spacing) * 3);\n  }\n  .w-3\\.5 {\n    width: calc(var(--spacing) * 3.5);\n  }\n  .w-4 {\n    width: calc(var(--spacing) * 4);\n  }\n  .w-4\\.5 {\n    width: calc(var(--spacing) * 4.5);\n  }\n  .w-5 {\n    width: calc(var(--spacing) * 5);\n  }\n  .w-5\\.5 {\n    width: calc(var(--spacing) * 5.5);\n  }\n  .w-6 {\n    width: calc(var(--spacing) * 6);\n  }\n  .w-7 {\n    width: calc(var(--spacing) * 7);\n  }\n  .w-8 {\n    width: calc(var(--spacing) * 8);\n  }\n  .w-10 {\n    width: calc(var(--spacing) * 10);\n  }\n  .w-11 {\n    width: calc(var(--spacing) * 11);\n  }\n  .w-12 {\n    width: calc(var(--spacing) * 12);\n  }\n  .w-14 {\n    width: calc(var(--spacing) * 14);\n  }\n  .w-16 {\n    width: calc(var(--spacing) * 16);\n  }\n  .w-20 {\n    width: calc(var(--spacing) * 20);\n  }\n  .w-24 {\n    width: calc(var(--spacing) * 24);\n  }\n  .w-28 {\n    width: calc(var(--spacing) * 28);\n  }\n  .w-32 {\n    width: calc(var(--spacing) * 32);\n  }\n  .w-48 {\n    width: calc(var(--spacing) * 48);\n  }\n  .w-52 {\n    width: calc(var(--spacing) * 52);\n  }\n  .w-\\[1\\.5px\\] {\n    width: 1.5px;\n  }\n  .w-\\[1px\\] {\n    width: 1px;\n  }\n  .w-\\[2px\\] {\n    width: 2px;\n  }\n  .w-\\[40\\%\\] {\n    width: 40%;\n  }\n  .w-\\[45\\%\\] {\n    width: 45%;\n  }\n  .w-\\[48\\%\\] {\n    width: 48%;\n  }\n  .w-\\[52\\%\\] {\n    width: 52%;\n  }\n  .w-\\[55\\%\\] {\n    width: 55%;\n  }\n  .w-\\[60\\%\\] {\n    width: 60%;\n  }\n  .w-\\[200\\%\\] {\n    width: 200%;\n  }\n  .w-full {\n    width: 100%;\n  }\n  .w-screen {\n    width: 100vw;\n  }\n  .max-w-\\[50\\%\\] {\n    max-width: 50%;\n  }\n  .max-w-\\[70\\%\\] {\n    max-width: 70%;\n  }\n  .max-w-\\[80px\\] {\n    max-width: 80px;\n  }\n  .max-w-\\[90\\%\\] {\n    max-width: 90%;\n  }\n  .max-w-\\[420px\\] {\n    max-width: 420px;\n  }\n  .max-w-\\[480px\\] {\n    max-width: 480px;\n  }\n  .max-w-\\[500px\\] {\n    max-width: 500px;\n  }\n  .max-w-\\[520px\\] {\n    max-width: 520px;\n  }\n  .max-w-\\[680px\\] {\n    max-width: 680px;\n  }\n  .max-w-\\[700px\\] {\n    max-width: 700px;\n  }\n  .max-w-\\[800px\\] {\n    max-width: 800px;\n  }\n  .max-w-\\[860px\\] {\n    max-width: 860px;\n  }\n  .max-w-xs {\n    max-width: var(--container-xs);\n  }\n  .min-w-0 {\n    min-width: calc(var(--spacing) * 0);\n  }\n  .min-w-full {\n    min-width: 100%;\n  }\n  .flex-1 {\n    flex: 1;\n  }\n  .shrink-0 {\n    flex-shrink: 0;\n  }\n  .grow {\n    flex-grow: 1;\n  }\n  .scale-\\[1\\.03\\] {\n    scale: 1.03;\n  }\n  .rotate-180 {\n    rotate: 180deg;\n  }\n  .rotate-\\[1deg\\] {\n    rotate: 1deg;\n  }\n  .transform {\n    transform: var(--tw-rotate-x,) var(--tw-rotate-y,) var(--tw-rotate-z,) var(--tw-skew-x,) var(--tw-skew-y,);\n  }\n  .animate-spin {\n    animation: var(--animate-spin);\n  }\n  .cursor-ew-resize {\n    cursor: ew-resize;\n  }\n  .cursor-not-allowed {\n    cursor: not-allowed;\n  }\n  .cursor-ns-resize {\n    cursor: ns-resize;\n  }\n  .cursor-pointer {\n    cursor: pointer;\n  }\n  .resize-none {\n    resize: none;\n  }\n  .appearance-none {\n    appearance: none;\n  }\n  .grid-cols-2 {\n    grid-template-columns: repeat(2, minmax(0, 1fr));\n  }\n  .grid-cols-3 {\n    grid-template-columns: repeat(3, minmax(0, 1fr));\n  }\n  .grid-cols-\\[180px_1fr\\] {\n    grid-template-columns: 180px 1fr;\n  }\n  .flex-col {\n    flex-direction: column;\n  }\n  .flex-row {\n    flex-direction: row;\n  }\n  .flex-row-reverse {\n    flex-direction: row-reverse;\n  }\n  .flex-wrap {\n    flex-wrap: wrap;\n  }\n  .items-center {\n    align-items: center;\n  }\n  .items-end {\n    align-items: flex-end;\n  }\n  .items-start {\n    align-items: flex-start;\n  }\n  .justify-between {\n    justify-content: space-between;\n  }\n  .justify-center {\n    justify-content: center;\n  }\n  .gap-1 {\n    gap: calc(var(--spacing) * 1);\n  }\n  .gap-1\\.5 {\n    gap: calc(var(--spacing) * 1.5);\n  }\n  .gap-2 {\n    gap: calc(var(--spacing) * 2);\n  }\n  .gap-2\\.5 {\n    gap: calc(var(--spacing) * 2.5);\n  }\n  .gap-3 {\n    gap: calc(var(--spacing) * 3);\n  }\n  .gap-4 {\n    gap: calc(var(--spacing) * 4);\n  }\n  .gap-5 {\n    gap: calc(var(--spacing) * 5);\n  }\n  .gap-6 {\n    gap: calc(var(--spacing) * 6);\n  }\n  .gap-12 {\n    gap: calc(var(--spacing) * 12);\n  }\n  .gap-\\[2px\\] {\n    gap: 2px;\n  }\n  .divide-y {\n    :where(& > :not(:last-child)) {\n      --tw-divide-y-reverse: 0;\n      border-bottom-style: var(--tw-border-style);\n      border-top-style: var(--tw-border-style);\n      border-top-width: calc(1px * var(--tw-divide-y-reverse));\n      border-bottom-width: calc(1px * calc(1 - var(--tw-divide-y-reverse)));\n    }\n  }\n  .divide-\\[\\#2b2420\\]\\/60 {\n    :where(& > :not(:last-child)) {\n      border-color: color-mix(in oklab, #2b2420 60%, transparent);\n    }\n  }\n  .truncate {\n    overflow: hidden;\n    text-overflow: ellipsis;\n    white-space: nowrap;\n  }\n  .overflow-auto {\n    overflow: auto;\n  }\n  .overflow-hidden {\n    overflow: hidden;\n  }\n  .overflow-x-auto {\n    overflow-x: auto;\n  }\n  .overflow-y-auto {\n    overflow-y: auto;\n  }\n  .overflow-y-hidden {\n    overflow-y: hidden;\n  }\n  .rounded {\n    border-radius: 0.25rem;\n  }\n  .rounded-full {\n    border-radius: calc(infinity * 1px);\n  }\n  .rounded-lg {\n    border-radius: var(--radius-lg);\n  }\n  .rounded-md {\n    border-radius: var(--radius-md);\n  }\n  .rounded-sm {\n    border-radius: var(--radius-sm);\n  }\n  .rounded-xl {\n    border-radius: var(--radius-xl);\n  }\n  .rounded-t {\n    border-top-left-radius: 0.25rem;\n    border-top-right-radius: 0.25rem;\n  }\n  .border {\n    border-style: var(--tw-border-style);\n    border-width: 1px;\n  }\n  .border-2 {\n    border-style: var(--tw-border-style);\n    border-width: 2px;\n  }\n  .border-4 {\n    border-style: var(--tw-border-style);\n    border-width: 4px;\n  }\n  .border-\\[3px\\] {\n    border-style: var(--tw-border-style);\n    border-width: 3px;\n  }\n  .border-t {\n    border-top-style: var(--tw-border-style);\n    border-top-width: 1px;\n  }\n  .border-r {\n    border-right-style: var(--tw-border-style);\n    border-right-width: 1px;\n  }\n  .border-b {\n    border-bottom-style: var(--tw-border-style);\n    border-bottom-width: 1px;\n  }\n  .border-l {\n    border-left-style: var(--tw-border-style);\n    border-left-width: 1px;\n  }\n  .border-dotted {\n    --tw-border-style: dotted;\n    border-style: dotted;\n  }\n  .border-none {\n    --tw-border-style: none;\n    border-style: none;\n  }\n  .border-\\[\\#2b2420\\] {\n    border-color: #2b2420;\n  }\n  .border-\\[\\#2b2420\\]\\/40 {\n    border-color: color-mix(in oklab, #2b2420 40%, transparent);\n  }\n  .border-\\[\\#2b2420\\]\\/50 {\n    border-color: color-mix(in oklab, #2b2420 50%, transparent);\n  }\n  .border-\\[\\#2b2420\\]\\/60 {\n    border-color: color-mix(in oklab, #2b2420 60%, transparent);\n  }\n  .border-\\[\\#3e342c\\] {\n    border-color: #3e342c;\n  }\n  .border-\\[\\#3e342c\\]\\/20 {\n    border-color: color-mix(in oklab, #3e342c 20%, transparent);\n  }\n  .border-\\[\\#3e342c\\]\\/30 {\n    border-color: color-mix(in oklab, #3e342c 30%, transparent);\n  }\n  .border-\\[\\#3e342c\\]\\/40 {\n    border-color: color-mix(in oklab, #3e342c 40%, transparent);\n  }\n  .border-\\[\\#3e342c\\]\\/50 {\n    border-color: color-mix(in oklab, #3e342c 50%, transparent);\n  }\n  .border-\\[\\#3e342c\\]\\/60 {\n    border-color: color-mix(in oklab, #3e342c 60%, transparent);\n  }\n  .border-amber-400 {\n    border-color: var(--color-amber-400);\n  }\n  .border-black {\n    border-color: var(--color-black);\n  }\n  .border-cyan-400 {\n    border-color: var(--color-cyan-400);\n  }\n  .border-cyan-500\\/35 {\n    border-color: color-mix(in srgb, oklch(71.5% 0.143 215.221) 35%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      border-color: color-mix(in oklab, var(--color-cyan-500) 35%, transparent);\n    }\n  }\n  .border-green-500\\/10 {\n    border-color: color-mix(in srgb, oklch(72.3% 0.219 149.579) 10%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      border-color: color-mix(in oklab, var(--color-green-500) 10%, transparent);\n    }\n  }\n  .border-lime-500\\/10 {\n    border-color: color-mix(in srgb, oklch(76.8% 0.233 130.85) 10%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      border-color: color-mix(in oklab, var(--color-lime-500) 10%, transparent);\n    }\n  }\n  .border-purple-500\\/10 {\n    border-color: color-mix(in srgb, oklch(62.7% 0.265 303.9) 10%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      border-color: color-mix(in oklab, var(--color-purple-500) 10%, transparent);\n    }\n  }\n  .border-red-500\\/30 {\n    border-color: color-mix(in srgb, oklch(63.7% 0.237 25.331) 30%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      border-color: color-mix(in oklab, var(--color-red-500) 30%, transparent);\n    }\n  }\n  .border-sky-400\\/40 {\n    border-color: color-mix(in srgb, oklch(74.6% 0.16 232.661) 40%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      border-color: color-mix(in oklab, var(--color-sky-400) 40%, transparent);\n    }\n  }\n  .border-sky-500\\/10 {\n    border-color: color-mix(in srgb, oklch(68.5% 0.169 237.323) 10%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      border-color: color-mix(in oklab, var(--color-sky-500) 10%, transparent);\n    }\n  }\n  .border-sky-500\\/30 {\n    border-color: color-mix(in srgb, oklch(68.5% 0.169 237.323) 30%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      border-color: color-mix(in oklab, var(--color-sky-500) 30%, transparent);\n    }\n  }\n  .border-transparent {\n    border-color: transparent;\n  }\n  .border-vintage-border\\/30 {\n    border-color: color-mix(in srgb, #3e342c 30%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      border-color: color-mix(in oklab, var(--color-vintage-border) 30%, transparent);\n    }\n  }\n  .border-vintage-border\\/40 {\n    border-color: color-mix(in srgb, #3e342c 40%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      border-color: color-mix(in oklab, var(--color-vintage-border) 40%, transparent);\n    }\n  }\n  .border-vintage-gold\\/25 {\n    border-color: color-mix(in srgb, #c89547 25%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      border-color: color-mix(in oklab, var(--color-vintage-gold) 25%, transparent);\n    }\n  }\n  .border-vintage-gold\\/30 {\n    border-color: color-mix(in srgb, #c89547 30%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      border-color: color-mix(in oklab, var(--color-vintage-gold) 30%, transparent);\n    }\n  }\n  .border-vintage-gold\\/40 {\n    border-color: color-mix(in srgb, #c89547 40%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      border-color: color-mix(in oklab, var(--color-vintage-gold) 40%, transparent);\n    }\n  }\n  .border-vintage-gold\\/50 {\n    border-color: color-mix(in srgb, #c89547 50%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      border-color: color-mix(in oklab, var(--color-vintage-gold) 50%, transparent);\n    }\n  }\n  .border-white\\/5 {\n    border-color: color-mix(in srgb, #fff 5%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      border-color: color-mix(in oklab, var(--color-white) 5%, transparent);\n    }\n  }\n  .border-white\\/10 {\n    border-color: color-mix(in srgb, #fff 10%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      border-color: color-mix(in oklab, var(--color-white) 10%, transparent);\n    }\n  }\n  .border-white\\/\\[0\\.12\\] {\n    border-color: color-mix(in srgb, #fff 12%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      border-color: color-mix(in oklab, var(--color-white) 12%, transparent);\n    }\n  }\n  .border-t-transparent {\n    border-top-color: transparent;\n  }\n  .bg-\\[\\#1a1613\\] {\n    background-color: #1a1613;\n  }\n  .bg-\\[\\#1b121f\\] {\n    background-color: #1b121f;\n  }\n  .bg-\\[\\#1b1714\\] {\n    background-color: #1b1714;\n  }\n  .bg-\\[\\#1c1815\\] {\n    background-color: #1c1815;\n  }\n  .bg-\\[\\#1e1916\\]\\/30 {\n    background-color: color-mix(in oklab, #1e1916 30%, transparent);\n  }\n  .bg-\\[\\#1e1916\\]\\/40 {\n    background-color: color-mix(in oklab, #1e1916 40%, transparent);\n  }\n  .bg-\\[\\#1f1a17\\]\\/10 {\n    background-color: color-mix(in oklab, #1f1a17 10%, transparent);\n  }\n  .bg-\\[\\#1f1a17\\]\\/50 {\n    background-color: color-mix(in oklab, #1f1a17 50%, transparent);\n  }\n  .bg-\\[\\#2b2420\\] {\n    background-color: #2b2420;\n  }\n  .bg-\\[\\#2d2621\\] {\n    background-color: #2d2621;\n  }\n  .bg-\\[\\#3e342c\\]\\/50 {\n    background-color: color-mix(in oklab, #3e342c 50%, transparent);\n  }\n  .bg-\\[\\#6b5d53\\] {\n    background-color: #6b5d53;\n  }\n  .bg-\\[\\#110d0b\\] {\n    background-color: #110d0b;\n  }\n  .bg-\\[\\#110e0c\\] {\n    background-color: #110e0c;\n  }\n  .bg-\\[\\#151b11\\] {\n    background-color: #151b11;\n  }\n  .bg-\\[\\#251f15\\] {\n    background-color: #251f15;\n  }\n  .bg-\\[\\#818cf8\\] {\n    background-color: #818cf8;\n  }\n  .bg-\\[\\#14110f\\] {\n    background-color: #14110f;\n  }\n  .bg-\\[\\#28211d\\] {\n    background-color: #28211d;\n  }\n  .bg-\\[\\#161210\\] {\n    background-color: #161210;\n  }\n  .bg-\\[\\#181412\\] {\n    background-color: #181412;\n  }\n  .bg-\\[\\#c084fc\\] {\n    background-color: #c084fc;\n  }\n  .bg-\\[\\#fb7185\\] {\n    background-color: #fb7185;\n  }\n  .bg-amber-900\\/10 {\n    background-color: color-mix(in srgb, oklch(41.4% 0.112 45.904) 10%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      background-color: color-mix(in oklab, var(--color-amber-900) 10%, transparent);\n    }\n  }\n  .bg-black {\n    background-color: var(--color-black);\n  }\n  .bg-black\\/10 {\n    background-color: color-mix(in srgb, #000 10%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      background-color: color-mix(in oklab, var(--color-black) 10%, transparent);\n    }\n  }\n  .bg-black\\/20 {\n    background-color: color-mix(in srgb, #000 20%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      background-color: color-mix(in oklab, var(--color-black) 20%, transparent);\n    }\n  }\n  .bg-black\\/25 {\n    background-color: color-mix(in srgb, #000 25%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      background-color: color-mix(in oklab, var(--color-black) 25%, transparent);\n    }\n  }\n  .bg-black\\/30 {\n    background-color: color-mix(in srgb, #000 30%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      background-color: color-mix(in oklab, var(--color-black) 30%, transparent);\n    }\n  }\n  .bg-black\\/40 {\n    background-color: color-mix(in srgb, #000 40%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      background-color: color-mix(in oklab, var(--color-black) 40%, transparent);\n    }\n  }\n  .bg-black\\/60 {\n    background-color: color-mix(in srgb, #000 60%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      background-color: color-mix(in oklab, var(--color-black) 60%, transparent);\n    }\n  }\n  .bg-black\\/70 {\n    background-color: color-mix(in srgb, #000 70%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      background-color: color-mix(in oklab, var(--color-black) 70%, transparent);\n    }\n  }\n  .bg-black\\/80 {\n    background-color: color-mix(in srgb, #000 80%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      background-color: color-mix(in oklab, var(--color-black) 80%, transparent);\n    }\n  }\n  .bg-black\\/85 {\n    background-color: color-mix(in srgb, #000 85%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      background-color: color-mix(in oklab, var(--color-black) 85%, transparent);\n    }\n  }\n  .bg-black\\/\\[0\\.45\\] {\n    background-color: color-mix(in srgb, #000 45%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      background-color: color-mix(in oklab, var(--color-black) 45%, transparent);\n    }\n  }\n  .bg-cyan-400\\/30 {\n    background-color: color-mix(in srgb, oklch(78.9% 0.154 211.53) 30%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      background-color: color-mix(in oklab, var(--color-cyan-400) 30%, transparent);\n    }\n  }\n  .bg-green-500\\/30 {\n    background-color: color-mix(in srgb, oklch(72.3% 0.219 149.579) 30%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      background-color: color-mix(in oklab, var(--color-green-500) 30%, transparent);\n    }\n  }\n  .bg-green-500\\/50 {\n    background-color: color-mix(in srgb, oklch(72.3% 0.219 149.579) 50%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      background-color: color-mix(in oklab, var(--color-green-500) 50%, transparent);\n    }\n  }\n  .bg-pink-500\\/10 {\n    background-color: color-mix(in srgb, oklch(65.6% 0.241 354.308) 10%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      background-color: color-mix(in oklab, var(--color-pink-500) 10%, transparent);\n    }\n  }\n  .bg-red-500\\/10 {\n    background-color: color-mix(in srgb, oklch(63.7% 0.237 25.331) 10%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      background-color: color-mix(in oklab, var(--color-red-500) 10%, transparent);\n    }\n  }\n  .bg-red-500\\/30 {\n    background-color: color-mix(in srgb, oklch(63.7% 0.237 25.331) 30%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      background-color: color-mix(in oklab, var(--color-red-500) 30%, transparent);\n    }\n  }\n  .bg-red-500\\/50 {\n    background-color: color-mix(in srgb, oklch(63.7% 0.237 25.331) 50%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      background-color: color-mix(in oklab, var(--color-red-500) 50%, transparent);\n    }\n  }\n  .bg-sky-400 {\n    background-color: var(--color-sky-400);\n  }\n  .bg-sky-500\\/10 {\n    background-color: color-mix(in srgb, oklch(68.5% 0.169 237.323) 10%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      background-color: color-mix(in oklab, var(--color-sky-500) 10%, transparent);\n    }\n  }\n  .bg-slate-600 {\n    background-color: var(--color-slate-600);\n  }\n  .bg-slate-900 {\n    background-color: var(--color-slate-900);\n  }\n  .bg-slate-900\\/60 {\n    background-color: color-mix(in srgb, oklch(20.8% 0.042 265.755) 60%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      background-color: color-mix(in oklab, var(--color-slate-900) 60%, transparent);\n    }\n  }\n  .bg-slate-950\\/40 {\n    background-color: color-mix(in srgb, oklch(12.9% 0.042 264.695) 40%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      background-color: color-mix(in oklab, var(--color-slate-950) 40%, transparent);\n    }\n  }\n  .bg-transparent {\n    background-color: transparent;\n  }\n  .bg-vintage-bg {\n    background-color: var(--color-vintage-bg);\n  }\n  .bg-vintage-gold {\n    background-color: var(--color-vintage-gold);\n  }\n  .bg-vintage-gold\\/5 {\n    background-color: color-mix(in srgb, #c89547 5%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      background-color: color-mix(in oklab, var(--color-vintage-gold) 5%, transparent);\n    }\n  }\n  .bg-vintage-gold\\/10 {\n    background-color: color-mix(in srgb, #c89547 10%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      background-color: color-mix(in oklab, var(--color-vintage-gold) 10%, transparent);\n    }\n  }\n  .bg-vintage-gold\\/15 {\n    background-color: color-mix(in srgb, #c89547 15%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      background-color: color-mix(in oklab, var(--color-vintage-gold) 15%, transparent);\n    }\n  }\n  .bg-white {\n    background-color: var(--color-white);\n  }\n  .bg-white\\/10 {\n    background-color: color-mix(in srgb, #fff 10%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      background-color: color-mix(in oklab, var(--color-white) 10%, transparent);\n    }\n  }\n  .bg-yellow-500\\/30 {\n    background-color: color-mix(in srgb, oklch(79.5% 0.184 86.047) 30%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      background-color: color-mix(in oklab, var(--color-yellow-500) 30%, transparent);\n    }\n  }\n  .bg-yellow-500\\/50 {\n    background-color: color-mix(in srgb, oklch(79.5% 0.184 86.047) 50%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      background-color: color-mix(in oklab, var(--color-yellow-500) 50%, transparent);\n    }\n  }\n  .bg-gradient-to-br {\n    --tw-gradient-position: to bottom right in oklab;\n    background-image: linear-gradient(var(--tw-gradient-stops));\n  }\n  .bg-gradient-to-r {\n    --tw-gradient-position: to right in oklab;\n    background-image: linear-gradient(var(--tw-gradient-stops));\n  }\n  .from-\\[\\#261f1c\\] {\n    --tw-gradient-from: #261f1c;\n    --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position));\n  }\n  .from-transparent {\n    --tw-gradient-from: transparent;\n    --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position));\n  }\n  .via-cyan-400 {\n    --tw-gradient-via: var(--color-cyan-400);\n    --tw-gradient-via-stops: var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-via) var(--tw-gradient-via-position), var(--tw-gradient-to) var(--tw-gradient-to-position);\n    --tw-gradient-stops: var(--tw-gradient-via-stops);\n  }\n  .to-\\[\\#120d0b\\] {\n    --tw-gradient-to: #120d0b;\n    --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position));\n  }\n  .to-pink-500 {\n    --tw-gradient-to: var(--color-pink-500);\n    --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position));\n  }\n  .fill-current {\n    fill: currentcolor;\n  }\n  .fill-none {\n    fill: none;\n  }\n  .stroke-sky-400 {\n    stroke: var(--color-sky-400);\n  }\n  .stroke-slate-800 {\n    stroke: var(--color-slate-800);\n  }\n  .object-cover {\n    object-fit: cover;\n  }\n  .p-0 {\n    padding: calc(var(--spacing) * 0);\n  }\n  .p-1 {\n    padding: calc(var(--spacing) * 1);\n  }\n  .p-2 {\n    padding: calc(var(--spacing) * 2);\n  }\n  .p-2\\.5 {\n    padding: calc(var(--spacing) * 2.5);\n  }\n  .p-3 {\n    padding: calc(var(--spacing) * 3);\n  }\n  .p-3\\.5 {\n    padding: calc(var(--spacing) * 3.5);\n  }\n  .p-4 {\n    padding: calc(var(--spacing) * 4);\n  }\n  .p-4\\.5 {\n    padding: calc(var(--spacing) * 4.5);\n  }\n  .p-5 {\n    padding: calc(var(--spacing) * 5);\n  }\n  .p-6 {\n    padding: calc(var(--spacing) * 6);\n  }\n  .p-8 {\n    padding: calc(var(--spacing) * 8);\n  }\n  .px-1 {\n    padding-inline: calc(var(--spacing) * 1);\n  }\n  .px-1\\.5 {\n    padding-inline: calc(var(--spacing) * 1.5);\n  }\n  .px-2 {\n    padding-inline: calc(var(--spacing) * 2);\n  }\n  .px-2\\.5 {\n    padding-inline: calc(var(--spacing) * 2.5);\n  }\n  .px-3 {\n    padding-inline: calc(var(--spacing) * 3);\n  }\n  .px-3\\.5 {\n    padding-inline: calc(var(--spacing) * 3.5);\n  }\n  .px-4 {\n    padding-inline: calc(var(--spacing) * 4);\n  }\n  .px-5 {\n    padding-inline: calc(var(--spacing) * 5);\n  }\n  .px-6 {\n    padding-inline: calc(var(--spacing) * 6);\n  }\n  .px-12 {\n    padding-inline: calc(var(--spacing) * 12);\n  }\n  .py-0\\.5 {\n    padding-block: calc(var(--spacing) * 0.5);\n  }\n  .py-1 {\n    padding-block: calc(var(--spacing) * 1);\n  }\n  .py-1\\.5 {\n    padding-block: calc(var(--spacing) * 1.5);\n  }\n  .py-2 {\n    padding-block: calc(var(--spacing) * 2);\n  }\n  .py-2\\.5 {\n    padding-block: calc(var(--spacing) * 2.5);\n  }\n  .py-3 {\n    padding-block: calc(var(--spacing) * 3);\n  }\n  .pt-1 {\n    padding-top: calc(var(--spacing) * 1);\n  }\n  .pt-2 {\n    padding-top: calc(var(--spacing) * 2);\n  }\n  .pr-2 {\n    padding-right: calc(var(--spacing) * 2);\n  }\n  .pb-1\\.5 {\n    padding-bottom: calc(var(--spacing) * 1.5);\n  }\n  .pb-2 {\n    padding-bottom: calc(var(--spacing) * 2);\n  }\n  .pb-3 {\n    padding-bottom: calc(var(--spacing) * 3);\n  }\n  .pl-1 {\n    padding-left: calc(var(--spacing) * 1);\n  }\n  .pl-4 {\n    padding-left: calc(var(--spacing) * 4);\n  }\n  .pl-5 {\n    padding-left: calc(var(--spacing) * 5);\n  }\n  .pl-8 {\n    padding-left: calc(var(--spacing) * 8);\n  }\n  .text-center {\n    text-align: center;\n  }\n  .text-left {\n    text-align: left;\n  }\n  .text-right {\n    text-align: right;\n  }\n  .align-middle {\n    vertical-align: middle;\n  }\n  .font-mono {\n    font-family: var(--font-mono);\n  }\n  .font-sans {\n    font-family: var(--font-sans);\n  }\n  .font-serif {\n    font-family: var(--font-serif);\n  }\n  .text-sm {\n    font-size: var(--text-sm);\n    line-height: var(--tw-leading, var(--text-sm--line-height));\n  }\n  .text-xl {\n    font-size: var(--text-xl);\n    line-height: var(--tw-leading, var(--text-xl--line-height));\n  }\n  .text-xs {\n    font-size: var(--text-xs);\n    line-height: var(--tw-leading, var(--text-xs--line-height));\n  }\n  .text-\\[5px\\] {\n    font-size: 5px;\n  }\n  .text-\\[6px\\] {\n    font-size: 6px;\n  }\n  .text-\\[7px\\] {\n    font-size: 7px;\n  }\n  .text-\\[8px\\] {\n    font-size: 8px;\n  }\n  .text-\\[9px\\] {\n    font-size: 9px;\n  }\n  .text-\\[10px\\] {\n    font-size: 10px;\n  }\n  .text-\\[11px\\] {\n    font-size: 11px;\n  }\n  .text-\\[12px\\] {\n    font-size: 12px;\n  }\n  .text-\\[14px\\] {\n    font-size: 14px;\n  }\n  .text-\\[34px\\] {\n    font-size: 34px;\n  }\n  .leading-\\[0\\.98\\] {\n    --tw-leading: 0.98;\n    line-height: 0.98;\n  }\n  .leading-none {\n    --tw-leading: 1;\n    line-height: 1;\n  }\n  .leading-normal {\n    --tw-leading: var(--leading-normal);\n    line-height: var(--leading-normal);\n  }\n  .leading-relaxed {\n    --tw-leading: var(--leading-relaxed);\n    line-height: var(--leading-relaxed);\n  }\n  .leading-snug {\n    --tw-leading: var(--leading-snug);\n    line-height: var(--leading-snug);\n  }\n  .leading-tight {\n    --tw-leading: var(--leading-tight);\n    line-height: var(--leading-tight);\n  }\n  .font-black {\n    --tw-font-weight: var(--font-weight-black);\n    font-weight: var(--font-weight-black);\n  }\n  .font-bold {\n    --tw-font-weight: var(--font-weight-bold);\n    font-weight: var(--font-weight-bold);\n  }\n  .font-extrabold {\n    --tw-font-weight: var(--font-weight-extrabold);\n    font-weight: var(--font-weight-extrabold);\n  }\n  .font-light {\n    --tw-font-weight: var(--font-weight-light);\n    font-weight: var(--font-weight-light);\n  }\n  .font-medium {\n    --tw-font-weight: var(--font-weight-medium);\n    font-weight: var(--font-weight-medium);\n  }\n  .font-semibold {\n    --tw-font-weight: var(--font-weight-semibold);\n    font-weight: var(--font-weight-semibold);\n  }\n  .tracking-\\[0\\.3em\\] {\n    --tw-tracking: 0.3em;\n    letter-spacing: 0.3em;\n  }\n  .tracking-\\[0\\.4em\\] {\n    --tw-tracking: 0.4em;\n    letter-spacing: 0.4em;\n  }\n  .tracking-\\[0\\.25em\\] {\n    --tw-tracking: 0.25em;\n    letter-spacing: 0.25em;\n  }\n  .tracking-\\[0\\.35em\\] {\n    --tw-tracking: 0.35em;\n    letter-spacing: 0.35em;\n  }\n  .tracking-tight {\n    --tw-tracking: var(--tracking-tight);\n    letter-spacing: var(--tracking-tight);\n  }\n  .tracking-tighter {\n    --tw-tracking: var(--tracking-tighter);\n    letter-spacing: var(--tracking-tighter);\n  }\n  .tracking-wide {\n    --tw-tracking: var(--tracking-wide);\n    letter-spacing: var(--tracking-wide);\n  }\n  .tracking-wider {\n    --tw-tracking: var(--tracking-wider);\n    letter-spacing: var(--tracking-wider);\n  }\n  .tracking-widest {\n    --tw-tracking: var(--tracking-widest);\n    letter-spacing: var(--tracking-widest);\n  }\n  .break-all {\n    word-break: break-all;\n  }\n  .whitespace-pre {\n    white-space: pre;\n  }\n  .whitespace-pre-wrap {\n    white-space: pre-wrap;\n  }\n  .text-\\[\\#6b5d53\\] {\n    color: #6b5d53;\n  }\n  .text-\\[\\#8f8278\\] {\n    color: #8f8278;\n  }\n  .text-\\[\\#94a3b8\\] {\n    color: #94a3b8;\n  }\n  .text-\\[\\#14110f\\] {\n    color: #14110f;\n  }\n  .text-\\[\\#a3978f\\] {\n    color: #a3978f;\n  }\n  .text-\\[\\#a88653\\] {\n    color: #a88653;\n  }\n  .text-\\[\\#bef264\\] {\n    color: #bef264;\n  }\n  .text-\\[\\#c5c8c6\\] {\n    color: #c5c8c6;\n  }\n  .text-\\[\\#ded9d5\\] {\n    color: #ded9d5;\n  }\n  .text-\\[\\#e2d5c3\\] {\n    color: #e2d5c3;\n  }\n  .text-\\[\\#f5ebd7\\] {\n    color: #f5ebd7;\n  }\n  .text-\\[\\#f472b6\\] {\n    color: #f472b6;\n  }\n  .text-amber-400 {\n    color: var(--color-amber-400);\n  }\n  .text-amber-400\\/80 {\n    color: color-mix(in srgb, oklch(82.8% 0.189 84.429) 80%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      color: color-mix(in oklab, var(--color-amber-400) 80%, transparent);\n    }\n  }\n  .text-black {\n    color: var(--color-black);\n  }\n  .text-cyan-300 {\n    color: var(--color-cyan-300);\n  }\n  .text-cyan-400 {\n    color: var(--color-cyan-400);\n  }\n  .text-cyan-400\\/30 {\n    color: color-mix(in srgb, oklch(78.9% 0.154 211.53) 30%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      color: color-mix(in oklab, var(--color-cyan-400) 30%, transparent);\n    }\n  }\n  .text-emerald-400 {\n    color: var(--color-emerald-400);\n  }\n  .text-green-400 {\n    color: var(--color-green-400);\n  }\n  .text-green-400\\/60 {\n    color: color-mix(in srgb, oklch(79.2% 0.209 151.711) 60%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      color: color-mix(in oklab, var(--color-green-400) 60%, transparent);\n    }\n  }\n  .text-pink-400 {\n    color: var(--color-pink-400);\n  }\n  .text-purple-400 {\n    color: var(--color-purple-400);\n  }\n  .text-purple-400\\/60 {\n    color: color-mix(in srgb, oklch(71.4% 0.203 305.504) 60%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      color: color-mix(in oklab, var(--color-purple-400) 60%, transparent);\n    }\n  }\n  .text-red-300 {\n    color: var(--color-red-300);\n  }\n  .text-red-400 {\n    color: var(--color-red-400);\n  }\n  .text-sky-400 {\n    color: var(--color-sky-400);\n  }\n  .text-sky-400\\/60 {\n    color: color-mix(in srgb, oklch(74.6% 0.16 232.661) 60%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      color: color-mix(in oklab, var(--color-sky-400) 60%, transparent);\n    }\n  }\n  .text-sky-400\\/80 {\n    color: color-mix(in srgb, oklch(74.6% 0.16 232.661) 80%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      color: color-mix(in oklab, var(--color-sky-400) 80%, transparent);\n    }\n  }\n  .text-sky-400\\/85 {\n    color: color-mix(in srgb, oklch(74.6% 0.16 232.661) 85%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      color: color-mix(in oklab, var(--color-sky-400) 85%, transparent);\n    }\n  }\n  .text-slate-300 {\n    color: var(--color-slate-300);\n  }\n  .text-slate-400 {\n    color: var(--color-slate-400);\n  }\n  .text-slate-500 {\n    color: var(--color-slate-500);\n  }\n  .text-slate-600 {\n    color: var(--color-slate-600);\n  }\n  .text-stone-200 {\n    color: var(--color-stone-200);\n  }\n  .text-stone-300 {\n    color: var(--color-stone-300);\n  }\n  .text-stone-400 {\n    color: var(--color-stone-400);\n  }\n  .text-stone-500 {\n    color: var(--color-stone-500);\n  }\n  .text-vintage-gold {\n    color: var(--color-vintage-gold);\n  }\n  .text-vintage-gold\\/80 {\n    color: color-mix(in srgb, #c89547 80%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      color: color-mix(in oklab, var(--color-vintage-gold) 80%, transparent);\n    }\n  }\n  .text-vintage-muted {\n    color: var(--color-vintage-muted);\n  }\n  .text-vintage-paper {\n    color: var(--color-vintage-paper);\n  }\n  .text-vintage-rust {\n    color: var(--color-vintage-rust);\n  }\n  .text-white {\n    color: var(--color-white);\n  }\n  .text-white\\/58 {\n    color: color-mix(in srgb, #fff 58%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      color: color-mix(in oklab, var(--color-white) 58%, transparent);\n    }\n  }\n  .text-white\\/60 {\n    color: color-mix(in srgb, #fff 60%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      color: color-mix(in oklab, var(--color-white) 60%, transparent);\n    }\n  }\n  .text-white\\/70 {\n    color: color-mix(in srgb, #fff 70%, transparent);\n    @supports (color: color-mix(in lab, red, red)) {\n      color: color-mix(in oklab, var(--color-white) 70%, transparent);\n    }\n  }\n  .capitalize {\n    text-transform: capitalize;\n  }\n  .uppercase {\n    text-transform: uppercase;\n  }\n  .italic {\n    font-style: italic;\n  }\n  .tabular-nums {\n    --tw-numeric-spacing: tabular-nums;\n    font-variant-numeric: var(--tw-ordinal,) var(--tw-slashed-zero,) var(--tw-numeric-figure,) var(--tw-numeric-spacing,) var(--tw-numeric-fraction,);\n  }\n  .placeholder-\\[\\#6b5d53\\] {\n    &::placeholder {\n      color: #6b5d53;\n    }\n  }\n  .accent-vintage-gold {\n    accent-color: var(--color-vintage-gold);\n  }\n  .opacity-0 {\n    opacity: 0%;\n  }\n  .opacity-10 {\n    opacity: 10%;\n  }\n  .opacity-15 {\n    opacity: 15%;\n  }\n  .opacity-20 {\n    opacity: 20%;\n  }\n  .opacity-25 {\n    opacity: 25%;\n  }\n  .opacity-30 {\n    opacity: 30%;\n  }\n  .opacity-80 {\n    opacity: 80%;\n  }\n  .opacity-100 {\n    opacity: 100%;\n  }\n  .opacity-\\[0\\.045\\] {\n    opacity: 0.045;\n  }\n  .mix-blend-overlay {\n    mix-blend-mode: overlay;\n  }\n  .shadow {\n    --tw-shadow: 0 1px 3px 0 var(--tw-shadow-color, rgb(0 0 0 / 0.1)), 0 1px 2px -1px var(--tw-shadow-color, rgb(0 0 0 / 0.1));\n    box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n  }\n  .shadow-2xl {\n    --tw-shadow: 0 25px 50px -12px var(--tw-shadow-color, rgb(0 0 0 / 0.25));\n    box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n  }\n  .shadow-\\[0_0_8px_rgba\\(56\\,189\\,248\\,0\\.8\\)\\] {\n    --tw-shadow: 0 0 8px var(--tw-shadow-color, rgba(56,189,248,0.8));\n    box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n  }\n  .shadow-\\[0_0_10px_\\#22d3ee\\] {\n    --tw-shadow: 0 0 10px var(--tw-shadow-color, #22d3ee);\n    box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n  }\n  .shadow-inner {\n    --tw-shadow: inset 0 2px 4px 0 var(--tw-shadow-color, rgb(0 0 0 / 0.05));\n    box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n  }\n  .shadow-md {\n    --tw-shadow: 0 4px 6px -1px var(--tw-shadow-color, rgb(0 0 0 / 0.1)), 0 2px 4px -2px var(--tw-shadow-color, rgb(0 0 0 / 0.1));\n    box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n  }\n  .outline {\n    outline-style: var(--tw-outline-style);\n    outline-width: 1px;\n  }\n  .blur {\n    --tw-blur: blur(8px);\n    filter: var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,);\n  }\n  .blur-2xl {\n    --tw-blur: blur(var(--blur-2xl));\n    filter: var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,);\n  }\n  .blur-xl {\n    --tw-blur: blur(var(--blur-xl));\n    filter: var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,);\n  }\n  .drop-shadow-\\[0_0_8px_rgba\\(56\\,189\\,248\\,0\\.4\\)\\] {\n    --tw-drop-shadow-size: drop-shadow(0 0 8px var(--tw-drop-shadow-color, rgba(56,189,248,0.4)));\n    --tw-drop-shadow: var(--tw-drop-shadow-size);\n    filter: var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,);\n  }\n  .drop-shadow-\\[0_0_12px_rgba\\(200\\,149\\,71\\,0\\.3\\)\\] {\n    --tw-drop-shadow-size: drop-shadow(0 0 12px var(--tw-drop-shadow-color, rgba(200,149,71,0.3)));\n    --tw-drop-shadow: var(--tw-drop-shadow-size);\n    filter: var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,);\n  }\n  .drop-shadow-\\[0_0_12px_rgba\\(200\\,149\\,71\\,0\\.5\\)\\] {\n    --tw-drop-shadow-size: drop-shadow(0 0 12px var(--tw-drop-shadow-color, rgba(200,149,71,0.5)));\n    --tw-drop-shadow: var(--tw-drop-shadow-size);\n    filter: var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,);\n  }\n  .grayscale-\\[40\\%\\] {\n    --tw-grayscale: grayscale(40%);\n    filter: var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,);\n  }\n  .hue-rotate-60 {\n    --tw-hue-rotate: hue-rotate(60deg);\n    filter: var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,);\n  }\n  .sepia-\\[25\\%\\] {\n    --tw-sepia: sepia(25%);\n    filter: var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,);\n  }\n  .filter {\n    filter: var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,);\n  }\n  .transition {\n    transition-property: color, background-color, border-color, outline-color, text-decoration-color, fill, stroke, --tw-gradient-from, --tw-gradient-via, --tw-gradient-to, opacity, box-shadow, transform, translate, scale, rotate, filter, -webkit-backdrop-filter, backdrop-filter, display, content-visibility, overlay, pointer-events;\n    transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));\n    transition-duration: var(--tw-duration, var(--default-transition-duration));\n  }\n  .transition-all {\n    transition-property: all;\n    transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));\n    transition-duration: var(--tw-duration, var(--default-transition-duration));\n  }\n  .transition-colors {\n    transition-property: color, background-color, border-color, outline-color, text-decoration-color, fill, stroke, --tw-gradient-from, --tw-gradient-via, --tw-gradient-to;\n    transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));\n    transition-duration: var(--tw-duration, var(--default-transition-duration));\n  }\n  .transition-transform {\n    transition-property: transform, translate, scale, rotate;\n    transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));\n    transition-duration: var(--tw-duration, var(--default-transition-duration));\n  }\n  .select-none {\n    -webkit-user-select: none;\n    user-select: none;\n  }\n  .group-hover\\:scale-105 {\n    &:is(:where(.group):hover *) {\n      @media (hover: hover) {\n        --tw-scale-x: 105%;\n        --tw-scale-y: 105%;\n        --tw-scale-z: 105%;\n        scale: var(--tw-scale-x) var(--tw-scale-y);\n      }\n    }\n  }\n  .group-hover\\:text-vintage-gold {\n    &:is(:where(.group):hover *) {\n      @media (hover: hover) {\n        color: var(--color-vintage-gold);\n      }\n    }\n  }\n  .hover\\:scale-105 {\n    &:hover {\n      @media (hover: hover) {\n        --tw-scale-x: 105%;\n        --tw-scale-y: 105%;\n        --tw-scale-z: 105%;\n        scale: var(--tw-scale-x) var(--tw-scale-y);\n      }\n    }\n  }\n  .hover\\:scale-\\[1\\.01\\] {\n    &:hover {\n      @media (hover: hover) {\n        scale: 1.01;\n      }\n    }\n  }\n  .hover\\:scale-\\[1\\.02\\] {\n    &:hover {\n      @media (hover: hover) {\n        scale: 1.02;\n      }\n    }\n  }\n  .hover\\:scale-\\[1\\.005\\] {\n    &:hover {\n      @media (hover: hover) {\n        scale: 1.005;\n      }\n    }\n  }\n  .hover\\:border-\\[\\#52443a\\] {\n    &:hover {\n      @media (hover: hover) {\n        border-color: #52443a;\n      }\n    }\n  }\n  .hover\\:bg-\\[\\#1f1a17\\] {\n    &:hover {\n      @media (hover: hover) {\n        background-color: #1f1a17;\n      }\n    }\n  }\n  .hover\\:bg-\\[\\#1f1a17\\]\\/25 {\n    &:hover {\n      @media (hover: hover) {\n        background-color: color-mix(in oklab, #1f1a17 25%, transparent);\n      }\n    }\n  }\n  .hover\\:bg-\\[\\#2d2621\\] {\n    &:hover {\n      @media (hover: hover) {\n        background-color: #2d2621;\n      }\n    }\n  }\n  .hover\\:bg-\\[\\#3e342c\\] {\n    &:hover {\n      @media (hover: hover) {\n        background-color: #3e342c;\n      }\n    }\n  }\n  .hover\\:bg-\\[\\#261f1c\\] {\n    &:hover {\n      @media (hover: hover) {\n        background-color: #261f1c;\n      }\n    }\n  }\n  .hover\\:bg-\\[\\#b08138\\] {\n    &:hover {\n      @media (hover: hover) {\n        background-color: #b08138;\n      }\n    }\n  }\n  .hover\\:bg-black\\/10 {\n    &:hover {\n      @media (hover: hover) {\n        background-color: color-mix(in srgb, #000 10%, transparent);\n        @supports (color: color-mix(in lab, red, red)) {\n          background-color: color-mix(in oklab, var(--color-black) 10%, transparent);\n        }\n      }\n    }\n  }\n  .hover\\:bg-vintage-gold {\n    &:hover {\n      @media (hover: hover) {\n        background-color: var(--color-vintage-gold);\n      }\n    }\n  }\n  .hover\\:bg-vintage-gold\\/70 {\n    &:hover {\n      @media (hover: hover) {\n        background-color: color-mix(in srgb, #c89547 70%, transparent);\n        @supports (color: color-mix(in lab, red, red)) {\n          background-color: color-mix(in oklab, var(--color-vintage-gold) 70%, transparent);\n        }\n      }\n    }\n  }\n  .hover\\:bg-vintage-gold\\/90 {\n    &:hover {\n      @media (hover: hover) {\n        background-color: color-mix(in srgb, #c89547 90%, transparent);\n        @supports (color: color-mix(in lab, red, red)) {\n          background-color: color-mix(in oklab, var(--color-vintage-gold) 90%, transparent);\n        }\n      }\n    }\n  }\n  .hover\\:bg-white\\/10 {\n    &:hover {\n      @media (hover: hover) {\n        background-color: color-mix(in srgb, #fff 10%, transparent);\n        @supports (color: color-mix(in lab, red, red)) {\n          background-color: color-mix(in oklab, var(--color-white) 10%, transparent);\n        }\n      }\n    }\n  }\n  .hover\\:text-black {\n    &:hover {\n      @media (hover: hover) {\n        color: var(--color-black);\n      }\n    }\n  }\n  .hover\\:text-white {\n    &:hover {\n      @media (hover: hover) {\n        color: var(--color-white);\n      }\n    }\n  }\n  .hover\\:underline {\n    &:hover {\n      @media (hover: hover) {\n        text-decoration-line: underline;\n      }\n    }\n  }\n  .hover\\:shadow-lg {\n    &:hover {\n      @media (hover: hover) {\n        --tw-shadow: 0 10px 15px -3px var(--tw-shadow-color, rgb(0 0 0 / 0.1)), 0 4px 6px -4px var(--tw-shadow-color, rgb(0 0 0 / 0.1));\n        box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n      }\n    }\n  }\n  .hover\\:brightness-110 {\n    &:hover {\n      @media (hover: hover) {\n        --tw-brightness: brightness(110%);\n        filter: var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,);\n      }\n    }\n  }\n  .focus\\:border-vintage-gold\\/50 {\n    &:focus {\n      border-color: color-mix(in srgb, #c89547 50%, transparent);\n      @supports (color: color-mix(in lab, red, red)) {\n        border-color: color-mix(in oklab, var(--color-vintage-gold) 50%, transparent);\n      }\n    }\n  }\n  .focus\\:border-vintage-gold\\/60 {\n    &:focus {\n      border-color: color-mix(in srgb, #c89547 60%, transparent);\n      @supports (color: color-mix(in lab, red, red)) {\n        border-color: color-mix(in oklab, var(--color-vintage-gold) 60%, transparent);\n      }\n    }\n  }\n  .focus\\:outline-none {\n    &:focus {\n      --tw-outline-style: none;\n      outline-style: none;\n    }\n  }\n  .active\\:scale-95 {\n    &:active {\n      --tw-scale-x: 95%;\n      --tw-scale-y: 95%;\n      --tw-scale-z: 95%;\n      scale: var(--tw-scale-x) var(--tw-scale-y);\n    }\n  }\n  .active\\:scale-\\[0\\.99\\] {\n    &:active {\n      scale: 0.99;\n    }\n  }\n  .active\\:brightness-95 {\n    &:active {\n      --tw-brightness: brightness(95%);\n      filter: var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,);\n    }\n  }\n  .disabled\\:cursor-not-allowed {\n    &:disabled {\n      cursor: not-allowed;\n    }\n  }\n  .disabled\\:opacity-40 {\n    &:disabled {\n      opacity: 40%;\n    }\n  }\n  .disabled\\:opacity-50 {\n    &:disabled {\n      opacity: 50%;\n    }\n  }\n  .md\\:w-24 {\n    @media (width >= 48rem) {\n      width: calc(var(--spacing) * 24);\n    }\n  }\n  .md\\:max-w-\\[650px\\] {\n    @media (width >= 48rem) {\n      max-width: 650px;\n    }\n  }\n  .md\\:p-6 {\n    @media (width >= 48rem) {\n      padding: calc(var(--spacing) * 6);\n    }\n  }\n  .md\\:p-12 {\n    @media (width >= 48rem) {\n      padding: calc(var(--spacing) * 12);\n    }\n  }\n  .md\\:text-2xl {\n    @media (width >= 48rem) {\n      font-size: var(--text-2xl);\n      line-height: var(--tw-leading, var(--text-2xl--line-height));\n    }\n  }\n  .md\\:text-sm {\n    @media (width >= 48rem) {\n      font-size: var(--text-sm);\n      line-height: var(--tw-leading, var(--text-sm--line-height));\n    }\n  }\n  .md\\:text-\\[10px\\] {\n    @media (width >= 48rem) {\n      font-size: 10px;\n    }\n  }\n  .lg\\:flex {\n    @media (width >= 64rem) {\n      display: flex;\n    }\n  }\n}\n@keyframes film-grain {\n  0%, 100% {\n    transform: translate(0, 0);\n  }\n  10% {\n    transform: translate(-1%, -1%);\n  }\n  20% {\n    transform: translate(-2%, 1%);\n  }\n  30% {\n    transform: translate(1%, -2%);\n  }\n  40% {\n    transform: translate(-1%, 3%);\n  }\n  50% {\n    transform: translate(-2%, 1%);\n  }\n  60% {\n    transform: translate(3%, 0%);\n  }\n  70% {\n    transform: translate(0%, 2%);\n  }\n  80% {\n    transform: translate(2%, 3%);\n  }\n  90% {\n    transform: translate(-1%, 1%);\n  }\n}\n@keyframes subtle-drift {\n  0% {\n    transform: scale(1.05) translate(0px, 0px) rotate(0deg);\n  }\n  50% {\n    transform: scale(1.08) translate(3px, -5px) rotate(0.2deg);\n  }\n  100% {\n    transform: scale(1.05) translate(0px, 0px) rotate(0deg);\n  }\n}\n.animate-grain {\n  animation: film-grain 0.6s steps(6) infinite;\n}\n.animate-subtle-drift {\n  animation: subtle-drift 12s ease-in-out infinite;\n}\n.vignette-overlay {\n  background: radial-gradient(circle, transparent 40%, rgba(12, 10, 9, 0.75) 100%);\n  pointer-events: none;\n}\n.cinematic-tint {\n  mix-blend-mode: color-burn;\n  background-color: rgba(217, 119, 6, 0.04);\n  pointer-events: none;\n}\n.custom-scrollbar::-webkit-scrollbar {\n  width: 6px;\n  height: 6px;\n}\n.custom-scrollbar::-webkit-scrollbar-track {\n  background: #110d0b;\n}\n.custom-scrollbar::-webkit-scrollbar-thumb {\n  background: #3e342c;\n  border-radius: 3px;\n}\n.custom-scrollbar::-webkit-scrollbar-thumb:hover {\n  background: #c89547;\n}\n@keyframes fadeIn {\n  from {\n    opacity: 0;\n  }\n  to {\n    opacity: 1;\n  }\n}\n.animate-fade-in {\n  animation: fadeIn 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;\n}\n.neon-text-cyan {\n  color: #22d3ee;\n  text-shadow: 0 0 4px rgba(34, 211, 238, 0.6), 0 0 12px rgba(34, 211, 238, 0.3);\n}\n.neon-text-pink {\n  color: #f472b6;\n  text-shadow: 0 0 4px rgba(244, 114, 182, 0.6), 0 0 12px rgba(244, 114, 182, 0.3);\n}\n.neon-border-pink {\n  border: 2px solid #f472b6;\n  box-shadow: 0 0 8px rgba(244, 114, 182, 0.4), inset 0 0 4px rgba(244, 114, 182, 0.2);\n}\n.pop-shadow {\n  box-shadow: 6px 6px 0px 0px #000000;\n}\n.pop-border {\n  border: 3px solid #000000;\n}\n@property --tw-rotate-x {\n  syntax: \"*\";\n  inherits: false;\n}\n@property --tw-rotate-y {\n  syntax: \"*\";\n  inherits: false;\n}\n@property --tw-rotate-z {\n  syntax: \"*\";\n  inherits: false;\n}\n@property --tw-skew-x {\n  syntax: \"*\";\n  inherits: false;\n}\n@property --tw-skew-y {\n  syntax: \"*\";\n  inherits: false;\n}\n@property --tw-divide-y-reverse {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0;\n}\n@property --tw-border-style {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: solid;\n}\n@property --tw-gradient-position {\n  syntax: \"*\";\n  inherits: false;\n}\n@property --tw-gradient-from {\n  syntax: \"<color>\";\n  inherits: false;\n  initial-value: #0000;\n}\n@property --tw-gradient-via {\n  syntax: \"<color>\";\n  inherits: false;\n  initial-value: #0000;\n}\n@property --tw-gradient-to {\n  syntax: \"<color>\";\n  inherits: false;\n  initial-value: #0000;\n}\n@property --tw-gradient-stops {\n  syntax: \"*\";\n  inherits: false;\n}\n@property --tw-gradient-via-stops {\n  syntax: \"*\";\n  inherits: false;\n}\n@property --tw-gradient-from-position {\n  syntax: \"<length-percentage>\";\n  inherits: false;\n  initial-value: 0%;\n}\n@property --tw-gradient-via-position {\n  syntax: \"<length-percentage>\";\n  inherits: false;\n  initial-value: 50%;\n}\n@property --tw-gradient-to-position {\n  syntax: \"<length-percentage>\";\n  inherits: false;\n  initial-value: 100%;\n}\n@property --tw-leading {\n  syntax: \"*\";\n  inherits: false;\n}\n@property --tw-font-weight {\n  syntax: \"*\";\n  inherits: false;\n}\n@property --tw-tracking {\n  syntax: \"*\";\n  inherits: false;\n}\n@property --tw-ordinal {\n  syntax: \"*\";\n  inherits: false;\n}\n@property --tw-slashed-zero {\n  syntax: \"*\";\n  inherits: false;\n}\n@property --tw-numeric-figure {\n  syntax: \"*\";\n  inherits: false;\n}\n@property --tw-numeric-spacing {\n  syntax: \"*\";\n  inherits: false;\n}\n@property --tw-numeric-fraction {\n  syntax: \"*\";\n  inherits: false;\n}\n@property --tw-shadow {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0 0 #0000;\n}\n@property --tw-shadow-color {\n  syntax: \"*\";\n  inherits: false;\n}\n@property --tw-shadow-alpha {\n  syntax: \"<percentage>\";\n  inherits: false;\n  initial-value: 100%;\n}\n@property --tw-inset-shadow {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0 0 #0000;\n}\n@property --tw-inset-shadow-color {\n  syntax: \"*\";\n  inherits: false;\n}\n@property --tw-inset-shadow-alpha {\n  syntax: \"<percentage>\";\n  inherits: false;\n  initial-value: 100%;\n}\n@property --tw-ring-color {\n  syntax: \"*\";\n  inherits: false;\n}\n@property --tw-ring-shadow {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0 0 #0000;\n}\n@property --tw-inset-ring-color {\n  syntax: \"*\";\n  inherits: false;\n}\n@property --tw-inset-ring-shadow {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0 0 #0000;\n}\n@property --tw-ring-inset {\n  syntax: \"*\";\n  inherits: false;\n}\n@property --tw-ring-offset-width {\n  syntax: \"<length>\";\n  inherits: false;\n  initial-value: 0px;\n}\n@property --tw-ring-offset-color {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: #fff;\n}\n@property --tw-ring-offset-shadow {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0 0 #0000;\n}\n@property --tw-outline-style {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: solid;\n}\n@property --tw-blur {\n  syntax: \"*\";\n  inherits: false;\n}\n@property --tw-brightness {\n  syntax: \"*\";\n  inherits: false;\n}\n@property --tw-contrast {\n  syntax: \"*\";\n  inherits: false;\n}\n@property --tw-grayscale {\n  syntax: \"*\";\n  inherits: false;\n}\n@property --tw-hue-rotate {\n  syntax: \"*\";\n  inherits: false;\n}\n@property --tw-invert {\n  syntax: \"*\";\n  inherits: false;\n}\n@property --tw-opacity {\n  syntax: \"*\";\n  inherits: false;\n}\n@property --tw-saturate {\n  syntax: \"*\";\n  inherits: false;\n}\n@property --tw-sepia {\n  syntax: \"*\";\n  inherits: false;\n}\n@property --tw-drop-shadow {\n  syntax: \"*\";\n  inherits: false;\n}\n@property --tw-drop-shadow-color {\n  syntax: \"*\";\n  inherits: false;\n}\n@property --tw-drop-shadow-alpha {\n  syntax: \"<percentage>\";\n  inherits: false;\n  initial-value: 100%;\n}\n@property --tw-drop-shadow-size {\n  syntax: \"*\";\n  inherits: false;\n}\n@property --tw-scale-x {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 1;\n}\n@property --tw-scale-y {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 1;\n}\n@property --tw-scale-z {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 1;\n}\n@keyframes spin {\n  to {\n    transform: rotate(360deg);\n  }\n}\n@layer properties {\n  @supports ((-webkit-hyphens: none) and (not (margin-trim: inline))) or ((-moz-orient: inline) and (not (color:rgb(from red r g b)))) {\n    *, ::before, ::after, ::backdrop {\n      --tw-rotate-x: initial;\n      --tw-rotate-y: initial;\n      --tw-rotate-z: initial;\n      --tw-skew-x: initial;\n      --tw-skew-y: initial;\n      --tw-divide-y-reverse: 0;\n      --tw-border-style: solid;\n      --tw-gradient-position: initial;\n      --tw-gradient-from: #0000;\n      --tw-gradient-via: #0000;\n      --tw-gradient-to: #0000;\n      --tw-gradient-stops: initial;\n      --tw-gradient-via-stops: initial;\n      --tw-gradient-from-position: 0%;\n      --tw-gradient-via-position: 50%;\n      --tw-gradient-to-position: 100%;\n      --tw-leading: initial;\n      --tw-font-weight: initial;\n      --tw-tracking: initial;\n      --tw-ordinal: initial;\n      --tw-slashed-zero: initial;\n      --tw-numeric-figure: initial;\n      --tw-numeric-spacing: initial;\n      --tw-numeric-fraction: initial;\n      --tw-shadow: 0 0 #0000;\n      --tw-shadow-color: initial;\n      --tw-shadow-alpha: 100%;\n      --tw-inset-shadow: 0 0 #0000;\n      --tw-inset-shadow-color: initial;\n      --tw-inset-shadow-alpha: 100%;\n      --tw-ring-color: initial;\n      --tw-ring-shadow: 0 0 #0000;\n      --tw-inset-ring-color: initial;\n      --tw-inset-ring-shadow: 0 0 #0000;\n      --tw-ring-inset: initial;\n      --tw-ring-offset-width: 0px;\n      --tw-ring-offset-color: #fff;\n      --tw-ring-offset-shadow: 0 0 #0000;\n      --tw-outline-style: solid;\n      --tw-blur: initial;\n      --tw-brightness: initial;\n      --tw-contrast: initial;\n      --tw-grayscale: initial;\n      --tw-hue-rotate: initial;\n      --tw-invert: initial;\n      --tw-opacity: initial;\n      --tw-saturate: initial;\n      --tw-sepia: initial;\n      --tw-drop-shadow: initial;\n      --tw-drop-shadow-color: initial;\n      --tw-drop-shadow-alpha: 100%;\n      --tw-drop-shadow-size: initial;\n      --tw-scale-x: 1;\n      --tw-scale-y: 1;\n      --tw-scale-z: 1;\n    }\n  }\n}\n"],"sourceRoot":""}]);
+// Exports
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
+
+
+/***/ },
+
+/***/ 349
+(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   A: () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _node_modules_css_loader_dist_runtime_sourceMaps_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(2001);
+/* harmony import */ var _node_modules_css_loader_dist_runtime_sourceMaps_js__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_node_modules_css_loader_dist_runtime_sourceMaps_js__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(935);
+/* harmony import */ var _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_1__);
+// Imports
+
+
+var ___CSS_LOADER_EXPORT___ = _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_1___default()((_node_modules_css_loader_dist_runtime_sourceMaps_js__WEBPACK_IMPORTED_MODULE_0___default()));
+// Module
+___CSS_LOADER_EXPORT___.push([module.id, `/* SceneAudio styles */
+.audio-container {
+  background: radial-gradient(circle at center, #1b121f 0%, #08050a 100%);
+  color: #f3e8ff;
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.audio-card {
+  border: 1px solid rgba(168, 85, 247, 0.2);
+  background: rgba(20, 12, 28, 0.85);
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.6), 0 0 20px rgba(168, 85, 247, 0.05);
+}
+
+.vinyl-record {
+  border: 4px solid #111;
+  background: radial-gradient(circle, #222 20%, #090909 50%, #1c1c1c 70%, #000 100%);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.5), inset 0 0 15px rgba(255,255,255,0.05);
+}
+
+.vinyl-center {
+  background-color: #a855f7;
+  box-shadow: 0 0 10px rgba(168, 85, 247, 0.5);
+}
+
+.waveform-bar {
+  background: linear-gradient(to top, rgba(168, 85, 247, 0.2) 0%, #c084fc 100%);
+  box-shadow: 0 0 8px rgba(192, 132, 252, 0.3);
+}
+`, "",{"version":3,"sources":["webpack://./src/scenes/styles/SceneAudio.css"],"names":[],"mappings":"AAAA,sBAAsB;AACtB;EACE,uEAAuE;EACvE,cAAc;EACd,WAAW;EACX,YAAY;EACZ,kBAAkB;EAClB,gBAAgB;AAClB;;AAEA;EACE,yCAAyC;EACzC,kCAAkC;EAClC,6EAA6E;AAC/E;;AAEA;EACE,sBAAsB;EACtB,kFAAkF;EAClF,8EAA8E;AAChF;;AAEA;EACE,yBAAyB;EACzB,4CAA4C;AAC9C;;AAEA;EACE,6EAA6E;EAC7E,4CAA4C;AAC9C","sourcesContent":["/* SceneAudio styles */\n.audio-container {\n  background: radial-gradient(circle at center, #1b121f 0%, #08050a 100%);\n  color: #f3e8ff;\n  width: 100%;\n  height: 100%;\n  position: relative;\n  overflow: hidden;\n}\n\n.audio-card {\n  border: 1px solid rgba(168, 85, 247, 0.2);\n  background: rgba(20, 12, 28, 0.85);\n  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.6), 0 0 20px rgba(168, 85, 247, 0.05);\n}\n\n.vinyl-record {\n  border: 4px solid #111;\n  background: radial-gradient(circle, #222 20%, #090909 50%, #1c1c1c 70%, #000 100%);\n  box-shadow: 0 10px 25px rgba(0,0,0,0.5), inset 0 0 15px rgba(255,255,255,0.05);\n}\n\n.vinyl-center {\n  background-color: #a855f7;\n  box-shadow: 0 0 10px rgba(168, 85, 247, 0.5);\n}\n\n.waveform-bar {\n  background: linear-gradient(to top, rgba(168, 85, 247, 0.2) 0%, #c084fc 100%);\n  box-shadow: 0 0 8px rgba(192, 132, 252, 0.3);\n}\n"],"sourceRoot":""}]);
+// Exports
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
+
+
+/***/ },
+
+/***/ 8526
+(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   A: () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _node_modules_css_loader_dist_runtime_sourceMaps_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(2001);
+/* harmony import */ var _node_modules_css_loader_dist_runtime_sourceMaps_js__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_node_modules_css_loader_dist_runtime_sourceMaps_js__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(935);
+/* harmony import */ var _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_1__);
+// Imports
+
+
+var ___CSS_LOADER_EXPORT___ = _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_1___default()((_node_modules_css_loader_dist_runtime_sourceMaps_js__WEBPACK_IMPORTED_MODULE_0___default()));
+// Module
+___CSS_LOADER_EXPORT___.push([module.id, `/* SceneCorporate styles */
+.corp-container {
+  background: radial-gradient(circle at center, #0f172a 0%, #020617 100%);
+  color: #f8fafc;
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.corp-panel {
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+.corp-chart-path {
+  stroke: #38bdf8;
+  stroke-width: 3.5;
+  fill: none;
+  filter: drop-shadow(0 4px 12px rgba(56, 189, 248, 0.35));
+}
+
+.corp-grid-dot {
+  fill: rgba(56, 189, 248, 0.15);
+}
+`, "",{"version":3,"sources":["webpack://./src/scenes/styles/SceneCorporate.css"],"names":[],"mappings":"AAAA,0BAA0B;AAC1B;EACE,uEAAuE;EACvE,cAAc;EACd,WAAW;EACX,YAAY;EACZ,kBAAkB;EAClB,gBAAgB;AAClB;;AAEA;EACE,yCAAyC;EACzC,iCAAiC;EACjC,2BAA2B;EAC3B,gDAAgD;AAClD;;AAEA;EACE,eAAe;EACf,iBAAiB;EACjB,UAAU;EACV,wDAAwD;AAC1D;;AAEA;EACE,8BAA8B;AAChC","sourcesContent":["/* SceneCorporate styles */\n.corp-container {\n  background: radial-gradient(circle at center, #0f172a 0%, #020617 100%);\n  color: #f8fafc;\n  width: 100%;\n  height: 100%;\n  position: relative;\n  overflow: hidden;\n}\n\n.corp-panel {\n  border: 1px solid rgba(56, 189, 248, 0.2);\n  background: rgba(15, 23, 42, 0.7);\n  backdrop-filter: blur(12px);\n  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);\n}\n\n.corp-chart-path {\n  stroke: #38bdf8;\n  stroke-width: 3.5;\n  fill: none;\n  filter: drop-shadow(0 4px 12px rgba(56, 189, 248, 0.35));\n}\n\n.corp-grid-dot {\n  fill: rgba(56, 189, 248, 0.15);\n}\n"],"sourceRoot":""}]);
+// Exports
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
+
+
+/***/ },
+
+/***/ 5616
+(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   A: () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _node_modules_css_loader_dist_runtime_sourceMaps_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(2001);
+/* harmony import */ var _node_modules_css_loader_dist_runtime_sourceMaps_js__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_node_modules_css_loader_dist_runtime_sourceMaps_js__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(935);
+/* harmony import */ var _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_1__);
+// Imports
+
+
+var ___CSS_LOADER_EXPORT___ = _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_1___default()((_node_modules_css_loader_dist_runtime_sourceMaps_js__WEBPACK_IMPORTED_MODULE_0___default()));
+// Module
+___CSS_LOADER_EXPORT___.push([module.id, `/* SceneCyberpunk styles */
+.cyber-container {
+  background: radial-gradient(circle at center, #0f0714 0%, #030105 100%);
+  color: #22d3ee;
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.cyber-grid {
+  background-image: 
+    linear-gradient(to right, rgba(236, 72, 153, 0.08) 1px, transparent 1px), 
+    linear-gradient(to bottom, rgba(236, 72, 153, 0.08) 1px, transparent 1px);
+  background-size: 30px 30px;
+}
+
+.cyber-neon-border {
+  border: 1px solid #f472b6;
+  box-shadow: 0 0 15px rgba(244, 114, 182, 0.3), inset 0 0 10px rgba(244, 114, 182, 0.15);
+}
+
+.cyber-neon-text-pink {
+  color: #f472b6;
+  text-shadow: 0 0 6px rgba(244, 114, 182, 0.6), 0 0 15px rgba(244, 114, 182, 0.3);
+}
+
+.cyber-neon-text-cyan {
+  color: #22d3ee;
+  text-shadow: 0 0 6px rgba(34, 211, 238, 0.6), 0 0 15px rgba(34, 211, 238, 0.3);
+}
+
+.hud-ring {
+  border: 1px dashed rgba(34, 211, 238, 0.3);
+}
+
+.matrix-stream {
+  text-shadow: 0 0 8px rgba(34, 211, 238, 0.8);
+}
+`, "",{"version":3,"sources":["webpack://./src/scenes/styles/SceneCyberpunk.css"],"names":[],"mappings":"AAAA,0BAA0B;AAC1B;EACE,uEAAuE;EACvE,cAAc;EACd,WAAW;EACX,YAAY;EACZ,kBAAkB;EAClB,gBAAgB;AAClB;;AAEA;EACE;;6EAE2E;EAC3E,0BAA0B;AAC5B;;AAEA;EACE,yBAAyB;EACzB,uFAAuF;AACzF;;AAEA;EACE,cAAc;EACd,gFAAgF;AAClF;;AAEA;EACE,cAAc;EACd,8EAA8E;AAChF;;AAEA;EACE,0CAA0C;AAC5C;;AAEA;EACE,4CAA4C;AAC9C","sourcesContent":["/* SceneCyberpunk styles */\n.cyber-container {\n  background: radial-gradient(circle at center, #0f0714 0%, #030105 100%);\n  color: #22d3ee;\n  width: 100%;\n  height: 100%;\n  position: relative;\n  overflow: hidden;\n}\n\n.cyber-grid {\n  background-image: \n    linear-gradient(to right, rgba(236, 72, 153, 0.08) 1px, transparent 1px), \n    linear-gradient(to bottom, rgba(236, 72, 153, 0.08) 1px, transparent 1px);\n  background-size: 30px 30px;\n}\n\n.cyber-neon-border {\n  border: 1px solid #f472b6;\n  box-shadow: 0 0 15px rgba(244, 114, 182, 0.3), inset 0 0 10px rgba(244, 114, 182, 0.15);\n}\n\n.cyber-neon-text-pink {\n  color: #f472b6;\n  text-shadow: 0 0 6px rgba(244, 114, 182, 0.6), 0 0 15px rgba(244, 114, 182, 0.3);\n}\n\n.cyber-neon-text-cyan {\n  color: #22d3ee;\n  text-shadow: 0 0 6px rgba(34, 211, 238, 0.6), 0 0 15px rgba(34, 211, 238, 0.3);\n}\n\n.hud-ring {\n  border: 1px dashed rgba(34, 211, 238, 0.3);\n}\n\n.matrix-stream {\n  text-shadow: 0 0 8px rgba(34, 211, 238, 0.8);\n}\n"],"sourceRoot":""}]);
+// Exports
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
+
+
+/***/ },
+
+/***/ 7637
+(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   A: () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _node_modules_css_loader_dist_runtime_sourceMaps_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(2001);
+/* harmony import */ var _node_modules_css_loader_dist_runtime_sourceMaps_js__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_node_modules_css_loader_dist_runtime_sourceMaps_js__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(935);
+/* harmony import */ var _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_1__);
+// Imports
+
+
+var ___CSS_LOADER_EXPORT___ = _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_1___default()((_node_modules_css_loader_dist_runtime_sourceMaps_js__WEBPACK_IMPORTED_MODULE_0___default()));
+// Module
+___CSS_LOADER_EXPORT___.push([module.id, `/* SceneIntro styles */
+.intro-container {
+  background: radial-gradient(circle at center, #241f1c 0%, #0e0c0b 100%);
+  color: #faf8f5;
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.intro-vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, transparent 30%, rgba(0, 0, 0, 0.8) 100%);
+  pointer-events: none;
+}
+
+.intro-gold-text {
+  color: #c89547;
+  text-shadow: 0 0 10px rgba(200, 149, 71, 0.3);
+}
+
+.intro-border-frame {
+  position: absolute;
+  inset: 40px;
+  border: 1px solid rgba(200, 149, 71, 0.15);
+  pointer-events: none;
+}
+`, "",{"version":3,"sources":["webpack://./src/scenes/styles/SceneIntro.css"],"names":[],"mappings":"AAAA,sBAAsB;AACtB;EACE,uEAAuE;EACvE,cAAc;EACd,WAAW;EACX,YAAY;EACZ,kBAAkB;EAClB,gBAAgB;AAClB;;AAEA;EACE,kBAAkB;EAClB,QAAQ;EACR,uFAAuF;EACvF,oBAAoB;AACtB;;AAEA;EACE,cAAc;EACd,6CAA6C;AAC/C;;AAEA;EACE,kBAAkB;EAClB,WAAW;EACX,0CAA0C;EAC1C,oBAAoB;AACtB","sourcesContent":["/* SceneIntro styles */\n.intro-container {\n  background: radial-gradient(circle at center, #241f1c 0%, #0e0c0b 100%);\n  color: #faf8f5;\n  width: 100%;\n  height: 100%;\n  position: relative;\n  overflow: hidden;\n}\n\n.intro-vignette {\n  position: absolute;\n  inset: 0;\n  background: radial-gradient(circle at center, transparent 30%, rgba(0, 0, 0, 0.8) 100%);\n  pointer-events: none;\n}\n\n.intro-gold-text {\n  color: #c89547;\n  text-shadow: 0 0 10px rgba(200, 149, 71, 0.3);\n}\n\n.intro-border-frame {\n  position: absolute;\n  inset: 40px;\n  border: 1px solid rgba(200, 149, 71, 0.15);\n  pointer-events: none;\n}\n"],"sourceRoot":""}]);
+// Exports
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
+
+
+/***/ },
+
+/***/ 2838
+(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   A: () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _node_modules_css_loader_dist_runtime_sourceMaps_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(2001);
+/* harmony import */ var _node_modules_css_loader_dist_runtime_sourceMaps_js__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_node_modules_css_loader_dist_runtime_sourceMaps_js__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(935);
+/* harmony import */ var _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_1__);
+// Imports
+
+
+var ___CSS_LOADER_EXPORT___ = _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_1___default()((_node_modules_css_loader_dist_runtime_sourceMaps_js__WEBPACK_IMPORTED_MODULE_0___default()));
+// Module
+___CSS_LOADER_EXPORT___.push([module.id, `/* SceneOutro styles */
+.outro-container {
+  background: radial-gradient(circle at center, #1b1715 0%, #0a0808 100%);
+  color: #faf8f5;
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.outro-terminal {
+  border: 1px solid rgba(200, 149, 71, 0.2);
+  background: rgba(12, 10, 9, 0.9);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6), 0 0 20px rgba(200, 149, 71, 0.05);
+}
+
+.outro-button {
+  background: linear-gradient(135deg, #c89547 0%, #a8722b 100%);
+  color: #0c0a09;
+  border: none;
+  box-shadow: 0 10px 25px rgba(200, 149, 71, 0.3), 0 0 12px rgba(200, 149, 71, 0.15);
+  font-weight: bold;
+}
+.outro-button:hover {
+  background: linear-gradient(135deg, #d4a357 0%, #b88135 100%);
+}
+`, "",{"version":3,"sources":["webpack://./src/scenes/styles/SceneOutro.css"],"names":[],"mappings":"AAAA,sBAAsB;AACtB;EACE,uEAAuE;EACvE,cAAc;EACd,WAAW;EACX,YAAY;EACZ,kBAAkB;EAClB,gBAAgB;AAClB;;AAEA;EACE,yCAAyC;EACzC,gCAAgC;EAChC,6EAA6E;AAC/E;;AAEA;EACE,6DAA6D;EAC7D,cAAc;EACd,YAAY;EACZ,kFAAkF;EAClF,iBAAiB;AACnB;AACA;EACE,6DAA6D;AAC/D","sourcesContent":["/* SceneOutro styles */\n.outro-container {\n  background: radial-gradient(circle at center, #1b1715 0%, #0a0808 100%);\n  color: #faf8f5;\n  width: 100%;\n  height: 100%;\n  position: relative;\n  overflow: hidden;\n}\n\n.outro-terminal {\n  border: 1px solid rgba(200, 149, 71, 0.2);\n  background: rgba(12, 10, 9, 0.9);\n  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6), 0 0 20px rgba(200, 149, 71, 0.05);\n}\n\n.outro-button {\n  background: linear-gradient(135deg, #c89547 0%, #a8722b 100%);\n  color: #0c0a09;\n  border: none;\n  box-shadow: 0 10px 25px rgba(200, 149, 71, 0.3), 0 0 12px rgba(200, 149, 71, 0.15);\n  font-weight: bold;\n}\n.outro-button:hover {\n  background: linear-gradient(135deg, #d4a357 0%, #b88135 100%);\n}\n"],"sourceRoot":""}]);
+// Exports
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
+
+
+/***/ },
+
+/***/ 8817
+(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   A: () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _node_modules_css_loader_dist_runtime_sourceMaps_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(2001);
+/* harmony import */ var _node_modules_css_loader_dist_runtime_sourceMaps_js__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_node_modules_css_loader_dist_runtime_sourceMaps_js__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(935);
+/* harmony import */ var _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_1__);
+// Imports
+
+
+var ___CSS_LOADER_EXPORT___ = _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_1___default()((_node_modules_css_loader_dist_runtime_sourceMaps_js__WEBPACK_IMPORTED_MODULE_0___default()));
+// Module
+___CSS_LOADER_EXPORT___.push([module.id, `/* ScenePerformance styles */
+.performance-container {
+  background: radial-gradient(circle at center, #0f1c18 0%, #050b09 100%);
+  color: #f0fdf4;
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.performance-card {
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  background: rgba(12, 28, 22, 0.85);
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.6), 0 0 25px rgba(34, 197, 94, 0.05);
+}
+
+.perf-graph-line {
+  stroke: #22c55e;
+  stroke-width: 3;
+  fill: none;
+  filter: drop-shadow(0 0 6px rgba(34, 197, 94, 0.6));
+}
+
+.core-progress-bar {
+  background-color: #22c55e;
+  box-shadow: 0 0 8px rgba(34, 197, 94, 0.4);
+}
+`, "",{"version":3,"sources":["webpack://./src/scenes/styles/ScenePerformance.css"],"names":[],"mappings":"AAAA,4BAA4B;AAC5B;EACE,uEAAuE;EACvE,cAAc;EACd,WAAW;EACX,YAAY;EACZ,kBAAkB;EAClB,gBAAgB;AAClB;;AAEA;EACE,wCAAwC;EACxC,kCAAkC;EAClC,4EAA4E;AAC9E;;AAEA;EACE,eAAe;EACf,eAAe;EACf,UAAU;EACV,mDAAmD;AACrD;;AAEA;EACE,yBAAyB;EACzB,0CAA0C;AAC5C","sourcesContent":["/* ScenePerformance styles */\n.performance-container {\n  background: radial-gradient(circle at center, #0f1c18 0%, #050b09 100%);\n  color: #f0fdf4;\n  width: 100%;\n  height: 100%;\n  position: relative;\n  overflow: hidden;\n}\n\n.performance-card {\n  border: 1px solid rgba(34, 197, 94, 0.2);\n  background: rgba(12, 28, 22, 0.85);\n  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.6), 0 0 25px rgba(34, 197, 94, 0.05);\n}\n\n.perf-graph-line {\n  stroke: #22c55e;\n  stroke-width: 3;\n  fill: none;\n  filter: drop-shadow(0 0 6px rgba(34, 197, 94, 0.6));\n}\n\n.core-progress-bar {\n  background-color: #22c55e;\n  box-shadow: 0 0 8px rgba(34, 197, 94, 0.4);\n}\n"],"sourceRoot":""}]);
+// Exports
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
+
+
+/***/ },
+
+/***/ 4688
+(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   A: () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _node_modules_css_loader_dist_runtime_sourceMaps_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(2001);
+/* harmony import */ var _node_modules_css_loader_dist_runtime_sourceMaps_js__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_node_modules_css_loader_dist_runtime_sourceMaps_js__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(935);
+/* harmony import */ var _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_1__);
+// Imports
+
+
+var ___CSS_LOADER_EXPORT___ = _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_1___default()((_node_modules_css_loader_dist_runtime_sourceMaps_js__WEBPACK_IMPORTED_MODULE_0___default()));
+// Module
+___CSS_LOADER_EXPORT___.push([module.id, `/* ScenePlayful styles */
+.playful-container {
+  background-color: #fde047;
+  color: #000000;
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.playful-grid-dots {
+  background-image: radial-gradient(circle, #000000 3px, transparent 3px);
+  background-size: 24px 24px;
+}
+
+.neobrutalism-card {
+  border: 3.5px solid #000000;
+  box-shadow: 8px 8px 0px 0px #000000;
+}
+
+.playful-star-rotate {
+  animation: none; /* Handled by Remotion */
+}
+`, "",{"version":3,"sources":["webpack://./src/scenes/styles/ScenePlayful.css"],"names":[],"mappings":"AAAA,wBAAwB;AACxB;EACE,yBAAyB;EACzB,cAAc;EACd,WAAW;EACX,YAAY;EACZ,kBAAkB;EAClB,gBAAgB;AAClB;;AAEA;EACE,uEAAuE;EACvE,0BAA0B;AAC5B;;AAEA;EACE,2BAA2B;EAC3B,mCAAmC;AACrC;;AAEA;EACE,eAAe,EAAE,wBAAwB;AAC3C","sourcesContent":["/* ScenePlayful styles */\n.playful-container {\n  background-color: #fde047;\n  color: #000000;\n  width: 100%;\n  height: 100%;\n  position: relative;\n  overflow: hidden;\n}\n\n.playful-grid-dots {\n  background-image: radial-gradient(circle, #000000 3px, transparent 3px);\n  background-size: 24px 24px;\n}\n\n.neobrutalism-card {\n  border: 3.5px solid #000000;\n  box-shadow: 8px 8px 0px 0px #000000;\n}\n\n.playful-star-rotate {\n  animation: none; /* Handled by Remotion */\n}\n"],"sourceRoot":""}]);
+// Exports
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
+
+
+/***/ },
+
+/***/ 171
+(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   A: () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _node_modules_css_loader_dist_runtime_sourceMaps_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(2001);
+/* harmony import */ var _node_modules_css_loader_dist_runtime_sourceMaps_js__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_node_modules_css_loader_dist_runtime_sourceMaps_js__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(935);
+/* harmony import */ var _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_1__);
+// Imports
+
+
+var ___CSS_LOADER_EXPORT___ = _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_1___default()((_node_modules_css_loader_dist_runtime_sourceMaps_js__WEBPACK_IMPORTED_MODULE_0___default()));
+// Module
+___CSS_LOADER_EXPORT___.push([module.id, `/* ScenePrecision styles */
+.precision-container {
+  background: radial-gradient(circle at center, #0f161e 0%, #05080c 100%);
+  color: #e2e8f0;
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.precision-card {
+  border: 1px solid rgba(56, 189, 248, 0.15);
+  background: rgba(10, 17, 26, 0.8);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5), 0 0 25px rgba(56, 189, 248, 0.05);
+}
+
+.radial-progress-ring {
+  transform: rotate(-90deg);
+}
+
+.timeline-clip-active {
+  background-color: rgba(14, 165, 233, 0.15);
+  border: 1px solid rgba(14, 165, 233, 0.4);
+}
+`, "",{"version":3,"sources":["webpack://./src/scenes/styles/ScenePrecision.css"],"names":[],"mappings":"AAAA,0BAA0B;AAC1B;EACE,uEAAuE;EACvE,cAAc;EACd,WAAW;EACX,YAAY;EACZ,kBAAkB;EAClB,gBAAgB;AAClB;;AAEA;EACE,0CAA0C;EAC1C,iCAAiC;EACjC,6EAA6E;AAC/E;;AAEA;EACE,yBAAyB;AAC3B;;AAEA;EACE,0CAA0C;EAC1C,yCAAyC;AAC3C","sourcesContent":["/* ScenePrecision styles */\n.precision-container {\n  background: radial-gradient(circle at center, #0f161e 0%, #05080c 100%);\n  color: #e2e8f0;\n  width: 100%;\n  height: 100%;\n  position: relative;\n  overflow: hidden;\n}\n\n.precision-card {\n  border: 1px solid rgba(56, 189, 248, 0.15);\n  background: rgba(10, 17, 26, 0.8);\n  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5), 0 0 25px rgba(56, 189, 248, 0.05);\n}\n\n.radial-progress-ring {\n  transform: rotate(-90deg);\n}\n\n.timeline-clip-active {\n  background-color: rgba(14, 165, 233, 0.15);\n  border: 1px solid rgba(14, 165, 233, 0.4);\n}\n"],"sourceRoot":""}]);
+// Exports
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
+
+
+/***/ },
+
+/***/ 2990
+(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   A: () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _node_modules_css_loader_dist_runtime_sourceMaps_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(2001);
+/* harmony import */ var _node_modules_css_loader_dist_runtime_sourceMaps_js__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_node_modules_css_loader_dist_runtime_sourceMaps_js__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(935);
+/* harmony import */ var _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_1__);
+// Imports
+
+
+var ___CSS_LOADER_EXPORT___ = _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_1___default()((_node_modules_css_loader_dist_runtime_sourceMaps_js__WEBPACK_IMPORTED_MODULE_0___default()));
+// Module
+___CSS_LOADER_EXPORT___.push([module.id, `/* SceneReact styles */
+.react-container {
+  background: radial-gradient(circle at center, #111 0%, #050505 100%);
+  color: #ded9d5;
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.ide-window {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(15, 15, 15, 0.85);
+  backdrop-filter: blur(16px);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 0 0 20px rgba(100, 100, 255, 0.05);
+}
+
+.ide-tab-active {
+  border-bottom: 2px solid #38bdf8;
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
+.code-cursor {
+  display: inline-block;
+  width: 6px;
+  height: 14px;
+  background-color: #38bdf8;
+  margin-left: 2px;
+  vertical-align: middle;
+}
+`, "",{"version":3,"sources":["webpack://./src/scenes/styles/SceneReact.css"],"names":[],"mappings":"AAAA,sBAAsB;AACtB;EACE,oEAAoE;EACpE,cAAc;EACd,WAAW;EACX,YAAY;EACZ,kBAAkB;EAClB,gBAAgB;AAClB;;AAEA;EACE,2CAA2C;EAC3C,kCAAkC;EAClC,2BAA2B;EAC3B,8EAA8E;AAChF;;AAEA;EACE,gCAAgC;EAChC,2CAA2C;AAC7C;;AAEA;EACE,qBAAqB;EACrB,UAAU;EACV,YAAY;EACZ,yBAAyB;EACzB,gBAAgB;EAChB,sBAAsB;AACxB","sourcesContent":["/* SceneReact styles */\n.react-container {\n  background: radial-gradient(circle at center, #111 0%, #050505 100%);\n  color: #ded9d5;\n  width: 100%;\n  height: 100%;\n  position: relative;\n  overflow: hidden;\n}\n\n.ide-window {\n  border: 1px solid rgba(255, 255, 255, 0.08);\n  background: rgba(15, 15, 15, 0.85);\n  backdrop-filter: blur(16px);\n  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 0 0 20px rgba(100, 100, 255, 0.05);\n}\n\n.ide-tab-active {\n  border-bottom: 2px solid #38bdf8;\n  background-color: rgba(255, 255, 255, 0.03);\n}\n\n.code-cursor {\n  display: inline-block;\n  width: 6px;\n  height: 14px;\n  background-color: #38bdf8;\n  margin-left: 2px;\n  vertical-align: middle;\n}\n"],"sourceRoot":""}]);
+// Exports
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
+
+
+/***/ },
+
+/***/ 3885
+(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   A: () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _node_modules_css_loader_dist_runtime_sourceMaps_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(2001);
+/* harmony import */ var _node_modules_css_loader_dist_runtime_sourceMaps_js__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_node_modules_css_loader_dist_runtime_sourceMaps_js__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(935);
+/* harmony import */ var _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_1__);
+// Imports
+
+
+var ___CSS_LOADER_EXPORT___ = _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_1___default()((_node_modules_css_loader_dist_runtime_sourceMaps_js__WEBPACK_IMPORTED_MODULE_0___default()));
+// Module
+___CSS_LOADER_EXPORT___.push([module.id, `/* SceneScale styles */
+.scale-container {
+  background: radial-gradient(circle at center, #0a111a 0%, #03060b 100%);
+  color: #e2e8f0;
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.scale-window {
+  border: 1px solid rgba(56, 189, 248, 0.15);
+  background: rgba(10, 18, 30, 0.85);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6), 0 0 25px rgba(56, 189, 248, 0.05);
+}
+
+.node-connector {
+  stroke-dasharray: 6 6;
+  stroke: rgba(56, 189, 248, 0.25);
+}
+
+.active-pulse-node {
+  fill: #38bdf8;
+  filter: drop-shadow(0 0 6px #38bdf8);
+}
+`, "",{"version":3,"sources":["webpack://./src/scenes/styles/SceneScale.css"],"names":[],"mappings":"AAAA,sBAAsB;AACtB;EACE,uEAAuE;EACvE,cAAc;EACd,WAAW;EACX,YAAY;EACZ,kBAAkB;EAClB,gBAAgB;AAClB;;AAEA;EACE,0CAA0C;EAC1C,kCAAkC;EAClC,6EAA6E;AAC/E;;AAEA;EACE,qBAAqB;EACrB,gCAAgC;AAClC;;AAEA;EACE,aAAa;EACb,oCAAoC;AACtC","sourcesContent":["/* SceneScale styles */\n.scale-container {\n  background: radial-gradient(circle at center, #0a111a 0%, #03060b 100%);\n  color: #e2e8f0;\n  width: 100%;\n  height: 100%;\n  position: relative;\n  overflow: hidden;\n}\n\n.scale-window {\n  border: 1px solid rgba(56, 189, 248, 0.15);\n  background: rgba(10, 18, 30, 0.85);\n  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6), 0 0 25px rgba(56, 189, 248, 0.05);\n}\n\n.node-connector {\n  stroke-dasharray: 6 6;\n  stroke: rgba(56, 189, 248, 0.25);\n}\n\n.active-pulse-node {\n  fill: #38bdf8;\n  filter: drop-shadow(0 0 6px #38bdf8);\n}\n"],"sourceRoot":""}]);
+// Exports
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
+
+
+/***/ },
+
+/***/ 3855
+(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   A: () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _node_modules_css_loader_dist_runtime_sourceMaps_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(2001);
+/* harmony import */ var _node_modules_css_loader_dist_runtime_sourceMaps_js__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_node_modules_css_loader_dist_runtime_sourceMaps_js__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(935);
+/* harmony import */ var _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_1__);
+// Imports
+
+
+var ___CSS_LOADER_EXPORT___ = _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_1___default()((_node_modules_css_loader_dist_runtime_sourceMaps_js__WEBPACK_IMPORTED_MODULE_0___default()));
+// Module
+___CSS_LOADER_EXPORT___.push([module.id, `/* SceneTransitions styles */
+.transitions-container {
+  background: radial-gradient(circle at center, #1b1e17 0%, #090a07 100%);
+  color: #faf8f5;
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.cinematic-letterbox-top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 24px;
+  background-color: #000;
+  z-index: 30;
+}
+
+.cinematic-letterbox-bottom {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 24px;
+  background-color: #000;
+  z-index: 30;
+}
+
+.transitions-card {
+  border: 1px solid rgba(200, 149, 71, 0.15);
+  background: rgba(15, 17, 13, 0.85);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6), 0 0 20px rgba(132, 204, 22, 0.05);
+}
+
+.transitions-split-line {
+  box-shadow: 0 0 12px rgba(200, 149, 71, 0.8);
+}
+`, "",{"version":3,"sources":["webpack://./src/scenes/styles/SceneTransitions.css"],"names":[],"mappings":"AAAA,4BAA4B;AAC5B;EACE,uEAAuE;EACvE,cAAc;EACd,WAAW;EACX,YAAY;EACZ,kBAAkB;EAClB,gBAAgB;AAClB;;AAEA;EACE,kBAAkB;EAClB,MAAM;EACN,OAAO;EACP,QAAQ;EACR,YAAY;EACZ,sBAAsB;EACtB,WAAW;AACb;;AAEA;EACE,kBAAkB;EAClB,SAAS;EACT,OAAO;EACP,QAAQ;EACR,YAAY;EACZ,sBAAsB;EACtB,WAAW;AACb;;AAEA;EACE,0CAA0C;EAC1C,kCAAkC;EAClC,6EAA6E;AAC/E;;AAEA;EACE,4CAA4C;AAC9C","sourcesContent":["/* SceneTransitions styles */\n.transitions-container {\n  background: radial-gradient(circle at center, #1b1e17 0%, #090a07 100%);\n  color: #faf8f5;\n  width: 100%;\n  height: 100%;\n  position: relative;\n  overflow: hidden;\n}\n\n.cinematic-letterbox-top {\n  position: absolute;\n  top: 0;\n  left: 0;\n  right: 0;\n  height: 24px;\n  background-color: #000;\n  z-index: 30;\n}\n\n.cinematic-letterbox-bottom {\n  position: absolute;\n  bottom: 0;\n  left: 0;\n  right: 0;\n  height: 24px;\n  background-color: #000;\n  z-index: 30;\n}\n\n.transitions-card {\n  border: 1px solid rgba(200, 149, 71, 0.15);\n  background: rgba(15, 17, 13, 0.85);\n  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6), 0 0 20px rgba(132, 204, 22, 0.05);\n}\n\n.transitions-split-line {\n  box-shadow: 0 0 12px rgba(200, 149, 71, 0.8);\n}\n"],"sourceRoot":""}]);
+// Exports
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
+
+
+/***/ },
+
+/***/ 685
+(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   A: () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _node_modules_css_loader_dist_runtime_sourceMaps_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(2001);
+/* harmony import */ var _node_modules_css_loader_dist_runtime_sourceMaps_js__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_node_modules_css_loader_dist_runtime_sourceMaps_js__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(935);
+/* harmony import */ var _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_1__);
+// Imports
+
+
+var ___CSS_LOADER_EXPORT___ = _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_1___default()((_node_modules_css_loader_dist_runtime_sourceMaps_js__WEBPACK_IMPORTED_MODULE_0___default()));
+// Module
+___CSS_LOADER_EXPORT___.push([module.id, `/* SceneVintage styles */
+.vintage-container {
+  background: #1c1815;
+  color: #faf8f5;
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.vintage-vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle, transparent 40%, rgba(12, 10, 9, 0.85) 100%);
+  pointer-events: none;
+  z-index: 25;
+}
+
+.vintage-lut-tint {
+  position: absolute;
+  inset: 0;
+  mix-blend-mode: color-burn;
+  background-color: rgba(217, 119, 6, 0.05);
+  pointer-events: none;
+  z-index: 25;
+}
+
+.vintage-frame-lines {
+  position: absolute;
+  inset: 30px;
+  border: 1px solid rgba(200, 149, 71, 0.3);
+  pointer-events: none;
+  z-index: 20;
+}
+
+.vintage-dust {
+  position: absolute;
+  width: 2px;
+  height: 12px;
+  background-color: rgba(200, 149, 71, 0.35);
+  pointer-events: none;
+  z-index: 30;
+}
+`, "",{"version":3,"sources":["webpack://./src/scenes/styles/SceneVintage.css"],"names":[],"mappings":"AAAA,wBAAwB;AACxB;EACE,mBAAmB;EACnB,cAAc;EACd,WAAW;EACX,YAAY;EACZ,kBAAkB;EAClB,gBAAgB;AAClB;;AAEA;EACE,kBAAkB;EAClB,QAAQ;EACR,gFAAgF;EAChF,oBAAoB;EACpB,WAAW;AACb;;AAEA;EACE,kBAAkB;EAClB,QAAQ;EACR,0BAA0B;EAC1B,yCAAyC;EACzC,oBAAoB;EACpB,WAAW;AACb;;AAEA;EACE,kBAAkB;EAClB,WAAW;EACX,yCAAyC;EACzC,oBAAoB;EACpB,WAAW;AACb;;AAEA;EACE,kBAAkB;EAClB,UAAU;EACV,YAAY;EACZ,0CAA0C;EAC1C,oBAAoB;EACpB,WAAW;AACb","sourcesContent":["/* SceneVintage styles */\n.vintage-container {\n  background: #1c1815;\n  color: #faf8f5;\n  width: 100%;\n  height: 100%;\n  position: relative;\n  overflow: hidden;\n}\n\n.vintage-vignette {\n  position: absolute;\n  inset: 0;\n  background: radial-gradient(circle, transparent 40%, rgba(12, 10, 9, 0.85) 100%);\n  pointer-events: none;\n  z-index: 25;\n}\n\n.vintage-lut-tint {\n  position: absolute;\n  inset: 0;\n  mix-blend-mode: color-burn;\n  background-color: rgba(217, 119, 6, 0.05);\n  pointer-events: none;\n  z-index: 25;\n}\n\n.vintage-frame-lines {\n  position: absolute;\n  inset: 30px;\n  border: 1px solid rgba(200, 149, 71, 0.3);\n  pointer-events: none;\n  z-index: 20;\n}\n\n.vintage-dust {\n  position: absolute;\n  width: 2px;\n  height: 12px;\n  background-color: rgba(200, 149, 71, 0.35);\n  pointer-events: none;\n  z-index: 30;\n}\n"],"sourceRoot":""}]);
 // Exports
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
 
@@ -52839,7 +57157,7 @@ config(en());
 /******/ 	// Load entry module and return exports
 /******/ 	// This entry module is referenced by other modules so it can't be inlined
 /******/ 	__webpack_require__(5460);
-/******/ 	__webpack_require__(6589);
+/******/ 	__webpack_require__(4167);
 /******/ 	__webpack_require__(3257);
 /******/ 	var __webpack_exports__ = __webpack_require__(9681);
 /******/ 	

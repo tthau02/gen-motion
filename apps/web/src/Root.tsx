@@ -16,8 +16,12 @@ const calculateMetadata: CalculateMetadataFunction<VideoMetadata> = async ({
     }
   });
 
+  const isVertical = props.aspectRatio === "9:16";
+
   return {
     durationInFrames: totalDuration || 900,
+    width: isVertical ? 720 : 1280,
+    height: isVertical ? 1280 : 720,
   };
 };
 

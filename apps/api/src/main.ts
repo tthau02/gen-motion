@@ -3,9 +3,21 @@ import { basename, join, resolve } from 'path';
 import express from 'express';
 import { existsSync } from 'fs';
 
-// Load env configurations
-dotenv.config({ path: join(process.cwd(), '.env') });
-dotenv.config({ path: join(process.cwd(), 'apps', 'api', '.env') });
+const loadEnv = () => {
+  const envPaths = [
+    join(process.cwd(), '.env'),
+    join(process.cwd(), 'apps', 'api', '.env'),
+    resolve(__dirname, '..', '.env'),
+  ];
+
+  for (const envPath of envPaths) {
+    if (existsSync(envPath)) {
+      dotenv.config({ path: envPath, override: false });
+    }
+  }
+};
+
+loadEnv();
 
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';

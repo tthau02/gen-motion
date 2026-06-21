@@ -1,0 +1,39 @@
+/* SceneTransitions styles */
+.transitions-container {
+  background: radial-gradient(circle at center, #1b1e17 0%, #090a07 100%);
+  color: #faf8f5;
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.cinematic-letterbox-top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 24px;
+  background-color: #000;
+  z-index: 30;
+}
+
+.cinematic-letterbox-bottom {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 24px;
+  background-color: #000;
+  z-index: 30;
+}
+
+.transitions-card {
+  border: 1px solid rgba(200, 149, 71, 0.15);
+  background: rgba(15, 17, 13, 0.85);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6), 0 0 20px rgba(132, 204, 22, 0.05);
+}
+
+.transitions-split-line {
+  box-shadow: 0 0 12px rgba(200, 149, 71, 0.8);
+}

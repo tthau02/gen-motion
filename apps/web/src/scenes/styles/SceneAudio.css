@@ -1,0 +1,31 @@
+/* SceneAudio styles */
+.audio-container {
+  background: radial-gradient(circle at center, #1b121f 0%, #08050a 100%);
+  color: #f3e8ff;
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.audio-card {
+  border: 1px solid rgba(168, 85, 247, 0.2);
+  background: rgba(20, 12, 28, 0.85);
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.6), 0 0 20px rgba(168, 85, 247, 0.05);
+}
+
+.vinyl-record {
+  border: 4px solid #111;
+  background: radial-gradient(circle, #222 20%, #090909 50%, #1c1c1c 70%, #000 100%);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.5), inset 0 0 15px rgba(255,255,255,0.05);
+}
+
+.vinyl-center {
+  background-color: #a855f7;
+  box-shadow: 0 0 10px rgba(168, 85, 247, 0.5);
+}
+
+.waveform-bar {
+  background: linear-gradient(to top, rgba(168, 85, 247, 0.2) 0%, #c084fc 100%);
+  box-shadow: 0 0 8px rgba(192, 132, 252, 0.3);
+}

@@ -1,0 +1,43 @@
+/* SceneVintage styles */
+.vintage-container {
+  background: #1c1815;
+  color: #faf8f5;
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.vintage-vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle, transparent 40%, rgba(12, 10, 9, 0.85) 100%);
+  pointer-events: none;
+  z-index: 25;
+}
+
+.vintage-lut-tint {
+  position: absolute;
+  inset: 0;
+  mix-blend-mode: color-burn;
+  background-color: rgba(217, 119, 6, 0.05);
+  pointer-events: none;
+  z-index: 25;
+}
+
+.vintage-frame-lines {
+  position: absolute;
+  inset: 30px;
+  border: 1px solid rgba(200, 149, 71, 0.3);
+  pointer-events: none;
+  z-index: 20;
+}
+
+.vintage-dust {
+  position: absolute;
+  width: 2px;
+  height: 12px;
+  background-color: rgba(200, 149, 71, 0.35);
+  pointer-events: none;
+  z-index: 30;
+}

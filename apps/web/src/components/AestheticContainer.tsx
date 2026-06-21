@@ -1,5 +1,5 @@
 import React from "react";
-import { AbsoluteFill } from "remotion";
+import { AbsoluteFill, useCurrentFrame } from "remotion";
 
 
 export interface AestheticContainerProps {
@@ -95,7 +95,10 @@ export const AestheticContainer: React.FC<AestheticContainerProps> = ({
   backgroundColor,
   borderColor,
 }) => {
+  const frame = useCurrentFrame();
   const derived = getDerivedColors(themeColor, backgroundColor, textColor, borderColor);
+  const grainX = ((frame * 17) % 9) - 4;
+  const grainY = ((frame * 29) % 9) - 4;
 
   return (
     <AbsoluteFill
@@ -144,7 +147,12 @@ export const AestheticContainer: React.FC<AestheticContainerProps> = ({
 
       {/* Dynamic SVG-based Film Grain Layer */}
       {showGrain && (
-        <div className="absolute -inset-[50%] w-[200%] h-[200%] opacity-[0.06] pointer-events-none mix-blend-overlay z-50 animate-grain">
+        <div
+          className="absolute -inset-[50%] w-[200%] h-[200%] opacity-[0.045] pointer-events-none mix-blend-overlay z-50"
+          style={{
+            transform: `translate(${grainX}px, ${grainY}px)`,
+          }}
+        >
           <svg
             width="100%"
             height="100%"

@@ -1,11 +1,36 @@
 import React from "react";
-import { Img } from "remotion";
-import { 
-  Cpu, Briefcase, Camera, Code, Music, Gamepad2, Sparkles, 
-  Leaf, Terminal, Shield, BookOpen, Database, 
-  TrendingUp, Globe, Activity, Eye, Zap
+import {
+  Easing,
+  Img,
+  interpolate,
+  useCurrentFrame,
+  useVideoConfig,
+} from "remotion";
+import {
+  Activity,
+  BookOpen,
+  Briefcase,
+  Camera,
+  Code,
+  Cpu,
+  Database,
+  Eye,
+  Gamepad2,
+  Globe,
+  Leaf,
+  Music,
+  Shield,
+  Sparkles,
+  Terminal,
+  TrendingUp,
+  Zap,
 } from "lucide-react";
+import { loadFont as loadSerif } from "@remotion/google-fonts/PlayfairDisplay";
+import { loadFont as loadSans } from "@remotion/google-fonts/SpaceGrotesk";
 import { MotionDiv } from "../components/Motion";
+
+const { fontFamily: serifFont } = loadSerif("normal", { weights: ["400", "700"] });
+const { fontFamily: sansFont } = loadSans("normal", { weights: ["400", "700"] });
 
 interface SceneDynamicProps {
   type: string;
@@ -23,6 +48,18 @@ interface SceneDynamicProps {
     metricLabel?: string;
     metricValue?: string;
     chips?: string[];
+    shotType?:
+      | "wide"
+      | "close-up"
+      | "detail"
+      | "editorial"
+      | "documentary"
+      | "data-insert";
+    focalPoint?: string;
+    captionStyle?: "none" | "lower-third" | "chapter" | "caption" | "annotation";
+    textureLevel?: "none" | "subtle" | "medium";
+    overlayDensity?: "none" | "low" | "medium";
+    supportingDetails?: string[];
     [key: string]: unknown;
   };
 }
@@ -80,6 +117,11 @@ const getIcon = (type: string) => {
   return Sparkles;
 };
 
+const sentenceCase = (value: string) => {
+  const lower = value.toLocaleLowerCase("vi-VN");
+  return lower.charAt(0).toLocaleUpperCase("vi-VN") + lower.slice(1);
+};
+
 export const SceneDynamic: React.FC<SceneDynamicProps> = ({
   type,
   title,
@@ -89,195 +131,286 @@ export const SceneDynamic: React.FC<SceneDynamicProps> = ({
   themeColor = "#c89547",
   customProps = {},
 }) => {
+  const frame = useCurrentFrame();
+  const { width, height } = useVideoConfig();
+  const isVertical = height > width;
   const Icon = getIcon(type);
+
   const {
     codeSnippet,
     terminalCommand,
     layoutVariant = "center",
     visualStyle = "cinematic",
+    badgeText,
+    metricLabel,
+    metricValue,
+    chips = [],
+    shotType = visualStyle === "technical" ? "data-insert" : "editorial",
+    focalPoint,
+    captionStyle = layoutVariant === "dashboard" ? "annotation" : "lower-third",
+    textureLevel = "subtle",
+    overlayDensity = layoutVariant === "dashboard" ? "medium" : "low",
+    supportingDetails = [],
   } = customProps;
 
-  // Layout alignment mapping
-  const alignmentClass = {
-    center: "items-center text-center",
-    split: "items-start text-left",
-    spotlight: "items-end text-right",
-    dashboard: "items-end text-right justify-end",
-  }[layoutVariant];
+  const isDataScene =
+    shotType === "data-insert" ||
+    visualStyle === "technical" ||
+    layoutVariant === "dashboard" ||
+    Boolean(codeSnippet || terminalCommand || metricLabel || metricValue);
 
-  const wrapperAlignmentClass = {
-    center: "items-center justify-center",
-    split: "items-start justify-center md:pl-16",
-    spotlight: "items-end justify-center md:pr-16",
-    dashboard: "items-end justify-end p-12",
-  }[layoutVariant];
+  const imageScale = interpolate(frame, [0, 240], [1.04, 1.1], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp",
+    easing: Easing.bezier(0.16, 1, 0.3, 1),
+  });
+  const imageX = interpolate(
+    frame,
+    [0, 240],
+    layoutVariant === "spotlight" ? [12, -8] : [-10, 8],
+    {
+      extrapolateLeft: "clamp",
+      extrapolateRight: "clamp",
+    }
+  );
+  const textureOpacity =
+    textureLevel === "medium" ? 0.12 : textureLevel === "subtle" ? 0.055 : 0;
+  const overlayOpacity =
+    overlayDensity === "medium" ? 0.72 : overlayDensity === "low" ? 0.48 : 0.26;
 
-  const visualCardClass = {
-    cinematic: "bg-black/35 backdrop-blur-md border border-white/10 shadow-2xl",
-    minimal: "bg-transparent border-none shadow-none",
-    technical: "bg-stone-950/80 border border-[#3e342c]/50 font-mono shadow-lg",
-    bold: "bg-black/75 border-2 border-white/20 shadow-2xl",
-  }[visualStyle];
+  const contentPosition = isVertical
+    ? {
+        left: 34,
+        right: 34,
+        bottom: 70,
+        maxWidth: "none",
+        alignItems: "flex-start",
+        textAlign: "left" as const,
+      }
+    : layoutVariant === "spotlight"
+      ? {
+          right: 76,
+          bottom: 68,
+          maxWidth: 540,
+          alignItems: "flex-end",
+          textAlign: "right" as const,
+        }
+      : layoutVariant === "split"
+        ? {
+            left: 72,
+            bottom: 64,
+            maxWidth: 560,
+            alignItems: "flex-start",
+            textAlign: "left" as const,
+          }
+        : {
+            left: 76,
+            bottom: 68,
+            maxWidth: 620,
+            alignItems: "flex-start",
+            textAlign: "left" as const,
+          };
 
-  const textGradient = {
-    cinematic: "text-[#faf8f5] tracking-wide font-serif",
-    minimal: "text-white tracking-normal font-sans",
-    technical: "text-[#ded9d5] tracking-widest font-mono uppercase",
-    bold: "text-white tracking-tight font-sans font-black",
-  }[visualStyle];
-
-  const isSplitLayout = layoutVariant === "split" && (!!codeSnippet || !!terminalCommand);
+  const titleFont = visualStyle === "technical" ? sansFont : serifFont;
+  const titleSize = isVertical ? 34 : isDataScene ? 42 : 58;
+  const showCaptionChrome = captionStyle !== "none" && !isDataScene;
+  const showDetails = supportingDetails.length > 0 && overlayDensity !== "none";
+  const showChips = isDataScene && chips.length > 0;
 
   return (
-    <div className="relative flex flex-col h-full w-full bg-[#13100e] overflow-hidden select-none">
-      {/* Background Graphic Grid */}
-      <div 
-        className="absolute inset-0 opacity-[0.04] pointer-events-none -z-10" 
+    <div
+      className="relative h-full w-full overflow-hidden select-none"
+      style={{
+        backgroundColor: "#0d0b09",
+        color: "#f7f2ea",
+        fontFamily: sansFont,
+      }}
+    >
+      {imageUrl ? (
+        <div className="absolute inset-0 overflow-hidden">
+          <Img
+            src={imageUrl}
+            className="h-full w-full object-cover"
+            style={{
+              transform: `translateX(${imageX}px) scale(${imageScale})`,
+              filter:
+                visualStyle === "minimal"
+                  ? "saturate(0.9) contrast(1.04)"
+                  : visualStyle === "technical"
+                    ? "saturate(0.62) contrast(1.14)"
+                    : "saturate(0.82) contrast(1.08)",
+            }}
+          />
+        </div>
+      ) : (
+        <div
+          className="absolute inset-0"
+          style={{
+            background: `linear-gradient(135deg, #15110e 0%, ${themeColor}22 46%, #080706 100%)`,
+          }}
+        />
+      )}
+
+      <div
+        className="absolute inset-0"
         style={{
-          backgroundImage: "linear-gradient(to right, #ffffff 1px, transparent 1px), linear-gradient(to bottom, #ffffff 1px, transparent 1px)",
-          backgroundSize: "60px 60px"
+          background: isVertical
+            ? `linear-gradient(180deg, rgba(0,0,0,0.08), rgba(0,0,0,${overlayOpacity}) 54%, rgba(0,0,0,0.86))`
+            : `linear-gradient(90deg, rgba(0,0,0,${overlayOpacity}) 0%, rgba(0,0,0,0.36) 43%, rgba(0,0,0,0.1) 100%)`,
         }}
       />
 
-      {/* Dynamic theme-colored radial glow overlay */}
-      <div 
-        className="absolute inset-0 pointer-events-none -z-10 bg-[radial-gradient(circle_at_center,var(--glow-color)_0%,#0e0c0b_90%)]"
-        style={{
-          "--glow-color": `${themeColor}22`
-        } as React.CSSProperties}
-      />
-
-      {imageUrl && (
-        <div className="absolute inset-0 -z-20 overflow-hidden opacity-20">
-          <Img
-            src={imageUrl}
-            className="w-full h-full object-cover scale-[1.05] animate-subtle-drift"
-          />
-        </div>
+      {textureOpacity > 0 && (
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            opacity: textureOpacity,
+            backgroundImage:
+              "linear-gradient(rgba(255,255,255,0.22) 1px, transparent 1px)",
+            backgroundSize: "100% 5px",
+            mixBlendMode: "overlay",
+          }}
+        />
       )}
 
-      {/* Dynamic Content Layout */}
-      <div className={`flex flex-col md:flex-row items-center justify-center h-full w-full px-12 gap-8 md:gap-12 z-20 ${wrapperAlignmentClass}`}>
-        
-        {/* If custom code snippet exists and split layout is preferred */}
-        {isSplitLayout && codeSnippet && (
-          <MotionDiv
-            initial={{ opacity: 0, x: -30 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ startFrame: 8, type: "spring", damping: 15 }}
-            className="w-full md:w-[45%] h-[320px] rounded-lg overflow-hidden border border-white/10 bg-black/55 shadow-2xl flex flex-col"
-          >
-            <div className="h-9 border-b border-white/5 bg-black/40 flex items-center px-4 justify-between">
-              <div className="flex gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-red-500/60" />
-                <span className="w-2.5 h-2.5 rounded-full bg-yellow-500/60" />
-                <span className="w-2.5 h-2.5 rounded-full bg-green-500/60" />
-              </div>
-              <span className="text-[9px] text-stone-500 font-mono tracking-widest uppercase">
-                {type}.tsx
-              </span>
-              <Code className="w-3.5 h-3.5 text-stone-400" style={{ color: themeColor }} />
-            </div>
-            <div className="p-5 font-mono text-[9px] leading-relaxed text-stone-300 flex-1 overflow-auto custom-scrollbar">
-              <pre className="text-left whitespace-pre">{codeSnippet}</pre>
-            </div>
-          </MotionDiv>
-        )}
-
-        {/* If custom terminal command exists and split layout is preferred */}
-        {isSplitLayout && terminalCommand && (
-          <MotionDiv
-            initial={{ opacity: 0, x: -30 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ startFrame: 8, type: "spring", damping: 15 }}
-            className="w-full md:w-[45%] h-[180px] rounded-lg overflow-hidden border border-stone-800 bg-[#0c0908] shadow-2xl flex flex-col"
-          >
-            <div className="h-9 border-b border-stone-900 bg-stone-950 flex items-center px-4 justify-between">
-              <span className="text-[9px] text-stone-500 font-mono tracking-wider">TERMINAL</span>
-              <Terminal className="w-3.5 h-3.5 text-stone-400" />
-            </div>
-            <div className="p-4 font-mono text-xs text-left leading-relaxed flex-1 flex flex-col justify-center">
-              <div className="text-stone-500 flex gap-2">
-                <span className="text-emerald-500">➜</span>
-                <span className="text-stone-300">workspace</span>
-                <span className="text-[#857467]">{terminalCommand}</span>
-              </div>
-              <div className="text-stone-400 mt-2 text-[10px]">
-                Running script for composition generation... Done.
-              </div>
-            </div>
-          </MotionDiv>
-        )}
-
-        {/* Main textual content wrapper */}
-        <div className={`flex flex-col max-w-[650px] ${isSplitLayout ? "w-full md:w-[55%]" : "w-full"} ${alignmentClass}`}>
-          
-          {/* Accent Badge / Card container for non-split designs */}
-          <div className={`p-8 rounded-xl flex flex-col ${isSplitLayout ? "bg-transparent border-none p-0" : visualCardClass} ${alignmentClass} w-full`}>
-            
-            {/* Topic Floating Icon */}
-            <MotionDiv
-              initial={{ opacity: 0, scale: 0.5, rotate: -15 }}
-              animate={{ opacity: 1, scale: 1, rotate: 0 }}
-              transition={{ startFrame: 4, type: "spring", damping: 12 }}
-              className="mb-4"
-            >
-              <div 
-                className="w-12 h-12 rounded-xl flex items-center justify-center border"
-                style={{ 
-                  backgroundColor: `${themeColor}15`, 
-                  borderColor: `${themeColor}40`,
-                  color: themeColor
-                }}
-              >
-                <Icon className="w-6 h-6" />
-              </div>
-            </MotionDiv>
-
-            {/* Subtitle */}
-            <MotionDiv
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 0.75, y: 0 }}
-              transition={{ startFrame: 8, type: "spring", damping: 15 }}
-              className="text-xs uppercase tracking-[0.3em] mb-2 font-bold font-sans"
-              style={{ color: themeColor }}
-            >
-              {subtitle}
-            </MotionDiv>
-
-            {/* Title */}
-            <MotionDiv
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ startFrame: 12, type: "spring", damping: 14 }}
-              className={`text-3xl md:text-4xl uppercase max-w-[550px] font-bold leading-tight ${textGradient} ${alignmentClass}`}
-            >
-              {title}
-            </MotionDiv>
-
-            {/* Description */}
-            {description && (
-              <MotionDiv
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 0.8, y: 0 }}
-                transition={{ startFrame: 18, type: "tween", duration: 25 }}
-                className="text-xs tracking-wider max-w-[460px] mt-4 leading-relaxed font-light font-sans text-stone-300"
-              >
-                {description}
-              </MotionDiv>
-            )}
-
-            {/* Decorative bottom lines using themeColor */}
-            <MotionDiv
-              initial={{ opacity: 0, scale: 0 }}
-              animate={{ opacity: 0.4, scale: 1 }}
-              transition={{ startFrame: 24, type: "spring", damping: 16 }}
-              className="w-16 h-[2px] mt-6"
-              style={{ backgroundColor: themeColor }}
-            />
+      {isDataScene && (
+        <MotionDiv
+          initial={{ opacity: 0, x: isVertical ? 0 : 28, y: isVertical ? -14 : 0 }}
+          animate={{ opacity: 1, x: 0, y: 0 }}
+          transition={{ startFrame: 10, type: "spring", damping: 18 }}
+          className="absolute border border-white/[0.12] bg-black/[0.45]"
+          style={{
+            right: isVertical ? 34 : 72,
+            top: isVertical ? 54 : 72,
+            width: isVertical ? "calc(100% - 68px)" : 360,
+            borderRadius: 8,
+            padding: 18,
+          }}
+        >
+          <div className="flex items-center justify-between gap-3 border-b border-white/10 pb-3">
+            <span className="text-[10px] font-semibold text-white/60">
+              {badgeText || focalPoint || sentenceCase(type)}
+            </span>
+            <Icon className="h-4 w-4" style={{ color: themeColor }} />
           </div>
-        </div>
 
+          {(metricValue || metricLabel) && (
+            <div className="mt-4">
+              {metricValue && (
+                <div className="text-[34px] leading-none font-bold">
+                  {metricValue}
+                </div>
+              )}
+              {metricLabel && (
+                <div className="mt-2 text-[11px] text-white/58">
+                  {metricLabel}
+                </div>
+              )}
+            </div>
+          )}
+
+          {(codeSnippet || terminalCommand) && (
+            <pre
+              className="mt-4 max-h-[150px] overflow-hidden whitespace-pre-wrap text-[10px] leading-relaxed text-white/70"
+              style={{ fontFamily: "ui-monospace, SFMono-Regular, Consolas, monospace" }}
+            >
+              {codeSnippet || `$ ${terminalCommand}`}
+            </pre>
+          )}
+
+          {showChips && (
+            <div className="mt-4 flex flex-wrap gap-2">
+              {chips.slice(0, 3).map((chip) => (
+                <span
+                  key={chip}
+                  className="rounded border border-white/[0.12] px-2 py-1 text-[10px] text-white/60"
+                >
+                  {chip}
+                </span>
+              ))}
+            </div>
+          )}
+        </MotionDiv>
+      )}
+
+      <div
+        className="absolute flex flex-col"
+        style={{
+          ...contentPosition,
+        }}
+      >
+        {showCaptionChrome && (
+          <MotionDiv
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ startFrame: 6, type: "spring", damping: 18 }}
+            className="mb-5 h-[1px]"
+            style={{
+              width: isVertical ? 78 : 116,
+              backgroundColor: themeColor,
+            }}
+          />
+        )}
+
+        <MotionDiv
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 0.74, y: 0 }}
+          transition={{ startFrame: 8, type: "tween", duration: 22 }}
+          className="mb-3 text-[12px] font-semibold"
+          style={{
+            color: themeColor,
+            letterSpacing: "0.08em",
+          }}
+        >
+          {subtitle}
+        </MotionDiv>
+
+        <MotionDiv
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ startFrame: 12, type: "spring", damping: 18 }}
+          className="leading-[0.98]"
+          style={{
+            fontFamily: titleFont,
+            fontSize: titleSize,
+            fontWeight: visualStyle === "minimal" ? 400 : 700,
+            letterSpacing: 0,
+            textTransform: visualStyle === "technical" ? "uppercase" : "none",
+          }}
+        >
+          {visualStyle === "technical" ? title : sentenceCase(title)}
+        </MotionDiv>
+
+        {description && (
+          <MotionDiv
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 0.78, y: 0 }}
+            transition={{ startFrame: 20, type: "tween", duration: 26 }}
+            className="mt-5 text-[14px] leading-relaxed"
+            style={{
+              maxWidth: isVertical ? "100%" : 480,
+              color: "#eee4d8",
+            }}
+          >
+            {description}
+          </MotionDiv>
+        )}
+
+        {showDetails && (
+          <MotionDiv
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 0.68, y: 0 }}
+            transition={{ startFrame: 28, type: "tween", duration: 24 }}
+            className="mt-6 grid gap-1.5 text-[11px] leading-snug text-white/70"
+          >
+            {supportingDetails.slice(0, 3).map((detail) => (
+              <div key={detail} className="flex gap-2">
+                <span style={{ color: themeColor }}>-</span>
+                <span>{detail}</span>
+              </div>
+            ))}
+          </MotionDiv>
+        )}
       </div>
     </div>
   );

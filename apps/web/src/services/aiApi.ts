@@ -8,6 +8,7 @@ export interface GenerateVideoRequest {
   tone: string;
   projectId?: string;
   templates?: string[];
+  aspectRatio?: "16:9" | "9:16";
 }
 
 export const aiApi = {
