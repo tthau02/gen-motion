@@ -9,11 +9,11 @@ const resolutionOptions: {
   label: string;
   size: string;
 }[] = [
-  { value: "720p", label: "HD 720p", size: "1280x720" },
-  { value: "1080p", label: "Full HD 1080p", size: "1920x1080" },
-  { value: "1440p", label: "QHD 1440p", size: "2560x1440" },
-  { value: "4k", label: "UHD 4K", size: "3840x2160" },
-];
+    { value: "720p", label: "HD 720p", size: "1280x720" },
+    { value: "1080p", label: "Full HD 1080p", size: "1920x1080" },
+    { value: "1440p", label: "QHD 1440p", size: "2560x1440" },
+    { value: "4k", label: "UHD 4K", size: "3840x2160" },
+  ];
 
 interface RenderModalProps {
   isOpen: boolean;
@@ -58,11 +58,11 @@ export const RenderModal: React.FC<RenderModalProps> = ({
           setJob((current) =>
             current
               ? {
-                  ...current,
-                  status: "error",
-                  message: "Render status polling failed",
-                  error: err instanceof Error ? err.message : String(err),
-                }
+                ...current,
+                status: "error",
+                message: "Render status polling failed",
+                error: err instanceof Error ? err.message : String(err),
+              }
               : current
           )
         );
@@ -242,7 +242,11 @@ export const RenderModal: React.FC<RenderModalProps> = ({
                   </span>
                 )}
                 <a
-                  href={job.outputUrl}
+                  href={
+                    job.outputUrl.startsWith("http")
+                      ? job.outputUrl
+                      : `${import.meta.env.VITE_API_URL || ""}${job.outputUrl}`
+                  }
                   download={job.filename}
                   className="w-full py-2 rounded bg-[#2b2420] hover:bg-[#3e342c] text-[#ded9d5] hover:text-white font-bold text-xs uppercase flex items-center justify-center gap-2 transition-all border border-[#3e342c]"
                 >
