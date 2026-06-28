@@ -52,12 +52,22 @@ export const VideoMetadataSchema = z.object({
   backgroundColor: zColor().optional(),
   borderColor: zColor().optional(),
   audioUrl: z.string().optional(),
+  narrationText: z.string().optional(),
   aspectRatio: z.enum(["16:9", "9:16"]).optional(),
   scenes: z.array(VideoSceneSchema),
 });
 
 export type VideoScene = z.infer<typeof VideoSceneSchema>;
 
-export interface VideoMetadata extends z.infer<typeof VideoMetadataSchema> {
+export interface VideoMetadata {
+  themeColor: string;
+  textColor?: string;
+  backgroundColor?: string;
+  borderColor?: string;
+  audioUrl?: string;
+  /** Pre-generated Vietnamese voiceover narration text from AI */
+  narrationText?: string;
+  aspectRatio?: "16:9" | "9:16";
+  scenes: VideoScene[];
   [key: string]: unknown;
 }

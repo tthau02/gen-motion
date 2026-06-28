@@ -5,6 +5,7 @@ import { SidebarProject } from "../components/dashboard/types";
 import { calculateTotalDuration } from "../utils/videoDuration";
 import { projectsApi } from "../services/projectsApi";
 import { aiApi } from "../services/aiApi";
+import { voiceoverApi } from "../services/voiceoverApi";
 
 export const useProjectLibrary = (onPlaybackReset: () => void) => {
   const [projects, setProjects] = useState<SidebarProject[]>([]);
@@ -13,6 +14,7 @@ export const useProjectLibrary = (onPlaybackReset: () => void) => {
   );
   const [activeProject, setActiveProject] = useState("vintage-cinematic");
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isGeneratingVoiceover, setIsGeneratingVoiceover] = useState(false);
   const [selectedSceneIndex, setSelectedSceneIndex] = useState(0);
   const lastSavedProjectData = useRef<Record<string, string>>({});
   const videoDataRef = useRef(videoData);
@@ -167,16 +169,77 @@ export const useProjectLibrary = (onPlaybackReset: () => void) => {
     }
   };
 
+  /**
+   * Generate Vietnamese AI voiceover based on the current video's scenes.
+   * Updates the video data's audioUrl with the generated audio file.
+   */
+  const generateVoiceoverForProject = async (options: {
+    title?: string;
+    description: string;
+    duration: string;
+    tone: string;
+    voiceId?: string;
+  }) => {
+    const currentData = videoDataRef.current;
+    const projectId = activeProjectRef.current;
+
+    setIsGeneratingVoiceover(true);
+    try {
+      const response = await voiceoverApi.generateVoiceover({
+        // PRIMARY PATH: Pass the pre-generated narration from the AI video gen step.
+        // This ensures voiceover matches the video content — one Gemini prompt for both.
+        narrationText: currentData.narrationText,
+        // FALLBACK: provide description/scenes in case narrationText is empty
+        title: options.title || projectId,
+        description: options.description,
+        duration: options.duration,
+        tone: options.tone,
+        voiceId: options.voiceId,
+        scenes: currentData.scenes.map((s) => ({
+          title: s.title,
+          subtitle: s.subtitle,
+          description: s.description,
+          type: s.type,
+        })),
+      });
+
+      // Update video data with the generated voiceover audio URL
+      const updatedData: VideoMetadata = {
+        ...currentData,
+        audioUrl: response.audioUrl,
+      };
+
+      setVideoData(updatedData);
+      setProjects((prev) =>
+        prev.map((project) =>
+          project.id === projectId
+            ? {
+                ...project,
+                data: updatedData,
+                durationInFrames: calculateTotalDuration(updatedData),
+              }
+            : project,
+        ),
+      );
+
+      return response;
+    } finally {
+      setIsGeneratingVoiceover(false);
+    }
+  };
+
   return {
     projects,
     videoData,
     activeProject,
     isGenerating,
+    isGeneratingVoiceover,
     selectedSceneIndex,
     setSelectedSceneIndex,
     updateCurrentVideoData,
     handleProjectSelect,
     handleSceneSelect,
     generateAiVideo,
+    generateVoiceoverForProject,
   };
 };

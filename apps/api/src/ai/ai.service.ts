@@ -18,7 +18,7 @@ export class AiService {
   private readonly imageCache = new Map<string, string>();
   private readonly cache = new Map<
     string,
-    { timestamp: number; data: { themeColor: string; scenes: VideoScene[] } }
+    { timestamp: number; data: { themeColor: string; narrationText?: string; scenes: VideoScene[] } }
   >();
   private readonly cacheTtl = 5 * 60 * 1000; // 5 minutes TTL
 
@@ -361,6 +361,7 @@ export class AiService {
           data: {
             themeColor: cached.data.themeColor || '#c89547',
             audioUrl: '',
+            narrationText: cached.data.narrationText || '',
             aspectRatio: aspectRatio || '16:9',
             scenes: newScenes,
           },
@@ -457,6 +458,19 @@ Guidelines for generating each scene:
 Avoid generic AI-looking design patterns: do not rely on abstract gradient blobs, decorative glass cards, random neon glow, fake metrics, generic badges, or keyword chips unless the subject explicitly calls for them. Each scene should feel like a directed shot with a concrete subject, intentional crop, and restrained typography.
 
 Assign a custom hex color code to 'themeColor' matching the visual theme and mood of the video (e.g. Deep Forest Green '#054e3b' for nature/food, Neon Cyberpunk Pink '#ec4899' or Cyan '#06b6d4' for tech/futurism, Warm Amber/Gold '#c89547' for vintage/historical, Playful Sunny Yellow '#eab308' or Magenta '#d946ef' for entertainment/creative). Choose any color that fits. Do not limit yourself to standard preset colors.
+
+7. IMPORTANT — NARRATION TEXT (narrationText):
+   After designing all scenes, write a single, cohesive Vietnamese voiceover narration script that ties the entire video together. This narration will be spoken by an AI voice as the video plays.
+   Requirements for narrationText:
+   - Write ENTIRELY in Vietnamese, natural spoken language suitable for reading aloud.
+   - Length: approximately ${Math.max(30, Math.round(durationNum * 2))} Vietnamese words — enough to read comfortably in ${durationNum} seconds at natural Vietnamese speech pace (~2-2.5 words/second).
+   - The narration should flow naturally from scene to scene, referencing and connecting the content of each scene.
+   - Use short, punchy sentences good for spoken delivery. No complex clauses.
+   - Match the "${tone}" tone throughout.
+   - Do NOT include scene numbers, speaker labels, stage directions, or any formatting — just the pure spoken text.
+   - No markdown, no special characters, no brackets, no quotes around the text.
+   - The narration should feel like one continuous story, not a list of scene descriptions.
+   - ONLY return the narration text itself. No preamble, no explanation.
 `;
 
     try {
@@ -474,6 +488,7 @@ Assign a custom hex color code to 'themeColor' matching the visual theme and moo
             type: Type.OBJECT,
             properties: {
               themeColor: { type: Type.STRING },
+              narrationText: { type: Type.STRING },
               scenes: {
                 type: Type.ARRAY,
                 items: {
@@ -564,7 +579,7 @@ Assign a custom hex color code to 'themeColor' matching the visual theme and moo
                 },
               },
             },
-            required: ['themeColor', 'scenes'],
+            required: ['themeColor', 'narrationText', 'scenes'],
           },
         },
       });
@@ -576,6 +591,7 @@ Assign a custom hex color code to 'themeColor' matching the visual theme and moo
 
       const generatedData = JSON.parse(responseText) as {
         themeColor: string;
+        narrationText: string;
         scenes: VideoScene[];
       };
 
@@ -612,6 +628,7 @@ Assign a custom hex color code to 'themeColor' matching the visual theme and moo
           timestamp: Date.now(),
           data: {
             themeColor: generatedData.themeColor,
+            narrationText: generatedData.narrationText || '',
             scenes: newScenes,
           },
         });
@@ -648,6 +665,7 @@ Assign a custom hex color code to 'themeColor' matching the visual theme and moo
           existingProject.data = {
             themeColor: generatedData.themeColor || '#c89547',
             audioUrl: existingProject.data.audioUrl || '',
+            narrationText: generatedData.narrationText || '',
             aspectRatio:
               aspectRatio || existingProject.data.aspectRatio || '16:9',
             scenes: newScenes,
@@ -665,6 +683,7 @@ Assign a custom hex color code to 'themeColor' matching the visual theme and moo
         data: {
           themeColor: generatedData.themeColor || '#c89547',
           audioUrl: '',
+          narrationText: generatedData.narrationText || '',
           aspectRatio: aspectRatio || '16:9',
           scenes: newScenes,
         },

@@ -4,6 +4,7 @@ import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { ProjectsModule } from './projects/projects.module';
 import { AiModule } from './ai/ai.module';
 import { RenderModule } from './render/render.module';
+import { VoiceoverModule } from './voiceover/voiceover.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { RenderModule } from './render/render.module';
     ProjectsModule,
     AiModule,
     RenderModule,
+    VoiceoverModule,
   ],
   controllers: [],
   providers: [

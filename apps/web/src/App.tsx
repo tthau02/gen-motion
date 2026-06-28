@@ -103,11 +103,13 @@ export const App: React.FC = () => {
     videoData,
     activeProject,
     isGenerating,
+    isGeneratingVoiceover,
     selectedSceneIndex,
     setSelectedSceneIndex,
     updateCurrentVideoData,
     handleProjectSelect,
     generateAiVideo,
+    generateVoiceoverForProject,
   } = projectLibrary;
 
   const isVerticalRatio = videoData?.aspectRatio === "9:16";
@@ -209,10 +211,26 @@ export const App: React.FC = () => {
     tone: string,
     updateCurrent: boolean,
     templates: string[],
-    aspectRatio?: "16:9" | "9:16"
+    aspectRatio?: "16:9" | "9:16",
+    voiceoverOptions?: { enabled: boolean; voiceId?: string },
   ) => {
     generateAiVideo(title, description, duration, tone, updateCurrent, templates, aspectRatio)
-      .then(() => setShowAiModal(false))
+      .then((project) => {
+        setShowAiModal(false);
+        // If voiceover is enabled, generate it after video creation
+        if (voiceoverOptions?.enabled && project) {
+          generateVoiceoverForProject({
+            title: project.title,
+            description,
+            duration,
+            tone,
+            voiceId: voiceoverOptions.voiceId,
+          }).catch((err: Error) => {
+            console.error("Error generating voiceover:", err);
+            alert(`Lỗi tạo giọng nói: ${err.message}`);
+          });
+        }
+      })
       .catch((err) => {
         console.error("Error generating AI video:", err);
         alert(`Error generating AI video: ${err.message}`);
@@ -367,7 +385,7 @@ export const App: React.FC = () => {
         isOpen={showAiModal}
         onClose={() => setShowAiModal(false)}
         onGenerate={handleGenerateAiVideo}
-        isGenerating={isGenerating}
+        isGenerating={isGenerating || isGeneratingVoiceover}
         defaultUpdateCurrent={defaultUpdateCurrent}
       />
 

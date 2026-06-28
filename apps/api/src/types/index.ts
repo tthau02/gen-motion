@@ -43,6 +43,8 @@ export class VideoMetadata {
   backgroundColor?: string;
   borderColor?: string;
   audioUrl?: string;
+  /** Pre-generated Vietnamese voiceover narration text (from AI prompt) */
+  narrationText?: string;
   aspectRatio?: '16:9' | '9:16';
   scenes: VideoScene[];
 }
