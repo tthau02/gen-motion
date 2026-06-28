@@ -41,6 +41,7 @@ export const VideoSceneSchema = z.object({
       textureLevel: z.enum(["none", "subtle", "medium"]).optional(),
       overlayDensity: z.enum(["none", "low", "medium"]).optional(),
       supportingDetails: z.array(z.string()).optional(),
+      narrationText: z.string().optional(),
     })
     .catchall(z.unknown())
     .optional(),

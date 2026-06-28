@@ -6,12 +6,16 @@ import { existsSync, mkdirSync } from 'fs';
 import { basename, isAbsolute, join, resolve } from 'path';
 import { randomUUID } from 'crypto';
 import { RenderJob, RenderRequest } from './render.types';
+import { VideoMetadata } from '../types';
 
 @Injectable()
 export class RenderService {
   private readonly jobs = new Map<string, RenderJob>();
   private serveUrlPromise: Promise<string> | null = null;
   private readonly workspaceRoot = this.resolveWorkspaceRoot();
+  private readonly assetBaseUrl =
+    process.env.RENDER_ASSET_BASE_URL?.replace(/\/+$/, '') ||
+    `http://127.0.0.1:${process.env.PORT ?? 3000}`;
 
   startRender(request: RenderRequest): RenderJob {
     const id = randomUUID();
@@ -86,7 +90,9 @@ export class RenderService {
       job.status = 'rendering';
       job.progress = Math.max(job.progress, 0.15);
       job.message = 'Resolving composition metadata';
-      const inputProps = request.data as unknown as Record<string, unknown>;
+      const inputProps = this.prepareRenderableData(
+        request.data,
+      ) as unknown as Record<string, unknown>;
 
       const composition = await selectComposition({
         serveUrl,
@@ -174,6 +180,27 @@ export class RenderService {
     return isAbsolute(outputDirectory)
       ? outputDirectory
       : resolve(this.workspaceRoot, outputDirectory);
+  }
+
+  private prepareRenderableData(data: VideoMetadata): VideoMetadata {
+    return {
+      ...data,
+      audioUrl: this.resolveRenderableAssetUrl(data.audioUrl),
+      scenes: (data.scenes || []).map((scene) => ({
+        ...scene,
+        imageUrl: this.resolveRenderableAssetUrl(scene.imageUrl),
+      })),
+    };
+  }
+
+  private resolveRenderableAssetUrl(
+    url: string | undefined,
+  ): string | undefined {
+    if (!url || !url.startsWith('/renders/')) {
+      return url;
+    }
+
+    return `${this.assetBaseUrl}${url}`;
   }
 
   private resolveResolution(resolution: RenderRequest['resolution']) {

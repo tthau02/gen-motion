@@ -220,6 +220,8 @@ export const App: React.FC = () => {
         // If voiceover is enabled, generate it after video creation
         if (voiceoverOptions?.enabled && project) {
           generateVoiceoverForProject({
+            projectId: project.id,
+            videoData: project.data,
             title: project.title,
             description,
             duration,

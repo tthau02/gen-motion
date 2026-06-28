@@ -19,7 +19,9 @@ export class VoiceoverController {
    */
   @Throttle({ default: { limit: 3, ttl: 60000 } })
   @Post('generate')
-  async generate(@Body() request: VoiceoverRequest): Promise<VoiceoverResponse> {
+  async generate(
+    @Body() request: VoiceoverRequest,
+  ): Promise<VoiceoverResponse> {
     return await this.voiceoverService.generateVoiceover(request);
   }
 

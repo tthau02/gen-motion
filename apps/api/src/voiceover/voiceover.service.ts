@@ -17,9 +17,15 @@ export class VoiceoverService {
   private readonly ai: GoogleGenAI;
   private readonly elevenlabs: ElevenLabsClient;
   private readonly outputDir: string;
+  private readonly ttsModelId: string;
+  private readonly ttsLanguageCode: string;
   private voicesCache: ElevenLabsVoice[] | null = null;
   private voicesCacheTime = 0;
   private readonly voicesCacheTtl = 30 * 60 * 1000; // 30 minutes
+  private readonly languageEnforcedModels = new Set([
+    'eleven_flash_v2_5',
+    'eleven_turbo_v2_5',
+  ]);
 
   constructor() {
     this.ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
@@ -28,6 +34,10 @@ export class VoiceoverService {
     this.elevenlabs = new ElevenLabsClient({
       apiKey: process.env.ELEVENLABS_API_KEY,
     });
+    this.ttsModelId =
+      process.env.ELEVENLABS_TTS_MODEL_ID?.trim() || 'eleven_flash_v2_5';
+    this.ttsLanguageCode =
+      process.env.ELEVENLABS_TTS_LANGUAGE_CODE?.trim() || 'vi';
 
     this.outputDir = this.resolveOutputDir();
     if (!existsSync(this.outputDir)) {
@@ -49,7 +59,9 @@ export class VoiceoverService {
    * FALLBACK PATH (narrationText not provided):
    *   Generate narration via a separate Gemini call using description/scenes.
    */
-  async generateVoiceover(request: VoiceoverRequest): Promise<VoiceoverResponse> {
+  async generateVoiceover(
+    request: VoiceoverRequest,
+  ): Promise<VoiceoverResponse> {
     // Step 1: Get narration text (use pre-generated or fallback to Gemini)
     let narrationText: string;
     if (request.narrationText && request.narrationText.trim().length > 0) {
@@ -59,7 +71,9 @@ export class VoiceoverService {
       );
     } else {
       // Fallback: generate narration with Gemini
-      console.log('[Voiceover] No narrationText provided, generating with Gemini...');
+      console.log(
+        '[Voiceover] No narrationText provided, generating with Gemini...',
+      );
       narrationText = await this.generateNarration(request);
     }
 
@@ -147,9 +161,9 @@ export class VoiceoverService {
       const allVoices: ElevenLabsVoice[] = (result.voices || []).map((v) => ({
         voice_id: v.voice_id,
         name: v.name ?? 'Unknown',
-        labels: v.labels as Record<string, string> | undefined,
-        category: v.category as string | undefined,
-        description: v.description as string | undefined,
+        labels: v.labels,
+        category: v.category,
+        description: v.description,
       }));
 
       // Priority 1: voices labeled as Vietnamese
@@ -157,15 +171,16 @@ export class VoiceoverService {
         const lang = v.labels?.language?.toLowerCase() || '';
         const accent = v.labels?.accent?.toLowerCase() || '';
         return (
-          lang === 'vi' || lang === 'vietnamese' ||
-          accent === 'vietnamese' || accent === 'vi'
+          lang === 'vi' ||
+          lang === 'vietnamese' ||
+          accent === 'vietnamese' ||
+          accent === 'vi'
         );
       });
 
-      // Priority 2: premade voices (all support multilingual v2)
-      const premadeVoices = allVoices.filter(
-        (v) => v.category === 'premade',
-      );
+      // Priority 2: premade voices. Vietnamese pronunciation is enforced by
+      // the TTS model/language_code, not by a voice label.
+      const premadeVoices = allVoices.filter((v) => v.category === 'premade');
 
       // Merge: Vietnamese-specific first, then premade, deduplicated
       const seen = new Set<string>();
@@ -180,7 +195,7 @@ export class VoiceoverService {
       if (merged.length > 0) {
         console.log(
           `[Voiceover] Found ${merged.length} voices via SDK ` +
-          `(${vnVoices.length} VN-specific, ${premadeVoices.length} premade)`,
+            `(${vnVoices.length} VN-specific, ${premadeVoices.length} premade)`,
         );
         this.voicesCache = merged;
         this.voicesCacheTime = Date.now();
@@ -204,7 +219,9 @@ export class VoiceoverService {
       }
 
       // Network errors → return empty, no fake IDs
-      console.warn('[Voiceover] Network error fetching voices, returning empty list');
+      console.warn(
+        '[Voiceover] Network error fetching voices, returning empty list',
+      );
       return [];
     }
   }
@@ -318,7 +335,7 @@ QUAN TRỌNG: Chỉ trả về đoạn text tiếng Việt, không kèm theo b�
             message.includes('ETIMEDOUT');
 
           if (isTransient && attempt < 2) {
-            const delay = (Math.pow(2, attempt) * 1000) + Math.random() * 500;
+            const delay = Math.pow(2, attempt) * 1000 + Math.random() * 500;
             console.warn(
               `[Voiceover] Model "${model}" lỗi tạm thời (lần ${attempt + 1}/3), ` +
                 `thử lại sau ${Math.round(delay)}ms: ${message.slice(0, 120)}`,
@@ -381,7 +398,7 @@ QUAN TRỌNG: Chỉ trả về đoạn text tiếng Việt, không kèm theo b�
     if (availableVoices.length === 0) {
       throw new InternalServerErrorException(
         'Không tìm thấy giọng đọc nào từ ElevenLabs. ' +
-        'Vui lòng kiểm tra ELEVENLABS_API_KEY trong file .env và đảm bảo API key hợp lệ.',
+          'Vui lòng kiểm tra ELEVENLABS_API_KEY trong file .env và đảm bảo API key hợp lệ.',
       );
     }
 
@@ -391,12 +408,14 @@ QUAN TRỌNG: Chỉ trả về đoạn text tiếng Việt, không kèm theo b�
         (v) => v.voice_id === preferredVoiceId,
       );
       if (match) {
-        console.log(`[Voiceover] Using selected voice: ${match.name} (${match.voice_id})`);
+        console.log(
+          `[Voiceover] Using selected voice: ${match.name} (${match.voice_id})`,
+        );
         return match;
       }
       console.warn(
         `[Voiceover] Voice ID "${preferredVoiceId}" không tìm thấy, ` +
-        'sẽ dùng giọng mặc định.',
+          'sẽ dùng giọng mặc định.',
       );
     }
 
@@ -426,24 +445,37 @@ QUAN TRỌNG: Chỉ trả về đoạn text tiếng Việt, không kèm theo b�
     voiceId: string,
   ): Promise<{ audioUrl: string; duration: number }> {
     try {
+      const shouldEnforceLanguage = this.languageEnforcedModels.has(
+        this.ttsModelId,
+      );
       console.log(
-        `[Voiceover] Calling ElevenLabs TTS: voice="${voiceId}" text=${text.length}chars`,
+        `[Voiceover] Calling ElevenLabs TTS: voice="${voiceId}" model="${this.ttsModelId}" ` +
+          `language="${shouldEnforceLanguage ? this.ttsLanguageCode : 'auto'}" text=${text.length}chars`,
       );
 
       // The SDK returns audio as a ReadableStream<Uint8Array>
-      const audioStream = await this.elevenlabs.textToSpeech.convert(
-        voiceId,
-        {
-          text,
-          model_id: 'eleven_multilingual_v2',
-          output_format: 'mp3_44100_128',
+      const audioStream = await this.elevenlabs.textToSpeech.convert(voiceId, {
+        text,
+        model_id: this.ttsModelId,
+        ...(shouldEnforceLanguage
+          ? { language_code: this.ttsLanguageCode }
+          : {}),
+        output_format: 'mp3_44100_128',
+        voice_settings: {
+          stability: 0.45,
+          similarity_boost: 0.75,
+          style: 0.2,
+          use_speaker_boost: true,
+          speed: 0.95,
         },
-      );
+      });
 
       // Collect all chunks from the stream
       const chunks: Uint8Array[] = [];
       for await (const chunk of audioStream) {
-        chunks.push(chunk);
+        chunks.push(
+          chunk instanceof Uint8Array ? chunk : Buffer.from(chunk as Buffer),
+        );
       }
 
       // Concatenate into a single buffer
@@ -461,7 +493,7 @@ QUAN TRỌNG: Chỉ trả về đoạn text tiếng Việt, không kèm theo b�
 
       // Estimate duration from file size (MP3 ~16KB/s at 128kbps)
       const estimatedDurationSec =
-        Math.round((audioBuffer.length / (128 * 1024 / 8)) * 10) / 10;
+        Math.round((audioBuffer.length / ((128 * 1024) / 8)) * 10) / 10;
 
       const audioUrl = `/renders/voiceovers/${filename}`;
 
@@ -498,9 +530,10 @@ QUAN TRỌNG: Chỉ trả về đoạn text tiếng Việt, không kèm theo b�
 
   private extractStatusCode(error: unknown): number | null {
     const message = error instanceof Error ? error.message : String(error);
-    const match = message.match(/status(?: code)?[:\s]*(\d{3})/i) ||
-                  message.match(/HTTP\s*(\d{3})/i) ||
-                  message.match(/^(\d{3})/);
+    const match =
+      message.match(/status(?: code)?[:\s]*(\d{3})/i) ||
+      message.match(/HTTP\s*(\d{3})/i) ||
+      message.match(/^(\d{3})/);
     return match ? parseInt(match[1], 10) : null;
   }
 

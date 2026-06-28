@@ -6,6 +6,7 @@ import { calculateTotalDuration } from "../utils/videoDuration";
 import { projectsApi } from "../services/projectsApi";
 import { aiApi } from "../services/aiApi";
 import { voiceoverApi } from "../services/voiceoverApi";
+import { alignSceneDurationsToNarration } from "../utils/sceneTiming";
 
 export const useProjectLibrary = (onPlaybackReset: () => void) => {
   const [projects, setProjects] = useState<SidebarProject[]>([]);
@@ -158,8 +159,10 @@ export const useProjectLibrary = (onPlaybackReset: () => void) => {
       } else {
         setProjects((prev) => [...prev, newProject]);
         setActiveProject(newProject.id);
+        activeProjectRef.current = newProject.id;
       }
 
+      videoDataRef.current = newProject.data;
       setVideoData(newProject.data);
       setSelectedSceneIndex(0);
       onPlaybackReset();
@@ -174,14 +177,16 @@ export const useProjectLibrary = (onPlaybackReset: () => void) => {
    * Updates the video data's audioUrl with the generated audio file.
    */
   const generateVoiceoverForProject = async (options: {
+    projectId?: string;
+    videoData?: VideoMetadata;
     title?: string;
     description: string;
     duration: string;
     tone: string;
     voiceId?: string;
   }) => {
-    const currentData = videoDataRef.current;
-    const projectId = activeProjectRef.current;
+    const currentData = options.videoData ?? videoDataRef.current;
+    const projectId = options.projectId ?? activeProjectRef.current;
 
     setIsGeneratingVoiceover(true);
     try {
@@ -205,10 +210,15 @@ export const useProjectLibrary = (onPlaybackReset: () => void) => {
 
       // Update video data with the generated voiceover audio URL
       const updatedData: VideoMetadata = {
-        ...currentData,
+        ...alignSceneDurationsToNarration(
+          currentData,
+          response.narrationText || currentData.narrationText || "",
+          response.duration,
+        ),
         audioUrl: response.audioUrl,
       };
 
+      videoDataRef.current = updatedData;
       setVideoData(updatedData);
       setProjects((prev) =>
         prev.map((project) =>
@@ -221,6 +231,7 @@ export const useProjectLibrary = (onPlaybackReset: () => void) => {
             : project,
         ),
       );
+      await saveProject(projectId, updatedData);
 
       return response;
     } finally {

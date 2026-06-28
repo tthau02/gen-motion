@@ -146,14 +146,14 @@ export const SidebarLeft: React.FC<SidebarLeftProps> = ({
               { type: "corporate", name: "Corporate Minimal", desc: "Clean layout, metric summary box" },
               { type: "vintage", name: "Vintage Cinematic", desc: "DM Serif font, warm parchment borders" },
               { type: "playful", name: "Playful Pop-Art", desc: "Bouncy springs, thick blocky shadow borders" },
-              { type: "intro", name: "Standard Intro", desc: "Sparkle icons, dynamic center texts" },
+              { type: "intro", name: "Adaptive Intro", desc: "Topic-aware opening title card" },
               { type: "react", name: "React Live Code", desc: "Formatted Javascript workspace" },
               { type: "precision", name: "Precision Insights", desc: "Analytical dashboard layout" },
               { type: "audio", name: "Audio Wave", desc: "Visual music/sound metadata indicators" },
               { type: "scale", name: "Futuristic Scale", desc: "Networks, futuristic space overlays" },
               { type: "transitions", name: "Cine Filters", desc: "Cinematic filter layouts, blur transitions" },
               { type: "performance", name: "Server Metrics", desc: "Infrastructure, database details" },
-              { type: "outro", name: "Terminal Outro", desc: "CLI inputs, call to actions" },
+              { type: "outro", name: "Adaptive Outro", desc: "Topic-aware closing card or call to action" },
             ].map((comp) => (
               <div
                 key={comp.type}

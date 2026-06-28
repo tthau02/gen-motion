@@ -14,6 +14,13 @@
   box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6), 0 0 20px rgba(200, 149, 71, 0.05);
 }
 
+.outro-editorial {
+  border-top: 1px solid rgba(200, 149, 71, 0.18);
+  border-bottom: 1px solid rgba(200, 149, 71, 0.18);
+  padding: 18px 24px;
+  max-width: 720px;
+}
+
 .outro-button {
   background: linear-gradient(135deg, #c89547 0%, #a8722b 100%);
   color: #0c0a09;

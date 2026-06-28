@@ -33,6 +33,7 @@ export class VideoScene {
     textureLevel?: 'none' | 'subtle' | 'medium';
     overlayDensity?: 'none' | 'low' | 'medium';
     supportingDetails?: string[];
+    narrationText?: string;
     [key: string]: any;
   };
 }

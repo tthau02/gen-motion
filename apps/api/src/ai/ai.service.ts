@@ -18,7 +18,14 @@ export class AiService {
   private readonly imageCache = new Map<string, string>();
   private readonly cache = new Map<
     string,
-    { timestamp: number; data: { themeColor: string; narrationText?: string; scenes: VideoScene[] } }
+    {
+      timestamp: number;
+      data: {
+        themeColor: string;
+        narrationText?: string;
+        scenes: VideoScene[];
+      };
+    }
   >();
   private readonly cacheTtl = 5 * 60 * 1000; // 5 minutes TTL
 
@@ -310,6 +317,90 @@ export class AiService {
     });
   }
 
+  private countWords(text: string): number {
+    const words = text
+      .trim()
+      .split(/\s+/)
+      .filter((word) => word.length > 0);
+    return words.length;
+  }
+
+  private getSceneNarrationText(scene: VideoScene): string {
+    const narrationText = scene.customProps?.narrationText;
+    if (typeof narrationText === 'string' && narrationText.trim()) {
+      return narrationText;
+    }
+
+    return [scene.title, scene.subtitle, scene.description]
+      .filter(Boolean)
+      .join(' ');
+  }
+
+  private calculateActualFrames(scenes: VideoScene[]): number {
+    return scenes.reduce((total, scene, index) => {
+      const isLast = index === scenes.length - 1;
+      const transitionOverlap = !isLast && scene.effect !== 'none' ? 10 : 0;
+      return total + scene.durationInFrames - transitionOverlap;
+    }, 0);
+  }
+
+  private formatFramesAsDuration(frames: number, fps: number): string {
+    const totalSeconds = frames / fps;
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = Math.floor(totalSeconds % 60);
+    return `${minutes.toString().padStart(2, '0')}:${seconds
+      .toString()
+      .padStart(2, '0')}`;
+  }
+
+  private distributeSceneDurations(
+    scenes: VideoScene[],
+    narrationText: string,
+    targetTimelineFrames: number,
+  ): VideoScene[] {
+    if (scenes.length === 0) {
+      return scenes;
+    }
+
+    const transitionOverlapFrames = scenes.reduce((total, scene, index) => {
+      const isLast = index === scenes.length - 1;
+      return total + (!isLast && scene.effect !== 'none' ? 10 : 0);
+    }, 0);
+    const targetSceneFrames = Math.max(
+      scenes.length * 45,
+      targetTimelineFrames + transitionOverlapFrames,
+    );
+    const fullNarrationWeight = Math.max(1, this.countWords(narrationText));
+    const weights = scenes.map((scene) =>
+      Math.max(1, this.countWords(this.getSceneNarrationText(scene))),
+    );
+    const weightTotal =
+      weights.reduce((sum, weight) => sum + weight, 0) || fullNarrationWeight;
+
+    let assignedFrames = 0;
+    return scenes.map((scene, index) => {
+      const isLast = index === scenes.length - 1;
+      const remainingScenes = scenes.length - index - 1;
+      const durationInFrames = isLast
+        ? Math.max(45, targetSceneFrames - assignedFrames)
+        : Math.max(
+            45,
+            Math.round((targetSceneFrames * weights[index]) / weightTotal),
+          );
+      const cappedDuration = Math.min(
+        durationInFrames,
+        targetSceneFrames - assignedFrames - remainingScenes * 45,
+      );
+      const finalDuration = Math.max(45, cappedDuration);
+      assignedFrames += finalDuration;
+
+      return {
+        ...scene,
+        durationInFrames: finalDuration,
+      };
+    });
+  }
+
   async generateVideo(
     title: string,
     description: string,
@@ -375,23 +466,11 @@ export class AiService {
     // Dynamically adjust number of scenes and duration limits depending on requested total length
     let minScenes = 3;
     let maxScenes = 6;
-    let minFrameDuration = 90; // 3s
-    let maxFrameDuration = 180; // 6s
 
     if (durationNum > 30) {
       // Scale scenes but cap them at a reasonable amount to avoid response token limits (max 25 scenes)
       minScenes = Math.min(20, Math.max(5, Math.floor(durationNum / 10)));
       maxScenes = Math.min(25, Math.max(8, Math.ceil(durationNum / 6)));
-
-      // Scale frame duration so a few scenes can span the long video
-      minFrameDuration = Math.max(
-        120,
-        Math.floor((totalFramesNeeded / maxScenes) * 0.8),
-      );
-      maxFrameDuration = Math.max(
-        240,
-        Math.ceil((totalFramesNeeded / minScenes) * 1.2),
-      );
     }
 
     let templateConstraint = '';
@@ -407,9 +486,9 @@ You are a creative video director. Generate a structured multi-scene video confi
 - Theme Tone: ${tone}${templateConstraint}
 
 Total frames target: ${totalFramesNeeded} frames (at 30 frames per second).
-You must divide the total duration of ${totalFramesNeeded} frames into a logical sequence of individual scenes.
+You must divide the video into a logical sequence of scenes. Scene durations will be recalculated by the backend from each scene's narration length, so do not make all scenes the same length.
 You should generate between ${minScenes} to ${maxScenes} scenes depending on the topic.
-The sum of the scene durations should equal roughly ${totalFramesNeeded} frames (each scene durationInFrames should typically be between ${minFrameDuration} and ${maxFrameDuration} frames).
+Set durationInFrames to a rough estimate only. Scenes with more narration should have a larger rough duration than scenes with shorter narration.
 
 Guidelines for generating each scene:
 1. First classify the topic domain, then choose scene types that fit that domain. The scene 'type' is a visual template signal, not a decoration.
@@ -444,6 +523,7 @@ Guidelines for generating each scene:
 5. Set an transition 'effect' for each scene (except the last scene which must have 'none'): 'fade', 'slide-left', 'slide-right' or 'none'.
 6. Only fill 'customProps.codeSnippet' when the scene is explicitly about programming, software, or a code interface. Never include code snippets for social life, documentary, culture, food, education, health, family, or community topics.
 7. Only fill 'customProps.terminalCommand' when the video is about developer tooling or technical setup. For non-technical outros, use normal Vietnamese call-to-action text in title/subtitle/description instead.
+   Intro and outro scenes must match the topic domain. For social, documentary, culture, food, education, health, family, or community videos, do not use installation/setup/developer wording. Use human, editorial, or story-closing language instead.
 8. For every scene, use 'customProps' as art direction, not generic dashboard decoration:
    - layoutVariant: choose 'center', 'split', 'spotlight', or 'dashboard'. Use 'dashboard' only when the scene is truly about data, systems, metrics, finance, analytics, or UI.
    - visualStyle: choose 'cinematic', 'minimal', 'technical', or 'bold'. Prefer 'minimal' or 'cinematic' for human/editorial subjects.
@@ -453,6 +533,7 @@ Guidelines for generating each scene:
    - textureLevel: choose 'none', 'subtle', or 'medium'. Texture should support the topic, not hide weak design.
    - overlayDensity: choose 'none', 'low', or 'medium'. Prefer low density. Use medium only for technical/data scenes.
    - supportingDetails: 1 to 3 concrete, scene-specific visual notes. Avoid generic words such as "sleek", "dynamic", "futuristic", "immersive", "stunning", or "cutting-edge".
+   - narrationText: REQUIRED. Write the exact Vietnamese sentence(s) or short paragraph that should be spoken while this scene is visible. It must be a contiguous part of the full narrationText.
    - badgeText, metricLabel, metricValue, and chips are OPTIONAL. Only include them when they carry real editorial meaning. Do not invent fake statistics. Do not add chips to cinematic, documentary, food, history, nature, or narrative scenes.
 
 Avoid generic AI-looking design patterns: do not rely on abstract gradient blobs, decorative glass cards, random neon glow, fake metrics, generic badges, or keyword chips unless the subject explicitly calls for them. Each scene should feel like a directed shot with a concrete subject, intentional crop, and restrained typography.
@@ -470,6 +551,7 @@ Assign a custom hex color code to 'themeColor' matching the visual theme and moo
    - Do NOT include scene numbers, speaker labels, stage directions, or any formatting — just the pure spoken text.
    - No markdown, no special characters, no brackets, no quotes around the text.
    - The narration should feel like one continuous story, not a list of scene descriptions.
+   - The full narrationText must be exactly the scene customProps.narrationText values joined together in scene order.
    - ONLY return the narration text itself. No preamble, no explanation.
 `;
 
@@ -564,6 +646,7 @@ Assign a custom hex color code to 'themeColor' matching the visual theme and moo
                           type: Type.ARRAY,
                           items: { type: Type.STRING },
                         },
+                        narrationText: { type: Type.STRING },
                       },
                     },
                   },
@@ -606,13 +689,18 @@ Assign a custom hex color code to 'themeColor' matching the visual theme and moo
         domainAdjustedScenes,
         aspectRatio || '16:9',
       );
-      const newScenes = scenesWithImages.map((scene, index) => {
+      const sequencedScenes = scenesWithImages.map((scene, index) => {
         const isLast = index === scenesWithImages.length - 1;
         return {
           ...scene,
           effect: isLast ? ('none' as const) : scene.effect,
         };
       });
+      const newScenes = this.distributeSceneDurations(
+        sequencedScenes,
+        generatedData.narrationText || '',
+        totalFramesNeeded,
+      );
 
       // Save resolved scenes to cache so repeated prompts reuse valid image URLs.
       if (!projectId) {
@@ -634,20 +722,8 @@ Assign a custom hex color code to 'themeColor' matching the visual theme and moo
         });
       }
 
-      // Calculate actual frames (taking overlapping transitions into account)
-      let actualFrames = 0;
-      newScenes.forEach((scene, index) => {
-        actualFrames += scene.durationInFrames;
-        const isLast = index === newScenes.length - 1;
-        if (!isLast && scene.effect !== 'none') {
-          actualFrames -= 10;
-        }
-      });
-
-      const totalSeconds = actualFrames / fps;
-      const minutes = Math.floor(totalSeconds / 60);
-      const seconds = Math.floor(totalSeconds % 60);
-      const formattedDuration = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+      const actualFrames = this.calculateActualFrames(newScenes);
+      const formattedDuration = this.formatFramesAsDuration(actualFrames, fps);
 
       if (projectId) {
         let existingProject: SidebarProject | null = null;
