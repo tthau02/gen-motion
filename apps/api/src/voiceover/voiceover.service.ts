@@ -19,6 +19,7 @@ export class VoiceoverService {
   private readonly outputDir: string;
   private readonly ttsModelId: string;
   private readonly ttsLanguageCode: string;
+  private readonly publicBaseUrl: string;
   private voicesCache: ElevenLabsVoice[] | null = null;
   private voicesCacheTime = 0;
   private readonly voicesCacheTtl = 30 * 60 * 1000; // 30 minutes
@@ -38,6 +39,7 @@ export class VoiceoverService {
       process.env.ELEVENLABS_TTS_MODEL_ID?.trim() || 'eleven_flash_v2_5';
     this.ttsLanguageCode =
       process.env.ELEVENLABS_TTS_LANGUAGE_CODE?.trim() || 'vi';
+    this.publicBaseUrl = this.resolvePublicBaseUrl();
 
     this.outputDir = this.resolveOutputDir();
     if (!existsSync(this.outputDir)) {
@@ -495,7 +497,10 @@ QUAN TRỌNG: Chỉ trả về đoạn text tiếng Việt, không kèm theo b�
       const estimatedDurationSec =
         Math.round((audioBuffer.length / ((128 * 1024) / 8)) * 10) / 10;
 
-      const audioUrl = `/renders/voiceovers/${filename}`;
+      const audioPath = `/renders/voiceovers/${filename}`;
+      const audioUrl = this.publicBaseUrl
+        ? `${this.publicBaseUrl}${audioPath}`
+        : audioPath;
 
       console.log(
         `[Voiceover] TTS complete: ${filename} (${(audioBuffer.length / 1024).toFixed(1)}KB, ~${estimatedDurationSec}s)`,
@@ -551,5 +556,14 @@ QUAN TRỌNG: Chỉ trả về đoạn text tiếng Việt, không kèm theo b�
     }
 
     return resolve(cwd, 'renders', 'voiceovers');
+  }
+
+  private resolvePublicBaseUrl(): string {
+    return (
+      process.env.PUBLIC_API_URL ||
+      process.env.API_PUBLIC_URL ||
+      process.env.RENDER_EXTERNAL_URL ||
+      ''
+    ).replace(/\/+$/, '');
   }
 }

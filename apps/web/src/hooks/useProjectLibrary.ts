@@ -7,6 +7,12 @@ import { projectsApi } from "../services/projectsApi";
 import { aiApi } from "../services/aiApi";
 import { voiceoverApi } from "../services/voiceoverApi";
 import { alignSceneDurationsToNarration } from "../utils/sceneTiming";
+import { resolveApiAssetUrl } from "../lib/apiClient";
+
+const normalizeProjectAssets = (data: VideoMetadata): VideoMetadata => ({
+  ...data,
+  audioUrl: resolveApiAssetUrl(data.audioUrl),
+});
 
 export const useProjectLibrary = (onPlaybackReset: () => void) => {
   const [projects, setProjects] = useState<SidebarProject[]>([]);
@@ -63,8 +69,13 @@ export const useProjectLibrary = (onPlaybackReset: () => void) => {
     projectsApi
       .list()
       .then((data) => {
-        setProjects(data);
-        lastSavedProjectData.current = data.reduce(
+        const normalizedProjects = data.map((project) => ({
+          ...project,
+          data: normalizeProjectAssets(project.data as VideoMetadata),
+        }));
+
+        setProjects(normalizedProjects);
+        lastSavedProjectData.current = normalizedProjects.reduce(
           (acc: Record<string, string>, project: SidebarProject) => {
             acc[project.id] = JSON.stringify(project.data);
             return acc;
@@ -72,14 +83,14 @@ export const useProjectLibrary = (onPlaybackReset: () => void) => {
           {}
         );
 
-        const activeProjectData = data.find(
+        const activeProjectData = normalizedProjects.find(
           (project) => project.id === activeProjectRef.current
         );
         if (activeProjectData) {
           setVideoData(activeProjectData.data);
-        } else if (data.length > 0) {
-          setActiveProject(data[0].id);
-          setVideoData(data[0].data);
+        } else if (normalizedProjects.length > 0) {
+          setActiveProject(normalizedProjects[0].id);
+          setVideoData(normalizedProjects[0].data);
         }
       })
       .catch((err) => console.error("Error fetching projects:", err));
@@ -120,7 +131,7 @@ export const useProjectLibrary = (onPlaybackReset: () => void) => {
     }
 
     setActiveProject(project.id);
-    setVideoData(project.data as VideoMetadata);
+    setVideoData(normalizeProjectAssets(project.data as VideoMetadata));
     setSelectedSceneIndex(0);
     onPlaybackReset();
   };
@@ -151,22 +162,27 @@ export const useProjectLibrary = (onPlaybackReset: () => void) => {
         aspectRatio,
       });
 
-      lastSavedProjectData.current[newProject.id] = JSON.stringify(newProject.data);
+      const normalizedProject = {
+        ...newProject,
+        data: normalizeProjectAssets(newProject.data),
+      };
+
+      lastSavedProjectData.current[normalizedProject.id] = JSON.stringify(normalizedProject.data);
       if (updateCurrent && activeProject) {
         setProjects((prev) =>
-          prev.map((project) => (project.id === activeProject ? newProject : project))
+          prev.map((project) => (project.id === activeProject ? normalizedProject : project))
         );
       } else {
-        setProjects((prev) => [...prev, newProject]);
-        setActiveProject(newProject.id);
-        activeProjectRef.current = newProject.id;
+        setProjects((prev) => [...prev, normalizedProject]);
+        setActiveProject(normalizedProject.id);
+        activeProjectRef.current = normalizedProject.id;
       }
 
-      videoDataRef.current = newProject.data;
-      setVideoData(newProject.data);
+      videoDataRef.current = normalizedProject.data;
+      setVideoData(normalizedProject.data);
       setSelectedSceneIndex(0);
       onPlaybackReset();
-      return newProject;
+      return normalizedProject;
     } finally {
       setIsGenerating(false);
     }
@@ -215,7 +231,7 @@ export const useProjectLibrary = (onPlaybackReset: () => void) => {
           response.narrationText || currentData.narrationText || "",
           response.duration,
         ),
-        audioUrl: response.audioUrl,
+        audioUrl: resolveApiAssetUrl(response.audioUrl),
       };
 
       videoDataRef.current = updatedData;

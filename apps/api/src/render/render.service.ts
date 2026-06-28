@@ -196,11 +196,24 @@ export class RenderService {
   private resolveRenderableAssetUrl(
     url: string | undefined,
   ): string | undefined {
-    if (!url || !url.startsWith('/renders/')) {
+    if (!url) {
       return url;
     }
 
-    return `${this.assetBaseUrl}${url}`;
+    if (url.startsWith('/renders/')) {
+      return `${this.assetBaseUrl}${url}`;
+    }
+
+    try {
+      const parsed = new URL(url);
+      if (parsed.pathname.startsWith('/renders/')) {
+        return `${this.assetBaseUrl}${parsed.pathname}${parsed.search}`;
+      }
+    } catch {
+      return url;
+    }
+
+    return url;
   }
 
   private resolveResolution(resolution: RenderRequest['resolution']) {
